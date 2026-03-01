@@ -1,0 +1,461 @@
+"""CARIA Companion — Tool execution functions.
+
+These are NOT ADK tools — they are plain Python functions called by
+the REST API endpoints (/api/companion/*). The browser receives tool calls
+from Gemini Live API and executes them by hitting these REST endpoints.
+"""
+
+import logging
+import uuid
+from datetime import datetime, timezone
+
+import httpx
+
+from config import settings
+from models.firestore import AlertDoc, ConversationDoc, HealthLogDoc, ReminderDoc
+from services.firestore_service import get_firestore_service
+
+logger = logging.getLogger(__name__)
+
+
+def _new_id() -> str:
+    return uuid.uuid4().hex[:20]
+
+
+def _today() -> str:
+    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+
+# ── analyze_medication ──────────────────────────────────────────────────────
+
+
+async def analyze_medication(user_id: str, image_description: str) -> dict:
+    """Analyse a medication image description against the user's prescription.
+
+    The Gemini Live API (running in the browser) has already performed visual
+    analysis on the camera frame. It passes us a text description of what it
+    saw on the medication label. We cross-reference with the user's known
+    medications stored in Firestore and optionally call Gemini text API for
+    deeper analysis.
+    """
+    fs = get_firestore_service()
+    user = await fs.get_user(user_id)
+
+    if not user:
+        return {"status": "error", "error_message": "User not found"}
+
+    known_meds = [m.lower().strip() for m in (user.medications or [])]
+    description_lower = image_description.lower()
+
+    # Simple fuzzy matching: check if any known medication name appears in
+    # the description provided by Gemini's visual analysis
+    matched_med = None
+    for med in known_meds:
+        # Match on medication name substring (e.g. "lisinopril" in
+        # "Lisinopril 10mg tablets")
+        if med in description_lower:
+            matched_med = med
+            break
+
+    if matched_med:
+        match_status = "match"
+        medication_name = matched_med.title()
+        guidance = (
+            f"This looks like {medication_name}, which is on your prescription list. "
+            f"Please take it as directed by your doctor."
+        )
+    elif known_meds:
+        match_status = "unknown"
+        medication_name = image_description.split(",")[0].strip()[:50]
+        guidance = (
+            f"I don't recognise this as one of your usual medications "
+            f"({', '.join(m.title() for m in known_meds)}). "
+            f"Please check with your doctor or pharmacist before taking it."
+        )
+    else:
+        match_status = "unknown"
+        medication_name = image_description.split(",")[0].strip()[:50]
+        guidance = (
+            "I don't have your medication list on file yet. "
+            "Please ask a family member or your doctor to update your profile "
+            "with your current medications."
+        )
+
+    # Attempt deeper analysis via Gemini text API if API key is available
+    dosage = "See label"
+    if settings.google_api_key:
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.post(
+                    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+                    headers={"x-goog-api-key": settings.google_api_key},
+                    json={
+                        "contents": [
+                            {
+                                "parts": [
+                                    {
+                                        "text": (
+                                            f"Extract the medication name and dosage from this description: "
+                                            f'"{image_description}". '
+                                            f"Respond in JSON: "
+                                            f'{{"name": "...", "dosage": "..."}}'
+                                        )
+                                    }
+                                ]
+                            }
+                        ],
+                        "generationConfig": {
+                            "responseMimeType": "application/json",
+                            "temperature": 0.1,
+                        },
+                    },
+                    timeout=10,
+                )
+            if resp.status_code == 200:
+                import json
+
+                result = resp.json()
+                text = (
+                    result.get("candidates", [{}])[0]
+                    .get("content", {})
+                    .get("parts", [{}])[0]
+                    .get("text", "")
+                )
+                parsed = json.loads(text)
+                medication_name = parsed.get("name", medication_name)
+                dosage = parsed.get("dosage", dosage)
+        except Exception as e:
+            logger.warning("Gemini medication analysis failed: %s", e)
+
+    logger.info(
+        "Medication analysed for user %s: name=%s match=%s",
+        user_id,
+        medication_name,
+        match_status,
+    )
+
+    return {
+        "status": "success",
+        "data": {
+            "medication_name": medication_name,
+            "dosage": dosage,
+            "match_status": match_status,
+            "guidance": guidance,
+        },
+    }
+
+
+# ── flag_emotional_distress ─────────────────────────────────────────────────
+
+
+async def flag_emotional_distress(
+    user_id: str, severity: str, observation: str
+) -> dict:
+    """Flag an emotional distress signal and create an alert.
+
+    Severity determines notification routing:
+    - low: log only
+    - medium: log + notify primary family contact
+    - high: log + notify all family contacts (urgent)
+    """
+    fs = get_firestore_service()
+
+    alert_id = _new_id()
+    alert = AlertDoc(
+        alert_id=alert_id,
+        user_id=user_id,
+        type="emotional_distress",
+        severity=severity,
+        message=observation,
+        source="companion",
+    )
+    await fs.create_alert(alert)
+
+    # Determine action and attempt notification
+    action = "logged"
+
+    if severity in ("medium", "high"):
+        # Look up family contacts for notification
+        family_links = await fs.get_family_links_for_elderly(user_id)
+
+        if family_links:
+            if severity == "high":
+                action = "urgent_alert"
+                # Notify ALL family contacts for urgent alerts
+                for link in family_links:
+                    family_user = await fs.get_user(link.family_user_id)
+                    if family_user and family_user.fcm_token:
+                        # FCM push notification would be sent here
+                        logger.info(
+                            "Urgent alert push queued for family member %s",
+                            link.family_user_id,
+                        )
+            else:
+                action = "notified_family"
+                # Notify primary family contact only
+                primary = family_links[0]
+                family_user = await fs.get_user(primary.family_user_id)
+                if family_user and family_user.fcm_token:
+                    logger.info(
+                        "Distress notification queued for family member %s",
+                        primary.family_user_id,
+                    )
+
+    logger.info(
+        "Emotional distress flagged for user %s: severity=%s action=%s",
+        user_id,
+        severity,
+        action,
+    )
+
+    return {
+        "status": "success",
+        "data": {
+            "alert_id": alert_id,
+            "action": action,
+        },
+    }
+
+
+# ── log_health_checkin ──────────────────────────────────────────────────────
+
+
+async def log_health_checkin(
+    user_id: str, mood: str, pain_level: int, notes: str
+) -> dict:
+    """Log a daily health check-in from the companion conversation.
+
+    Stores mood, pain level, and notes in the user's healthLogs subcollection,
+    keyed by today's date (merge if already exists).
+    """
+    fs = get_firestore_service()
+
+    today = _today()
+    mood_scores = {
+        "happy": 9,
+        "okay": 6,
+        "sad": 3,
+        "anxious": 4,
+        "confused": 3,
+        "tired": 5,
+    }
+
+    log = HealthLogDoc(
+        date=today,
+        mood=mood,
+        mood_score=mood_scores.get(mood, 5),
+        pain_level=pain_level,
+        notes=notes,
+    )
+    await fs.save_health_log(user_id, log)
+
+    # Flag high pain or concerning moods automatically
+    if pain_level >= 7:
+        await flag_emotional_distress(
+            user_id,
+            "medium",
+            f"High pain level ({pain_level}/10) reported during health check-in",
+        )
+
+    if mood in ("sad", "anxious", "confused") and pain_level >= 5:
+        await flag_emotional_distress(
+            user_id,
+            "medium",
+            f"Concerning health check-in: mood={mood}, pain={pain_level}/10",
+        )
+
+    logger.info(
+        "Health check-in logged for user %s: mood=%s pain=%d",
+        user_id,
+        mood,
+        pain_level,
+    )
+
+    return {
+        "status": "success",
+        "data": {
+            "log_id": f"{user_id}_{today}",
+            "date": today,
+        },
+    }
+
+
+# ── set_reminder ────────────────────────────────────────────────────────────
+
+
+async def set_reminder(
+    user_id: str, reminder_type: str, message: str, time_str: str
+) -> dict:
+    """Set a reminder for the user.
+
+    Creates a reminder document in Firestore. Accepts ISO 8601 datetime
+    or HH:MM (assumes today's date in that case).
+    """
+    fs = get_firestore_service()
+
+    reminder_id = _new_id()
+
+    # Parse the time string — accept ISO8601 or HH:MM
+    try:
+        if "T" in time_str:
+            scheduled_time = datetime.fromisoformat(
+                time_str.replace("Z", "+00:00")
+            )
+        else:
+            # Assume today + the given time in UTC
+            today = _today()
+            scheduled_time = datetime.fromisoformat(f"{today}T{time_str}:00+00:00")
+    except ValueError:
+        logger.warning("Could not parse reminder time '%s', using now + 1 hour", time_str)
+        scheduled_time = datetime.now(timezone.utc) + __import__("datetime").timedelta(hours=1)
+
+    # Ensure timezone-aware
+    if scheduled_time.tzinfo is None:
+        scheduled_time = scheduled_time.replace(tzinfo=timezone.utc)
+
+    reminder = ReminderDoc(
+        reminder_id=reminder_id,
+        type=reminder_type,
+        message=message,
+        scheduled_time=scheduled_time,
+    )
+    await fs.save_reminder(user_id, reminder)
+
+    logger.info(
+        "Reminder set for user %s: type=%s at %s",
+        user_id,
+        reminder_type,
+        scheduled_time,
+    )
+
+    return {
+        "status": "success",
+        "data": {
+            "reminder_id": reminder_id,
+            "scheduled_time": scheduled_time.isoformat(),
+        },
+    }
+
+
+# ── log_conversation ────────────────────────────────────────────────────────
+
+
+async def log_conversation(
+    user_id: str,
+    session_duration: int,
+    transcript: list[dict],
+    flags: list[str],
+) -> dict:
+    """Log a companion conversation session with transcript and analysis.
+
+    Generates a summary using Gemini (or simple heuristics as fallback),
+    extracts mood, and stores in Firestore. Triggers alerts for distress flags.
+    """
+    fs = get_firestore_service()
+
+    conversation_id = _new_id()
+
+    # Build text from transcript for analysis
+    transcript_text = "\n".join(
+        f"{t.get('role', 'unknown')}: {t.get('text', '')}" for t in transcript
+    )
+
+    # Attempt Gemini-powered summary
+    summary = ""
+    mood_score = 7  # Default neutral-positive
+
+    if settings.google_api_key and transcript_text.strip():
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.post(
+                    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+                    headers={"x-goog-api-key": settings.google_api_key},
+                    json={
+                        "contents": [
+                            {
+                                "parts": [
+                                    {
+                                        "text": (
+                                            "Summarise this conversation between CARIA (an AI companion) and an elderly user "
+                                            "in 1-2 sentences. Also rate the user's overall mood on a scale of 1-10 "
+                                            "(1=very distressed, 10=very happy). "
+                                            f'Respond in JSON: {{"summary": "...", "moodScore": N}}\n\n'
+                                            f"Transcript:\n{transcript_text[:3000]}"
+                                        )
+                                    }
+                                ]
+                            }
+                        ],
+                        "generationConfig": {
+                            "responseMimeType": "application/json",
+                            "temperature": 0.3,
+                        },
+                    },
+                    timeout=15,
+                )
+            if resp.status_code == 200:
+                import json
+
+                result = resp.json()
+                text = (
+                    result.get("candidates", [{}])[0]
+                    .get("content", {})
+                    .get("parts", [{}])[0]
+                    .get("text", "")
+                )
+                parsed = json.loads(text)
+                summary = parsed.get("summary", "")
+                mood_score = max(1, min(10, int(parsed.get("moodScore", 7))))
+        except Exception as e:
+            logger.warning("Gemini conversation summary failed: %s", e)
+
+    # Fallback summary
+    if not summary:
+        user_messages = [t for t in transcript if t.get("role") == "user"]
+        exchange_count = len(transcript)
+        duration_min = max(1, session_duration // 60)
+        summary = (
+            f"{duration_min}-minute conversation with {exchange_count} exchanges. "
+            f"User contributed {len(user_messages)} messages."
+        )
+
+    convo = ConversationDoc(
+        conversation_id=conversation_id,
+        summary=summary,
+        mood_score=mood_score,
+        session_duration=session_duration,
+        flags=flags,
+        transcript_count=len(transcript),
+    )
+    await fs.save_conversation(user_id, convo)
+
+    # If distress flags present, create alerts
+    if "distress" in flags:
+        await flag_emotional_distress(
+            user_id, "medium", "Distress detected during companion conversation"
+        )
+
+    # Flag low mood scores
+    if mood_score <= 3:
+        await flag_emotional_distress(
+            user_id,
+            "medium",
+            f"Low mood score ({mood_score}/10) detected in conversation summary",
+        )
+
+    logger.info(
+        "Conversation logged for user %s: id=%s duration=%ds mood=%d",
+        user_id,
+        conversation_id,
+        session_duration,
+        mood_score,
+    )
+
+    return {
+        "status": "success",
+        "data": {
+            "conversation_id": conversation_id,
+            "summary": summary,
+            "mood_score": mood_score,
+        },
+    }

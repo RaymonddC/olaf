@@ -1,0 +1,21 @@
+{
+  "name": "CARIA — AI Care Companion",
+  "short_name": "CARIA",
+  "description": "AI-powered elderly care companion with voice, stories, and navigation",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f0f7ff",
+  "theme_color": "#0074c5",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

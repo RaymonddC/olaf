@@ -1,0 +1,26 @@
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:geminiliveagentchallenge.devpost.com)",
+      "WebFetch(domain:ai.google.dev)",
+      "WebFetch(domain:google.github.io)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:firebase.google.com)",
+      "WebFetch(domain:docs.cloud.google.com)",
+      "WebFetch(domain:developers.googleblog.com)",
+      "Bash(npx skills:*)",
+      "WebFetch(domain:medium.com)",
+      "WebFetch(domain:www.pump.co)",
+      "WebFetch(domain:skills.sh)",
+      "Bash(wc:*)",
+      "Bash(find:*)",
+      "Bash(npx next:*)",
+      "Bash(python:*)",
+      "Bash(python3:*)"
+    ]
+  }
+}
