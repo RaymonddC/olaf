@@ -77,11 +77,22 @@ def create_app():
     )
 
     # ── Custom CARIA API routes ─────────────────────────────────────────
-    from api.routes import auth, gemini_token, companion, storyteller, navigator, health, alerts, notifications
+    from api.routes import (
+        auth,
+        gemini_token,
+        companion,
+        conversations,
+        storyteller,
+        navigator,
+        health,
+        alerts,
+        notifications,
+    )
 
     app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
     app.include_router(gemini_token.router, prefix="/api/gemini", tags=["gemini"])
     app.include_router(companion.router, prefix="/api/companion", tags=["companion"])
+    app.include_router(conversations.router, prefix="/api/companion", tags=["companion"])
     app.include_router(storyteller.router, prefix="/api/storyteller", tags=["storyteller"])
     app.include_router(navigator.router, prefix="/api/navigator", tags=["navigator"])
     app.include_router(health.router, prefix="/api/health", tags=["health"])
@@ -93,7 +104,7 @@ def create_app():
     async def health_check():
         return {"status": "healthy"}
 
-    logger.info("CARIA backend started with %d custom route groups", 8)
+    logger.info("CARIA backend started with %d custom route groups", 9)
     return app
 
 

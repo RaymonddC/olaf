@@ -22,6 +22,7 @@ export const queryKeys = {
   medications: (userId: string) => ['medications', userId] as const,
   familyLinks: (userId: string) => ['family-links', userId] as const,
   reminders: (userId: string) => ['reminders', userId] as const,
+  conversations: (userId: string) => ['conversations', userId] as const,
 };
 
 // ── Types (matching api-contracts.md) ────────────────────────────────────────
@@ -124,6 +125,16 @@ export interface Medication {
   dosage: string;
   scheduledTime: string;
   status: 'upcoming' | 'taken' | 'missed';
+}
+
+export interface Conversation {
+  conversationId: string;
+  summary: string;
+  moodScore: number;
+  sessionDuration: number;
+  flags: string[];
+  transcriptCount: number;
+  createdAt: string;
 }
 
 // ── Auth hooks ───────────────────────────────────────────────────────────────
@@ -314,5 +325,51 @@ export function useRegisterFCMToken() {
         token: data.token,
         device_id: data.deviceId ?? '',
       }),
+  });
+}
+
+// ── Conversation hooks ───────────────────────────────────────────────────────
+
+interface ConversationsResponse {
+  status: string;
+  data: {
+    conversations: Conversation[];
+    total: number;
+  };
+}
+
+export function useConversations(
+  userId: string,
+  limit = 20,
+  options?: Partial<UseQueryOptions<ConversationsResponse>>,
+) {
+  return useQuery({
+    queryKey: queryKeys.conversations(userId),
+    queryFn: () =>
+      api.get<ConversationsResponse>(
+        `/api/companion/conversations?userId=${encodeURIComponent(userId)}&limit=${limit}`,
+      ),
+    enabled: !!userId,
+    ...options,
+  });
+}
+
+// ── Notification preferences hooks ─────────────────────────────────────────
+
+export interface NotificationPrefs {
+  alertsEnabled: boolean;
+  dailyReportEnabled: boolean;
+  weeklyReportEnabled: boolean;
+  emailDigestEnabled: boolean;
+}
+
+export function useUpdateNotificationPrefs() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { userId: string; prefs: NotificationPrefs }) =>
+      api.patch<ApiResponse>(`/api/auth/notification-prefs`, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.me() });
+    },
   });
 }

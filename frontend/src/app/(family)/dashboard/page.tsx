@@ -23,7 +23,7 @@ import { setupPushNotifications, onForegroundMessage } from '@/lib/fcm';
 
 export default function FamilyDashboardPage() {
   const router = useRouter();
-  const { user, role, signOut } = useAuth();
+  const { user, signOut } = useAuth();
   const { toast } = useToast();
   const [acknowledgingId, setAcknowledgingId] = useState<string | null>(null);
 

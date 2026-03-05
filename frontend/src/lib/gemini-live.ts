@@ -1,10 +1,11 @@
 /**
- * GeminiLiveClient — Raw WebSocket client for Gemini Live API.
+ * GeminiLiveClient — Uses @google/genai SDK for Gemini Live API.
  *
- * Browser connects directly to Gemini using an ephemeral token provisioned
- * by the backend. Handles bidirectional audio, tool calls, session
- * resumption, and automatic reconnection on goAway.
+ * The SDK handles WebSocket auth, reconnection, and message framing.
+ * The API key is fetched from the backend so it never ships in the JS bundle.
  */
+
+import { GoogleGenAI, Modality } from '@google/genai';
 
 export type CompanionStatus =
   | 'idle'
@@ -45,12 +46,10 @@ export interface GeminiLiveConfig {
   callbacks: GeminiLiveCallbacks;
 }
 
-const WS_ENDPOINT =
-  'wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent';
+const MODEL = 'models/gemini-2.5-flash-native-audio-preview-12-2025';
 
 const RECONNECT_DELAY_MS = 1500;
 const MAX_RECONNECT_ATTEMPTS = 5;
-const SETUP_TIMEOUT_MS = 10_000;
 
 // CARIA system instruction — warm, patient, elderly-focused companion
 const SYSTEM_INSTRUCTION = [
@@ -66,7 +65,6 @@ const SYSTEM_INSTRUCTION = [
   'If the user is quiet for a while, gently check in on them.',
 ].join(' ');
 
-// Tool declarations matching docs/architecture/api-contracts.md
 const TOOL_DECLARATIONS = [
   {
     name: 'analyze_medication',
@@ -86,8 +84,7 @@ const TOOL_DECLARATIONS = [
   {
     name: 'flag_emotional_distress',
     description:
-      "Flag when the user shows signs of emotional distress in their voice or words. Call this silently — do not tell the user you are flagging anything.",
-    behavior: 'NON_BLOCKING',
+      'Flag when the user shows signs of emotional distress. Call this silently — do not tell the user.',
     parameters: {
       type: 'object',
       properties: {
@@ -107,8 +104,7 @@ const TOOL_DECLARATIONS = [
   {
     name: 'log_health_checkin',
     description:
-      "Log the user's daily health check-in including mood, pain level, and any health notes gathered during conversation.",
-    behavior: 'NON_BLOCKING',
+      "Log the user's daily health check-in including mood, pain level, and health notes.",
     parameters: {
       type: 'object',
       properties: {
@@ -131,7 +127,6 @@ const TOOL_DECLARATIONS = [
   {
     name: 'set_reminder',
     description: 'Set a reminder for the user at a specific time.',
-    behavior: 'NON_BLOCKING',
     parameters: {
       type: 'object',
       properties: {
@@ -153,23 +148,12 @@ const TOOL_DECLARATIONS = [
   },
 ];
 
-/**
- * Scheduling for tool responses — controls how Gemini reacts to results.
- * - SILENT: absorb silently (distress flags, health logging)
- * - WHEN_IDLE: tell user when there's a pause (reminders)
- * - INTERRUPT: tell user immediately (medication analysis)
- */
-const TOOL_SCHEDULING: Record<string, string> = {
-  flag_emotional_distress: 'SILENT',
-  log_health_checkin: 'SILENT',
-  set_reminder: 'WHEN_IDLE',
-  analyze_medication: 'INTERRUPT',
-};
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type LiveSession = any;
 
 export class GeminiLiveClient {
-  private ws: WebSocket | null = null;
+  private session: LiveSession = null;
   private config: GeminiLiveConfig;
-  private sessionHandle: string | null = null;
   private reconnectAttempts = 0;
   private intentionalClose = false;
   private _connected = false;
@@ -182,7 +166,7 @@ export class GeminiLiveClient {
     return this._connected;
   }
 
-  /** Open a new session: fetch token → WebSocket → setup → ready. */
+  /** Open a new session: fetch API key → connect via SDK → ready. */
   async connect(): Promise<void> {
     this.intentionalClose = false;
     this.config.callbacks.onStatusChange('connecting');
@@ -191,7 +175,7 @@ export class GeminiLiveClient {
       const authToken = await this.config.getAuthToken();
       if (!authToken) throw new Error('Not authenticated');
 
-      // 1. Fetch ephemeral token from backend
+      // Fetch API key from backend
       const tokenRes = await fetch(this.config.tokenEndpoint, {
         method: 'POST',
         headers: {
@@ -204,23 +188,47 @@ export class GeminiLiveClient {
         throw new Error(`Token request failed: ${tokenRes.status}`);
       }
       const { data } = await tokenRes.json();
-      const token: string = data.token;
+      const apiKey: string = data.token;
 
-      // 2. Open WebSocket
-      const wsUrl = `${WS_ENDPOINT}?access_token=${encodeURIComponent(token)}`;
-      this.ws = new WebSocket(wsUrl);
+      // Connect via SDK
+      const ai = new GoogleGenAI({ apiKey });
 
-      await this.waitForOpen();
-
-      // 3. Send setup
-      this.sendSetup();
-
-      // 4. Wait for setupComplete before attaching the main handler
-      await this.waitForSetupComplete();
-
-      this._connected = true;
-      this.reconnectAttempts = 0;
-      this.config.callbacks.onStatusChange('listening');
+      this.session = await ai.live.connect({
+        model: MODEL,
+        config: {
+          responseModalities: [Modality.AUDIO],
+          speechConfig: {
+            voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } },
+          },
+          systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
+          tools: [{ functionDeclarations: TOOL_DECLARATIONS }],
+        },
+        callbacks: {
+          onopen: () => {
+            console.log('[GeminiLive] session open');
+            this._connected = true;
+            this.reconnectAttempts = 0;
+            this.config.callbacks.onStatusChange('listening');
+          },
+          onmessage: (msg: Record<string, unknown>) => {
+            this.handleSdkMessage(msg);
+          },
+          onerror: (e: ErrorEvent) => {
+            console.error('[GeminiLive] error', e);
+            this.config.callbacks.onError(new Error(e.message ?? 'WebSocket error'));
+          },
+          onclose: (e: CloseEvent) => {
+            console.log('[GeminiLive] closed', e.code, e.reason);
+            this._connected = false;
+            if (!this.intentionalClose) {
+              this.config.callbacks.onStatusChange('connecting');
+              this.scheduleReconnect();
+            } else {
+              this.config.callbacks.onStatusChange('idle');
+            }
+          },
+        },
+      });
     } catch (err) {
       this._connected = false;
       this.config.callbacks.onStatusChange('error');
@@ -231,119 +239,10 @@ export class GeminiLiveClient {
     }
   }
 
-  // ── WebSocket lifecycle helpers ──────────────────────────────────────────
+  // ── Incoming message handler ─────────────────────────────────────────────
 
-  private waitForOpen(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (!this.ws) return reject(new Error('No WebSocket'));
-      const onOpen = () => {
-        this.ws?.removeEventListener('error', onError);
-        resolve();
-      };
-      const onError = () => {
-        this.ws?.removeEventListener('open', onOpen);
-        reject(new Error('WebSocket connection failed'));
-      };
-      this.ws.addEventListener('open', onOpen, { once: true });
-      this.ws.addEventListener('error', onError, { once: true });
-    });
-  }
-
-  private waitForSetupComplete(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (!this.ws) return reject(new Error('No WebSocket'));
-
-      const timeout = setTimeout(() => {
-        reject(new Error('Setup timed out'));
-      }, SETUP_TIMEOUT_MS);
-
-      const handler = (event: MessageEvent) => {
-        try {
-          const msg = JSON.parse(event.data);
-          if (msg.setupComplete !== undefined) {
-            clearTimeout(timeout);
-            this.ws?.removeEventListener('message', handler);
-            // Attach permanent handlers
-            this.ws?.addEventListener('message', this.handleMessage);
-            this.ws?.addEventListener('close', this.handleClose);
-            this.ws?.addEventListener('error', this.handleError);
-            resolve();
-          }
-        } catch {
-          // Ignore JSON parse errors during setup
-        }
-      };
-      this.ws.addEventListener('message', handler);
-    });
-  }
-
-  // ── Setup message ────────────────────────────────────────────────────────
-
-  private sendSetup(): void {
-    const setup: Record<string, unknown> = {
-      model: 'models/gemini-2.5-flash-native-audio-preview-12-2025',
-      generationConfig: {
-        responseModalities: ['AUDIO'],
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: 'Kore' },
-          },
-        },
-        enableAffectiveDialog: true,
-      },
-      systemInstruction: {
-        parts: [{ text: SYSTEM_INSTRUCTION }],
-      },
-      tools: [{ functionDeclarations: TOOL_DECLARATIONS }],
-      realtimeInputConfig: {
-        automaticActivityDetection: {
-          disabled: false,
-          // LOW sensitivity — elderly users make non-speech sounds
-          startOfSpeechSensitivity: 'START_SENSITIVITY_LOW',
-          // LOW end sensitivity + 800 ms silence — elderly users pause more
-          endOfSpeechSensitivity: 'END_SENSITIVITY_LOW',
-          prefixPaddingMs: 40,
-          silenceDurationMs: 800,
-        },
-        activityHandling: 'START_OF_ACTIVITY_INTERRUPTS',
-      },
-      contextWindowCompression: { slidingWindow: {} },
-      inputAudioTranscription: {},
-      outputAudioTranscription: {},
-    };
-
-    if (this.sessionHandle) {
-      setup.sessionResumption = { handle: this.sessionHandle };
-    }
-
-    this.send({ setup });
-  }
-
-  // ── Incoming message router ──────────────────────────────────────────────
-
-  private handleMessage = (event: MessageEvent): void => {
-    let msg: Record<string, unknown>;
-    try {
-      msg = JSON.parse(event.data);
-    } catch {
-      return;
-    }
-
-    // Session resumption handle — store for reconnection
-    const sru = msg.sessionResumptionUpdate as
-      | { resumable?: boolean; newHandle?: string }
-      | undefined;
-    if (sru?.resumable && sru.newHandle) {
-      this.sessionHandle = sru.newHandle;
-    }
-
-    // GoAway — server is about to disconnect; reconnect proactively
-    if (msg.goAway) {
-      this.reconnect();
-      return;
-    }
-
-    // Tool calls — forward to callback for REST execution
+  private handleSdkMessage(msg: Record<string, unknown>): void {
+    // Tool calls
     const toolCall = msg.toolCall as
       | { functionCalls: FunctionCall[] }
       | undefined;
@@ -351,8 +250,16 @@ export class GeminiLiveClient {
       this.config.callbacks.onStatusChange('thinking');
       this.config.callbacks
         .onToolCall(toolCall.functionCalls)
-        .then((responses) => this.sendToolResponse(responses))
-        .catch((err) =>
+        .then((responses) => {
+          this.session?.sendToolResponse({
+            functionResponses: responses.map((r) => ({
+              id: r.id,
+              name: r.name,
+              response: r.response,
+            })),
+          });
+        })
+        .catch((err: unknown) =>
           this.config.callbacks.onError(
             err instanceof Error ? err : new Error(String(err)),
           ),
@@ -367,24 +274,17 @@ export class GeminiLiveClient {
       return;
     }
 
-    // Server content — audio, transcriptions, interruptions
+    // Server content
     const sc = msg.serverContent as Record<string, unknown> | undefined;
     if (sc) {
-      // Interruption — user started speaking while model was talking
       if (sc.interrupted) {
         this.config.callbacks.onInterrupted();
         this.config.callbacks.onStatusChange('listening');
         return;
       }
 
-      // Model audio/text output
       const modelTurn = sc.modelTurn as
-        | {
-            parts: Array<{
-              inlineData?: { mimeType: string; data: string };
-              text?: string;
-            }>;
-          }
+        | { parts: Array<{ inlineData?: { mimeType: string; data: string }; text?: string }> }
         | undefined;
       if (modelTurn?.parts) {
         for (const part of modelTurn.parts) {
@@ -395,12 +295,10 @@ export class GeminiLiveClient {
         }
       }
 
-      // Turn complete — model finished speaking
       if (sc.turnComplete) {
         this.config.callbacks.onStatusChange('listening');
       }
 
-      // Input transcription (what the user said)
       const inputT = sc.inputTranscription as { text: string } | undefined;
       if (inputT?.text) {
         this.config.callbacks.onTranscript({
@@ -410,7 +308,6 @@ export class GeminiLiveClient {
         });
       }
 
-      // Output transcription (what the model said)
       const outputT = sc.outputTranscription as { text: string } | undefined;
       if (outputT?.text) {
         this.config.callbacks.onTranscript({
@@ -420,111 +317,49 @@ export class GeminiLiveClient {
         });
       }
     }
-  };
-
-  private handleClose = (): void => {
-    this._connected = false;
-    if (!this.intentionalClose) {
-      this.config.callbacks.onStatusChange('connecting');
-      this.reconnect();
-    } else {
-      this.config.callbacks.onStatusChange('idle');
-    }
-  };
-
-  private handleError = (): void => {
-    this.config.callbacks.onError(new Error('WebSocket error'));
-  };
+  }
 
   // ── Outbound messages ────────────────────────────────────────────────────
 
   /** Send a 16 kHz PCM audio chunk (base64-encoded). */
   sendAudio(pcmBase64: string): void {
-    this.send({
-      realtimeInput: {
-        audio: {
-          mimeType: 'audio/pcm;rate=16000',
-          data: pcmBase64,
-        },
-      },
+    this.session?.sendRealtimeInput({
+      audio: { mimeType: 'audio/pcm;rate=16000', data: pcmBase64 },
     });
   }
 
   /** Send a JPEG camera frame for medication scanning. */
   sendVideoFrame(jpegBase64: string): void {
-    this.send({
-      realtimeInput: {
-        video: {
-          mimeType: 'image/jpeg',
-          data: jpegBase64,
-        },
-      },
+    this.session?.sendRealtimeInput({
+      video: { mimeType: 'image/jpeg', data: jpegBase64 },
     });
-  }
-
-  private sendToolResponse(
-    responses: Array<{ id: string; name: string; response: unknown }>,
-  ): void {
-    const functionResponses = responses.map((r) => ({
-      id: r.id,
-      name: r.name,
-      response: r.response,
-      scheduling: TOOL_SCHEDULING[r.name] ?? 'WHEN_IDLE',
-    }));
-    this.send({ toolResponse: { functionResponses } });
-  }
-
-  private send(message: Record<string, unknown>): void {
-    if (this.ws?.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify(message));
-    }
   }
 
   // ── Reconnection ─────────────────────────────────────────────────────────
 
-  private async reconnect(): Promise<void> {
+  private scheduleReconnect(): void {
     if (this.reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
       this.config.callbacks.onStatusChange('error');
-      this.config.callbacks.onError(
-        new Error('Max reconnection attempts reached'),
-      );
+      this.config.callbacks.onError(new Error('Max reconnection attempts reached'));
       return;
     }
     this.reconnectAttempts++;
-    this.teardown();
-
     const delay = RECONNECT_DELAY_MS * this.reconnectAttempts;
-    await new Promise((r) => setTimeout(r, delay));
-
-    try {
-      await this.connect();
-    } catch {
-      // connect() already reports errors via callback
-    }
+    setTimeout(() => {
+      if (!this.intentionalClose) {
+        this.connect().catch(() => {/* already reported via callback */});
+      }
+    }, delay);
   }
 
   // ── Cleanup ──────────────────────────────────────────────────────────────
-
-  private teardown(): void {
-    if (this.ws) {
-      this.ws.removeEventListener('message', this.handleMessage);
-      this.ws.removeEventListener('close', this.handleClose);
-      this.ws.removeEventListener('error', this.handleError);
-      if (
-        this.ws.readyState === WebSocket.OPEN ||
-        this.ws.readyState === WebSocket.CONNECTING
-      ) {
-        this.ws.close();
-      }
-      this.ws = null;
-    }
-  }
 
   /** Intentionally end the session. */
   disconnect(): void {
     this.intentionalClose = true;
     this._connected = false;
-    this.teardown();
+    this.session?.close();
+    this.session = null;
     this.config.callbacks.onStatusChange('idle');
   }
 }

@@ -69,14 +69,22 @@ async function apiFetch<T>(
   }
 
   if (!response.ok) {
-    // Match api-contracts.md error format: { error: { code, message, details? } }
-    const err = (data as { error?: { code?: string; message?: string; details?: unknown } })
-      ?.error;
+    // Match api-contracts.md error format: { status: "error", errorMessage: "..." }
+    // Also handle legacy { error: { code, message, details? } } format
+    const body = data as {
+      errorMessage?: string;
+      error?: { code?: string; message?: string; details?: unknown };
+    };
+    const errorMessage =
+      body?.errorMessage ??
+      body?.error?.message ??
+      `HTTP ${response.status}`;
+    const errorCode = body?.error?.code ?? 'UNKNOWN';
     throw new ApiError(
       response.status,
-      err?.code ?? 'UNKNOWN',
-      err?.message ?? `HTTP ${response.status}`,
-      err?.details,
+      errorCode,
+      errorMessage,
+      body?.error?.details,
     );
   }
 
