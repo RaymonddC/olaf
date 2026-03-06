@@ -2,7 +2,6 @@ import { type ReactNode } from 'react';
 
 interface PageShellProps {
   children: ReactNode;
-  /** Page main heading (for skip-link target) */
   id?: string;
   /** Remove bottom padding for bottom nav (e.g. family pages) */
   noBottomPad?: boolean;
@@ -21,20 +20,6 @@ export function PageShell({
 }: PageShellProps) {
   return (
     <>
-      {/* Skip link — first focusable element on page */}
-      <a
-        href={`#${id}`}
-        className={[
-          'sr-only focus:not-sr-only',
-          'focus:fixed focus:top-4 focus:left-4 focus:z-50',
-          'focus:px-4 focus:py-2 focus:bg-primary-700 focus:text-white',
-          'focus:rounded-xl focus:text-body focus:font-semibold',
-          'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-300',
-        ].join(' ')}
-      >
-        Skip to main content
-      </a>
-
       <main
         id={id}
         className={[

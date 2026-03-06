@@ -218,7 +218,7 @@ export function TalkContent() {
     : 'Start talking with OLAF';
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+    <div className="flex flex-col items-center justify-center text-center w-full">
       {/* OLAF's last spoken message — visible for hearing-impaired users */}
       <p
         className="text-body-lg text-text-primary font-medium mb-6 max-w-md px-4 leading-relaxed"

@@ -18,6 +18,7 @@ import {
   useAlerts,
   useAcknowledgeAlert,
   useReports,
+  useConversations,
 } from '@/hooks/useApi';
 import { Button } from '@/components/ui/Button';
 import { setupPushNotifications, onForegroundMessage } from '@/lib/fcm';
@@ -49,6 +50,7 @@ export default function FamilyDashboardPage() {
   const { data: weekLogs, isLoading: weekLogsLoading } = useHealthLogs(elderlyUserId, 'week');
   const { data: alertsData, isLoading: alertsLoading } = useAlerts(elderlyUserId);
   const { data: reportsData, isLoading: reportsLoading } = useReports(elderlyUserId);
+  const { data: conversationsData } = useConversations(elderlyUserId, 1);
 
   const acknowledgeAlert = useAcknowledgeAlert(elderlyUserId);
 
@@ -56,6 +58,7 @@ export default function FamilyDashboardPage() {
   const weeklyLogs = weekLogs?.data?.logs ?? [];
   const alerts = alertsData?.data?.alerts ?? [];
   const reports = reportsData?.data?.reports ?? [];
+  const lastConversationTime = conversationsData?.data?.conversations?.[0]?.createdAt ?? null;
 
   // Handle alert acknowledge
   const handleAcknowledge = useCallback(
@@ -184,7 +187,7 @@ export default function FamilyDashboardPage() {
           {/* Today's Overview */}
           <OverviewCard
             healthLog={todayLog}
-            lastConversationTime={null}
+            lastConversationTime={lastConversationTime}
             loading={logsLoading}
           />
 
