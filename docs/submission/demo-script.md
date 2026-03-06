@@ -180,7 +180,7 @@
 >
 > OLAF. For the people who deserve more than a weekly phone call."
 
-*[Title card: OLAF. caria.care]*
+*[Title card: OLAF. olaf.care]*
 
 ---
 

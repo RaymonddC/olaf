@@ -650,7 +650,7 @@ AlertAgent
 
 ```python
 root_agent = Agent(
-    name="caria_coordinator",
+    name="olaf_coordinator",
     sub_agents=[storyteller_agent, navigator_agent],  # LLM-driven delegation
     tools=[AgentTool(agent=alert_agent)]              # Explicit invocation
 )

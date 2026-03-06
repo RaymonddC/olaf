@@ -8,11 +8,11 @@
  * Usage in tailwind.config.ts:
  *
  *   import type { Config } from 'tailwindcss';
- *   import { cariaTheme } from './docs/design-system/tailwind-theme';
+ *   import { olafTheme } from './docs/design-system/tailwind-theme';
  *
  *   const config: Config = {
  *     content: ['./src/**\/*.{js,ts,jsx,tsx,mdx}'],
- *     theme: { extend: cariaTheme },
+ *     theme: { extend: olafTheme },
  *     plugins: [],
  *   };
  *   export default config;
@@ -38,7 +38,7 @@
  *   // <body className={`${figtree.variable} ${notoSans.variable} font-body`}>
  */
 
-export const cariaTheme = {
+export const olafTheme = {
   // ─── Colors ────────────────────────────────────────────────────────
   // Primary: Calm blue — trust & stability (Senior Care/Elderly palette)
   // Accent: Reassuring green — health & confirmation

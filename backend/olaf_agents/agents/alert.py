@@ -6,8 +6,8 @@ Wrapped as AgentTool for explicit invocation by the coordinator.
 
 from google.adk.agents import Agent
 
-from caria_agents.instructions.alert import ALERT_INSTRUCTION
-from caria_agents.tools.alert_tools import (
+from olaf_agents.instructions.alert import ALERT_INSTRUCTION
+from olaf_agents.tools.alert_tools import (
     create_alert,
     escalate_alert,
     evaluate_signal,

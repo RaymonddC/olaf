@@ -500,7 +500,7 @@ alert_manager = Agent(
 )
 
 root_agent = Agent(
-    name="caria_coordinator",
+    name="olaf_coordinator",
     model="gemini-2.5-flash",
     instruction="""
     You coordinate OLAF's agent team.
@@ -592,7 +592,7 @@ session_service = InMemorySessionService()
 
 ```python
 session = await session_service.create_session(
-    app_name="caria",
+    app_name="olaf",
     user_id="user_123",
     session_id="session_abc"
 )
@@ -610,7 +610,7 @@ from google.adk.runners import Runner
 
 runner = Runner(
     agent=root_agent,
-    app_name="caria",
+    app_name="olaf",
     session_service=session_service,
     artifact_service=artifact_service  # Optional
 )
@@ -677,7 +677,7 @@ artifact_service = GcsArtifactService(bucket_name="olaf-artifacts")
 
 runner = Runner(
     agent=root_agent,
-    app_name="caria",
+    app_name="olaf",
     session_service=session_service,
     artifact_service=artifact_service
 )
@@ -758,7 +758,7 @@ def safety_before_model(
     return None  # Proceed normally
 
 root_agent = Agent(
-    name="caria",
+    name="olaf",
     before_model_callback=safety_before_model,
     ...
 )
@@ -843,7 +843,7 @@ if __name__ == "__main__":
 
 ```json
 {
-  "appName": "caria",
+  "appName": "olaf",
   "userId": "user_123",
   "sessionId": "session_abc",
   "newMessage": {
@@ -873,7 +873,7 @@ adk deploy cloud_run \
   --project=$GOOGLE_CLOUD_PROJECT \
   --region=$GOOGLE_CLOUD_LOCATION \
   --service_name=olaf-agents \
-  --app_name=caria \
+  --app_name=olaf \
   path/to/agent/
 ```
 
@@ -885,7 +885,7 @@ This automatically: packages code → builds container → pushes to Artifact Re
 
 ```
 olaf-backend/
-├── caria_agents/
+├── olaf_agents/
 │   ├── __init__.py          # from . import agent
 │   └── agent.py             # root_agent definition
 ├── main.py                  # Custom FastAPI server
@@ -971,7 +971,7 @@ curl -X POST -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   $APP_URL/run_sse \
   -d '{
-    "appName": "caria_agents",
+    "appName": "olaf_agents",
     "userId": "user_123",
     "sessionId": "session_abc",
     "newMessage": {
@@ -1006,7 +1006,7 @@ from google.adk.evaluation.agent_evaluator import AgentEvaluator
 async def test_storyteller_agent():
     """Test storyteller with golden dataset."""
     await AgentEvaluator.evaluate(
-        agent_module="caria_agents",
+        agent_module="olaf_agents",
         eval_dataset_file_path_or_dir="tests/fixtures/storyteller_eval.test.json"
     )
 ```
@@ -1025,7 +1025,7 @@ async def test_storyteller_agent():
 ### CLI Evaluation
 
 ```bash
-adk eval caria_agents/ tests/eval_set.evalset.json --print_detailed_results
+adk eval olaf_agents/ tests/eval_set.evalset.json --print_detailed_results
 ```
 
 ### Unit Testing Tools Directly
@@ -1033,7 +1033,7 @@ adk eval caria_agents/ tests/eval_set.evalset.json --print_detailed_results
 ```python
 # tests/test_tools.py
 import pytest
-from caria_agents.tools import log_health_checkin
+from olaf_agents.tools import log_health_checkin
 
 def test_log_health_checkin():
     """Test the health check-in tool function directly."""
@@ -1120,7 +1120,7 @@ alert_agent = Agent(
 # --- Root Coordinator ---
 root_agent = Agent(
     model="gemini-2.5-flash",
-    name="caria_coordinator",
+    name="olaf_coordinator",
     description="OLAF's main coordinator that routes requests to specialized agents.",
     instruction="""
     You coordinate OLAF's server-side agents.
@@ -1142,7 +1142,7 @@ root_agent = Agent(
 ### Complete Working Example
 
 ```python
-# caria_agents/agent.py
+# olaf_agents/agent.py
 from google.adk.agents import Agent
 from google.adk.tools import AgentTool
 from .tools.storyteller_tools import (
@@ -1205,7 +1205,7 @@ alert_agent = Agent(
 
 root_agent = Agent(
     model="gemini-2.5-flash",
-    name="caria_coordinator",
+    name="olaf_coordinator",
     description="Routes requests to storyteller, navigator, or alert agents.",
     instruction=COORDINATOR_INSTRUCTION,
     sub_agents=[storyteller_agent, navigator_agent],
@@ -1214,7 +1214,7 @@ root_agent = Agent(
 ```
 
 ```python
-# caria_agents/__init__.py
+# olaf_agents/__init__.py
 from . import agent
 ```
 

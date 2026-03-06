@@ -70,7 +70,7 @@ Our `GeminiLiveClient` class handles the full lifecycle of a Gemini Live session
 
 When Gemini issues a function call over the WebSocket, our `ToolHandler` class intercepts it, calls the corresponding backend REST endpoint (`/api/companion/analyze-medication`, etc.), and sends the response back to Gemini via `toolResponse`. The bridge runs all tool calls in parallel and handles cancellation via `toolCallCancellation` messages.
 
-**Backend: Python + Google ADK (`backend/caria_agents/`)**
+**Backend: Python + Google ADK (`backend/olaf_agents/`)**
 
 The backend is a FastAPI application created with ADK's `get_fast_api_app()`, which provides ADK's built-in `/run_sse` endpoint alongside our custom routes. We run it on Cloud Run with 2 vCPU, 2GB memory, and `min-instances: 1` for warm Playwright containers.
 
@@ -79,7 +79,7 @@ The backend is a FastAPI application created with ADK's `get_fast_api_app()`, wh
 ```python
 root_agent = Agent(
     model="gemini-2.5-flash",
-    name="caria_coordinator",
+    name="olaf_coordinator",
     sub_agents=[storyteller_agent, navigator_agent],  # LLM-driven delegation
     tools=[AgentTool(agent=alert_agent)],             # Explicit invocation
     before_model_callback=safety_before_model,
@@ -88,7 +88,7 @@ root_agent = Agent(
 
 The AlertAgent is deliberately wrapped as an `AgentTool` rather than a `sub_agent`. This was an architectural insight from studying ADK's delegation model: `sub_agents` uses LLM description matching, which works well for user-initiated requests but unreliably for system-triggered signals. `AgentTool` gives us explicit invocation when a distress flag or health anomaly arrives.
 
-**StorytellerAgent — SequentialAgent Pipeline (`backend/caria_agents/agents/storyteller.py`)**
+**StorytellerAgent — SequentialAgent Pipeline (`backend/olaf_agents/agents/storyteller.py`)**
 
 For memory chapter creation, we use a three-stage `SequentialAgent`:
 

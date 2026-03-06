@@ -6,9 +6,9 @@ medical appointments, forms, and document retrieval.
 
 from google.adk.agents import Agent
 
-from caria_agents.callbacks.navigator_guard import validate_navigation_safety
-from caria_agents.instructions.navigator import NAVIGATOR_INSTRUCTION
-from caria_agents.tools.navigator_tools import (
+from olaf_agents.callbacks.navigator_guard import validate_navigation_safety
+from olaf_agents.instructions.navigator import NAVIGATOR_INSTRUCTION
+from olaf_agents.tools.navigator_tools import (
     ask_user_confirmation,
     click_element,
     navigate_to_url,

@@ -12,13 +12,13 @@ available for advanced orchestration if needed.
 
 from google.adk.agents import Agent, SequentialAgent
 
-from caria_agents.instructions.storyteller import (
+from olaf_agents.instructions.storyteller import (
     ASSEMBLER_INSTRUCTION,
     ILLUSTRATOR_INSTRUCTION,
     NARRATIVE_WRITER_INSTRUCTION,
     STORYTELLER_INSTRUCTION,
 )
-from caria_agents.tools.storyteller_tools import (
+from olaf_agents.tools.storyteller_tools import (
     generate_illustration,
     get_conversation_summaries,
     get_health_logs,

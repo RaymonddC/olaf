@@ -15,7 +15,7 @@ from .instructions.coordinator import COORDINATOR_INSTRUCTION
 
 root_agent = Agent(
     model="gemini-2.5-flash",
-    name="caria_coordinator",
+    name="olaf_coordinator",
     description="Routes requests to storyteller, navigator, or alert agents.",
     instruction=COORDINATOR_INSTRUCTION,
     sub_agents=[storyteller_agent, navigator_agent],

@@ -664,7 +664,7 @@ Stream agent responses via Server-Sent Events.
 **Request:**
 ```json
 {
-  "appName": "caria_agents",
+  "appName": "olaf_agents",
   "userId": "string",
   "sessionId": "string",
   "newMessage": {

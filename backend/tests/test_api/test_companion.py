@@ -31,7 +31,7 @@ def test_log_health_checkin(client: TestClient, mock_fs):
 
     # Override to avoid recursive flag_emotional_distress calls
     with patch(
-        "caria_agents.tools.companion_tools.flag_emotional_distress",
+        "olaf_agents.tools.companion_tools.flag_emotional_distress",
         new_callable=AsyncMock,
         return_value={"status": "success", "data": {"alert_id": "a1", "action": "logged"}},
     ):
@@ -55,7 +55,7 @@ def test_log_health_checkin_triggers_alert_for_high_pain(client: TestClient, moc
     mock_fs._users["elderly-user-456"] = _make_elderly_user()
 
     with patch(
-        "caria_agents.tools.companion_tools.flag_emotional_distress",
+        "olaf_agents.tools.companion_tools.flag_emotional_distress",
         new_callable=AsyncMock,
         return_value={"status": "success", "data": {"alert_id": "a1", "action": "logged"}},
     ) as mock_flag:
@@ -152,7 +152,7 @@ def test_log_conversation(client: TestClient, mock_fs):
     mock_fs._users["elderly-user-456"] = _make_elderly_user()
 
     with patch(
-        "caria_agents.tools.companion_tools.flag_emotional_distress",
+        "olaf_agents.tools.companion_tools.flag_emotional_distress",
         new_callable=AsyncMock,
         return_value={"status": "success", "data": {"alert_id": "a1", "action": "logged"}},
     ):

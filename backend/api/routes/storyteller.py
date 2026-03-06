@@ -16,7 +16,7 @@ from google.adk.sessions import InMemorySessionService
 from google.genai import types
 
 from api.middleware.firebase_auth import get_current_user
-from caria_agents.agents.storyteller import storyteller_agent
+from olaf_agents.agents.storyteller import storyteller_agent
 from models.api import (
     ApiResponse,
     CreateDailyNarrativeRequest,

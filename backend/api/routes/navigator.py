@@ -48,7 +48,7 @@ async def start_navigator(
 
     # If a template is provided, set estimated steps
     if req.template_id:
-        from caria_agents.tools.navigator_templates import get_template
+        from olaf_agents.tools.navigator_templates import get_template
 
         template = get_template(req.template_id)
         if template:
@@ -200,7 +200,7 @@ async def navigator_stream(
                 )
                 await session.send_narration(f"Opening {session.start_url}…")
         elif session.template_id:
-            from caria_agents.tools.navigator_templates import get_template
+            from olaf_agents.tools.navigator_templates import get_template
 
             template = get_template(session.template_id)
             if template and template.start_url:

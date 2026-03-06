@@ -3,7 +3,7 @@
 ## Monorepo Layout
 
 ```
-caria/
+olaf/
 ├── .github/
 │   └── workflows/
 │       └── ci.yml                    # GitHub Actions CI/CD
@@ -134,7 +134,7 @@ caria/
 │   └── package.json
 │
 ├── backend/                          # Python ADK Agent Backend
-│   ├── caria_agents/                 # ADK agent module (required convention)
+│   ├── olaf_agents/                 # ADK agent module (required convention)
 │   │   ├── __init__.py               # from . import agent
 │   │   ├── agent.py                  # root_agent definition
 │   │   │
@@ -247,9 +247,9 @@ caria/
 
 ### Backend (Python ADK)
 
-- **ADK Convention:** `caria_agents/` follows ADK's required structure — `__init__.py` imports agent module, `agent.py` exports `root_agent`
+- **ADK Convention:** `olaf_agents/` follows ADK's required structure — `__init__.py` imports agent module, `agent.py` exports `root_agent`
 - **Separation of Concerns:**
-  - `caria_agents/` — Agent definitions, tools, instructions, callbacks (ADK domain)
+  - `olaf_agents/` — Agent definitions, tools, instructions, callbacks (ADK domain)
   - `api/` — Custom FastAPI routes, middleware, WebSocket handlers (HTTP domain)
   - `services/` — Business logic shared between agents and API routes
   - `models/` — Python dataclasses for type safety

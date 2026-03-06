@@ -303,7 +303,7 @@ def app(mock_firebase, mock_fs):
         # Also patch companion_tools.get_firestore_service which is called directly
         # (not via FastAPI DI), and similarly for any other tool modules.
         with patch(
-            "caria_agents.tools.companion_tools.get_firestore_service",
+            "olaf_agents.tools.companion_tools.get_firestore_service",
             return_value=mock_fs,
         ):
             yield test_app

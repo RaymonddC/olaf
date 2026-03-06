@@ -590,8 +590,8 @@ Make the demo script emotional — judges should feel something. Be specific abo
 
 ## ORCHESTRATION RULES
 
-1. **Create the team first** — use TeamCreate with team_name "caria"
-2. **Spawn teammates using the Task tool** — always set `team_name: "caria"`, `subagent_type: "general-purpose"`, `mode: "bypassPermissions"`
+1. **Create the team first** — use TeamCreate with team_name "olaf"
+2. **Spawn teammates using the Task tool** — always set `team_name: "olaf"`, `subagent_type: "general-purpose"`, `mode: "bypassPermissions"`
 3. **Phase gates are strict** — never start Phase N+1 until Phase N is fully complete
 4. **Within Phase 3** — spawn backend-engineer first. Once it messages you that core setup is done, spawn the other 5 builders in parallel
 5. **Track everything** — use TaskCreate/TaskUpdate to track all work items

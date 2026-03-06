@@ -51,7 +51,7 @@ OLAF is a voice-first AI companion for elderly users and the families who care f
   │  ┌─────────────────────────────────────────────────┐    │
   │  │              Google ADK Agents                   │    │
   │  │                                                  │    │
-  │  │  caria_coordinator (root_agent)                  │    │
+  │  │  olaf_coordinator (root_agent)                  │    │
   │  │    ├── sub_agents:                               │    │
   │  │    │     ├── storyteller_agent (gemini-2.5-flash)│    │
   │  │    │     │     └── SequentialAgent pipeline:     │    │
@@ -141,8 +141,8 @@ olaf/
 ├── backend/                       # Python FastAPI + Google ADK
 │   ├── main.py                    # App entry point (get_fast_api_app + custom routes)
 │   ├── config.py                  # Pydantic settings (env vars)
-│   ├── caria_agents/              # ADK agent module (convention: exports root_agent)
-│   │   ├── agent.py               # root_agent = caria_coordinator
+│   ├── olaf_agents/              # ADK agent module (convention: exports root_agent)
+│   │   ├── agent.py               # root_agent = olaf_coordinator
 │   │   ├── agents/
 │   │   │   ├── storyteller.py     # storyteller_agent + story_pipeline (SequentialAgent)
 │   │   │   ├── navigator.py       # navigator_agent (Playwright tools)

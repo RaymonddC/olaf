@@ -1,7 +1,7 @@
 /* eslint-disable no-undef */
 /**
  * Firebase Cloud Messaging Service Worker.
- * Handles background push notifications for the CARIA Family Dashboard.
+ * Handles background push notifications for the OLAF Family Dashboard.
  */
 
 importScripts(
@@ -25,12 +25,12 @@ const messaging = firebase.messaging();
 
 // Handle background messages
 messaging.onBackgroundMessage(function (payload) {
-  const notificationTitle = payload.notification?.title ?? 'CARIA Alert';
+  const notificationTitle = payload.notification?.title ?? 'OLAF Alert';
   const notificationOptions = {
     body: payload.notification?.body ?? '',
     icon: '/icons/icon-192x192.png',
     badge: '/icons/icon-72x72.png',
-    tag: payload.data?.alert_id ?? 'caria-notification',
+    tag: payload.data?.alert_id ?? 'olaf-notification',
     data: {
       url: '/dashboard',
       ...payload.data,

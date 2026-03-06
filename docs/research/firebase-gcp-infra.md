@@ -609,7 +609,7 @@ gcloud run deploy olaf-backend \
 
 # Or deploy with pre-built image
 gcloud run deploy olaf-backend \
-  --image us-central1-docker.pkg.dev/olaf-hackathon/caria/backend:latest \
+  --image us-central1-docker.pkg.dev/olaf-hackathon/olaf/backend:latest \
   --region us-central1 \
   --allow-unauthenticated \
   --memory 2Gi \
@@ -626,7 +626,7 @@ GOOGLE_CLOUD_LOCATION=us-central1
 FIREBASE_PROJECT_ID=olaf-hackathon
 GCS_BUCKET_NAME=olaf-artifacts
 GEMINI_API_KEY=<for ephemeral token generation>
-ALLOWED_ORIGINS=https://caria.vercel.app,http://localhost:3000
+ALLOWED_ORIGINS=https://olaf.vercel.app,http://localhost:3000
 ```
 
 ### IAM & Service Account
@@ -884,7 +884,7 @@ gsutil cors set cors.json gs://olaf-artifacts
 // cors.json
 [
   {
-    "origin": ["https://caria.vercel.app", "http://localhost:3000"],
+    "origin": ["https://olaf.vercel.app", "http://localhost:3000"],
     "method": ["GET", "PUT"],
     "responseHeader": ["Content-Type"],
     "maxAgeSeconds": 3600

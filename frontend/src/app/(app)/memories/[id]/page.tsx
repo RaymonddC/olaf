@@ -245,7 +245,7 @@ export default function MemoryDetailPage() {
             </header>
 
             {/* Narrative text */}
-            <div className="prose-caria">
+            <div className="prose-olaf">
               {memory.narrativeText.split('\n\n').map((paragraph, i) => (
                 <p
                   key={i}

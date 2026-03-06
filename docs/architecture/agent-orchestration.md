@@ -17,7 +17,7 @@
 │              ADK Backend (Cloud Run)                 │
 │                                                     │
 │  ┌─────────────────────────────────┐                │
-│  │      caria_coordinator          │                │
+│  │      olaf_coordinator          │                │
 │  │      (root_agent)               │                │
 │  │                                 │                │
 │  │  sub_agents:                    │                │
@@ -44,12 +44,12 @@
 - **Tool calls:** Executed via REST to backend (`/api/companion/*`)
 - **Not part of ADK hierarchy** — communicates with backend via REST
 
-### 2.2 caria_coordinator (Root Agent — ADK)
+### 2.2 olaf_coordinator (Root Agent — ADK)
 
 ```python
 root_agent = Agent(
     model="gemini-2.5-flash",
-    name="caria_coordinator",
+    name="olaf_coordinator",
     description="Routes requests to storyteller, navigator, or alert agents.",
     instruction=COORDINATOR_INSTRUCTION,
     sub_agents=[storyteller_agent, navigator_agent],  # LLM-driven delegation

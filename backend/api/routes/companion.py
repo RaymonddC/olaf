@@ -10,7 +10,7 @@ import logging
 from fastapi import APIRouter, Depends
 
 from api.middleware.firebase_auth import get_current_user
-from caria_agents.tools.companion_tools import (
+from olaf_agents.tools.companion_tools import (
     analyze_medication,
     flag_emotional_distress,
     log_conversation,
