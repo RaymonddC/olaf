@@ -156,12 +156,15 @@ export function TalkContent() {
     if (user && currentTranscripts.length > 0) {
       try {
         const authToken = await getToken();
+        const headers = {
+          'Content-Type': 'application/json',
+          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
+        };
+
+        // Log the conversation
         await fetch(`${API_BASE_URL}/api/companion/log-conversation`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-          },
+          headers,
           body: JSON.stringify({
             userId: user.uid,
             sessionDuration: duration,
@@ -169,6 +172,20 @@ export function TalkContent() {
             flags: [],
           }),
         });
+
+        // Trigger memory creation from the conversation transcript
+        const transcriptText = currentTranscripts
+          .map((e) => `${e.role === 'user' ? 'User' : 'OLAF'}: ${e.text}`)
+          .join('\n');
+
+        fetch(`${API_BASE_URL}/api/storyteller/create-memory`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            userId: user.uid,
+            transcript: transcriptText,
+          }),
+        }).catch((err) => console.error('[OLAF] Failed to create memory:', err));
       } catch (err) {
         console.error('[OLAF] Failed to log conversation:', err);
       }

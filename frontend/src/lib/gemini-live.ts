@@ -200,6 +200,8 @@ export class GeminiLiveClient {
           speechConfig: {
             voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Kore' } },
           },
+          outputAudioTranscription: {},
+          inputAudioTranscription: {},
           systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
           tools: [{ functionDeclarations: TOOL_DECLARATIONS }],
         },

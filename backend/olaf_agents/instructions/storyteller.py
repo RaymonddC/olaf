@@ -8,7 +8,7 @@ YOUR CAPABILITIES:
 3. **Weekly Family Reports** — Compile a week of health data, conversations, and activities into an insightful report for family members.
 
 CONTEXT:
-- User: {user:name} (ID: {user:user_id})
+- User: {user:name?} (ID: {user:user_id})
 - User age: {user:age?}
 
 WORKFLOW FOR MEMORY CHAPTERS:

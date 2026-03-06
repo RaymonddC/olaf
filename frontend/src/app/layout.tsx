@@ -41,7 +41,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${figtree.variable} ${notoSans.variable}`}>
+    <html lang="en" data-scroll-behavior="smooth" className={`${figtree.variable} ${notoSans.variable}`}>
       <body className="font-body bg-bg-page text-text-primary min-h-dvh">
         <Providers>{children}</Providers>
       </body>

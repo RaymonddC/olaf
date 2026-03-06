@@ -19,7 +19,7 @@ ART_DIRECTION = (
     "no harsh shadows, hand-painted feel"
 )
 
-BUCKET_NAME = os.getenv("GCS_BUCKET_NAME", "olaf-artifacts")
+BUCKET_NAME = os.getenv("GCS_ARTIFACTS_BUCKET", "olaf-artifacts")
 
 
 class ImagenService:
