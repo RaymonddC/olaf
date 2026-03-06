@@ -55,5 +55,8 @@ backend/sessions.db
 # Docker
 .docker/
 
+# Secrets
+backend/secrets/
+
 # Misc
 *.log

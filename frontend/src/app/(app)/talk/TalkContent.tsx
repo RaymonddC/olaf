@@ -4,12 +4,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Mic, MicOff, Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import {
-  GeminiLiveClient,
+  AdkLiveClient,
   type CompanionStatus,
   type TranscriptEntry,
-} from '@/lib/gemini-live';
+} from '@/lib/adk-live';
 import { AudioManager } from '@/lib/audio-manager';
-import { ToolHandler } from '@/lib/tool-handler';
 import { AudioVisualizer } from '@/components/companion/AudioVisualizer';
 import { StatusIndicator } from '@/components/companion/StatusIndicator';
 import { CameraToggle } from '@/components/companion/CameraToggle';
@@ -19,10 +18,9 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
 /**
  * TalkContent — Client component for the full voice companion UI.
  *
- * Wires together GeminiLiveClient (WebSocket), AudioManager (mic/playback),
- * and ToolHandler (backend REST calls) into a single interactive page.
- *
- * Layout matches docs/design-system/README.md Section 8 (Talk page wireframe).
+ * Wires together AdkLiveClient (ADK bidi-streaming WebSocket),
+ * AudioManager (mic/playback) into a single interactive page.
+ * Tool calls now execute server-side — no REST bridge needed.
  */
 export function TalkContent() {
   const { user, getToken } = useAuth();
@@ -37,9 +35,8 @@ export function TalkContent() {
   const [error, setError] = useState<string | null>(null);
 
   // ── Refs (persist across renders without triggering them) ────────────────
-  const clientRef = useRef<GeminiLiveClient | null>(null);
+  const clientRef = useRef<AdkLiveClient | null>(null);
   const audioRef = useRef<AudioManager | null>(null);
-  const toolRef = useRef<ToolHandler | null>(null);
   const transcriptsRef = useRef<TranscriptEntry[]>([]);
   const sessionStartRef = useRef<number>(0);
 
@@ -47,16 +44,6 @@ export function TalkContent() {
   useEffect(() => {
     transcriptsRef.current = transcripts;
   }, [transcripts]);
-
-  // ── Initialise ToolHandler once we have user info ────────────────────────
-  useEffect(() => {
-    if (!user) return;
-    toolRef.current = new ToolHandler({
-      apiBaseUrl: API_BASE_URL,
-      getAuthToken: getToken,
-      userId: user.uid,
-    });
-  }, [user, getToken]);
 
   // ── Cleanup on unmount ───────────────────────────────────────────────────
   useEffect(() => {
@@ -76,9 +63,9 @@ export function TalkContent() {
       const audio = new AudioManager();
       audioRef.current = audio;
 
-      // Create GeminiLiveClient with callbacks wired to state
-      const client = new GeminiLiveClient({
-        tokenEndpoint: `${API_BASE_URL}/api/gemini/token`,
+      // Create AdkLiveClient — connects to ADK bidi-streaming backend
+      const client = new AdkLiveClient({
+        apiBaseUrl: API_BASE_URL,
         getAuthToken: getToken,
         userId: user.uid,
         callbacks: {
@@ -90,18 +77,9 @@ export function TalkContent() {
               setLastModelMessage(entry.text);
             }
           },
-          onToolCall: async (calls) => {
-            if (!toolRef.current) {
-              return calls.map((c) => ({
-                id: c.id,
-                name: c.name,
-                response: { status: 'error', errorMessage: 'Tool handler not ready' },
-              }));
-            }
-            return toolRef.current.executeCalls(calls);
-          },
-          onToolCallCancellation: (ids) => {
-            toolRef.current?.cancelCalls(ids);
+          onToolCall: (name, _args) => {
+            // Tools now execute server-side — just show activity in UI
+            console.log('[OLAF] tool executing server-side:', name);
           },
           onInterrupted: () => {
             audio.clearPlaybackQueue();
@@ -114,7 +92,7 @@ export function TalkContent() {
       });
       clientRef.current = client;
 
-      // Start mic capture — audio chunks flow to GeminiLiveClient
+      // Start mic capture — audio chunks flow to AdkLiveClient
       await audio.start(
         (base64) => client.sendAudio(base64),
         (_speaking) => {
@@ -122,7 +100,7 @@ export function TalkContent() {
         },
       );
 
-      // Connect to Gemini Live API
+      // Connect to ADK bidi-streaming backend
       await client.connect();
 
       sessionStartRef.current = Date.now();
@@ -141,7 +119,7 @@ export function TalkContent() {
 
   // ── Stop voice session ───────────────────────────────────────────────────
   const stopSession = useCallback(async () => {
-    // Disconnect Gemini
+    // Disconnect ADK stream (sends {"type":"end"} to backend)
     clientRef.current?.disconnect();
     clientRef.current = null;
 

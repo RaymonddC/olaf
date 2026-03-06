@@ -81,6 +81,7 @@ def create_app():
         auth,
         gemini_token,
         companion,
+        companion_stream,
         conversations,
         storyteller,
         navigator,
@@ -92,6 +93,7 @@ def create_app():
     app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
     app.include_router(gemini_token.router, prefix="/api/gemini", tags=["gemini"])
     app.include_router(companion.router, prefix="/api/companion", tags=["companion"])
+    app.include_router(companion_stream.router, prefix="/api/companion", tags=["companion"])
     app.include_router(conversations.router, prefix="/api/companion", tags=["companion"])
     app.include_router(storyteller.router, prefix="/api/storyteller", tags=["storyteller"])
     app.include_router(navigator.router, prefix="/api/navigator", tags=["navigator"])
@@ -104,7 +106,7 @@ def create_app():
     async def health_check():
         return {"status": "healthy"}
 
-    logger.info("OLAF backend started with %d custom route groups", 9)
+    logger.info("OLAF backend started with %d custom route groups", 10)
     return app
 
 
