@@ -55,6 +55,22 @@ class FamilyLinkRequest(CamelModel):
     permissions: list[str] = []
 
 
+class CreateElderAccountRequest(CamelModel):
+    name: str
+    email: str
+    relationship: Literal["son", "daughter", "spouse", "caregiver", "other"]
+    age: Optional[int] = None
+    timezone: str = "UTC"
+    language: str = "en"
+
+
+class CreateElderAccountResponse(CamelModel):
+    elder_user_id: str
+    email: str
+    temp_password: str
+    link_id: str
+
+
 class LinkedAccount(CamelModel):
     user_id: str
     name: str

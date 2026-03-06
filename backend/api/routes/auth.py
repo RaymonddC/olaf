@@ -6,12 +6,17 @@ GET  /api/auth/me — Get current user profile and linked accounts
 """
 
 import logging
+import secrets
+import string
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from firebase_admin import auth as firebase_auth
 
 from api.middleware.firebase_auth import get_current_user
 from models.api import (
     ApiResponse,
+    CreateElderAccountRequest,
+    CreateElderAccountResponse,
     FamilyLinkRequest,
     LinkedAccount,
     RegisterRequest,
@@ -162,5 +167,86 @@ async def get_me(
             name=profile.name,
             age=profile.age,
             linked_accounts=linked_accounts,
+        ).model_dump(by_alias=True),
+    )
+
+
+@router.post("/create-elder-account", status_code=status.HTTP_201_CREATED)
+async def create_elder_account(
+    req: CreateElderAccountRequest,
+    user: dict = Depends(get_current_user),
+    fs: FirestoreService = Depends(get_firestore_service),
+) -> ApiResponse:
+    """Family member creates an elder's account on their behalf.
+
+    Creates a Firebase Auth user, a Firestore profile, and a family link
+    in one step. Returns temporary credentials for the family member to
+    set up the elder's device.
+    """
+    family_uid = user["uid"]
+
+    # Verify the caller is a family member
+    family_profile = await fs.get_user(family_uid)
+    if family_profile and family_profile.role != "family":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only family members can create elder accounts",
+        )
+
+    # Generate a secure temporary password
+    alphabet = string.ascii_letters + string.digits
+    temp_password = "".join(secrets.choice(alphabet) for _ in range(10))
+
+    # Create Firebase Auth user for the elder
+    try:
+        firebase_user = firebase_auth.create_user(
+            email=req.email,
+            password=temp_password,
+            display_name=req.name,
+        )
+    except firebase_auth.EmailAlreadyExistsError:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="An account with this email already exists",
+        )
+
+    elder_uid = firebase_user.uid
+
+    # Create Firestore profile for the elder
+    elder_profile = UserProfile(
+        uid=elder_uid,
+        role="elderly",
+        name=req.name,
+        age=req.age,
+        timezone=req.timezone,
+        language=req.language,
+    )
+    await fs.create_user(elder_profile)
+
+    # Create the family link
+    family_name = family_profile.name if family_profile else ""
+    link_id = f"{family_uid}_{elder_uid}"
+    link = FamilyLink(
+        link_id=link_id,
+        elderly_user_id=elder_uid,
+        family_user_id=family_uid,
+        family_name=family_name,
+        relationship=req.relationship,
+        permissions=["view_health", "view_alerts", "view_memories"],
+    )
+    await fs.create_family_link(link)
+
+    logger.info(
+        "Family member %s created elder account %s (%s)",
+        family_uid, elder_uid, req.email,
+    )
+
+    return ApiResponse(
+        status="success",
+        data=CreateElderAccountResponse(
+            elder_user_id=elder_uid,
+            email=req.email,
+            temp_password=temp_password,
+            link_id=link_id,
         ).model_dump(by_alias=True),
     )

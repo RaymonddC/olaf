@@ -12,13 +12,20 @@ import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
  */
 export default function AppLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, role } = useAuth();
 
   useEffect(() => {
     if (!loading && !user) {
       router.replace('/login');
     }
   }, [user, loading, router]);
+
+  // Family members belong on /dashboard, not the elder app
+  useEffect(() => {
+    if (!loading && user && role === 'family') {
+      router.replace('/dashboard');
+    }
+  }, [user, loading, role, router]);
 
   if (loading) {
     return (

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { LogOut } from 'lucide-react';
+import { LogOut, Heart } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
 import { PageShell } from '@/components/layout/PageShell';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
@@ -19,6 +19,7 @@ import {
   useAcknowledgeAlert,
   useReports,
 } from '@/hooks/useApi';
+import { Button } from '@/components/ui/Button';
 import { setupPushNotifications, onForegroundMessage } from '@/lib/fcm';
 
 export default function FamilyDashboardPage() {
@@ -113,6 +114,46 @@ export default function FamilyDashboardPage() {
             <LoadingSkeleton shape="card" />
           </div>
         </PageShell>
+      </>
+    );
+  }
+
+  // No linked elder yet — prompt to link
+  if (!meLoading && profile && !elderlyUserId) {
+    return (
+      <>
+        <Header
+          title="Family Dashboard"
+          action={
+            <button
+              onClick={handleSignOut}
+              className="flex items-center gap-2 px-4 py-2 rounded-xl text-body-sm font-semibold text-text-secondary hover:bg-bg-surface-alt transition-colors duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-300 min-h-[48px]"
+            >
+              <LogOut className="w-5 h-5" aria-hidden="true" />
+              Sign out
+            </button>
+          }
+        />
+        <div className="min-h-[60vh] flex items-center justify-center px-6">
+          <div className="text-center max-w-sm">
+            <div className="w-16 h-16 rounded-full bg-primary-100 flex items-center justify-center mx-auto mb-4">
+              <Heart className="w-8 h-8 text-primary-700" aria-hidden="true" />
+            </div>
+            <h2 className="text-h2 font-heading font-bold text-text-heading mb-2">
+              Connect to your loved one
+            </h2>
+            <p className="text-body text-text-secondary mb-6">
+              You have not set up a loved one yet. Create their account to start monitoring their care.
+            </p>
+            <Button
+              variant="primary"
+              size="lg"
+              onClick={() => router.push('/setup-elder')}
+            >
+              Set up their account
+            </Button>
+          </div>
+        </div>
       </>
     );
   }

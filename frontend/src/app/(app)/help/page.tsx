@@ -6,10 +6,13 @@ import {
   FileText,
   ClipboardList,
   ChevronRight,
+  LogOut,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { Header } from '@/components/layout/Header';
 import { PageShell } from '@/components/layout/PageShell';
 import { NavigatorSession } from '@/components/navigator/NavigatorSession';
+import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 
 // ── Task definitions ────────────────────────────────────────────────────────
@@ -63,6 +66,8 @@ interface StartNavigatorResponse {
 // ── Component ───────────────────────────────────────────────────────────────
 
 export default function HelpPage() {
+  const router = useRouter();
+  const { signOut } = useAuth();
   const [activeSession, setActiveSession] = useState<{
     sessionId: string;
     websocketUrl: string;
@@ -194,6 +199,26 @@ export default function HelpPage() {
           <span className="text-primary-700 font-medium">&ldquo;Help me with…&rdquo;</span>{' '}
           to OLAF
         </p>
+
+        {/* Sign out */}
+        <div className="mt-10 border-t border-border pt-6">
+          <button
+            type="button"
+            onClick={async () => {
+              await signOut();
+              router.replace('/login');
+            }}
+            className={[
+              'flex items-center gap-3 w-full px-4 py-3 rounded-xl',
+              'text-body text-text-secondary hover:bg-bg-surface-alt',
+              'transition-colors duration-150',
+              'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-300',
+            ].join(' ')}
+          >
+            <LogOut className="w-5 h-5" aria-hidden="true" />
+            Sign out
+          </button>
+        </div>
       </PageShell>
     </>
   );
