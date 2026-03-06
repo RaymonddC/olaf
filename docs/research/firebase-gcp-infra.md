@@ -1,7 +1,7 @@
-# Firebase & GCP Infrastructure Research for CARIA
+# Firebase & GCP Infrastructure Research for OLAF
 
 **Date:** 2026-02-28
-**Purpose:** Comprehensive research on all Firebase/GCP services needed for CARIA AI elderly care companion.
+**Purpose:** Comprehensive research on all Firebase/GCP services needed for OLAF AI elderly care companion.
 
 ---
 
@@ -26,7 +26,7 @@
 
 ### Overview
 
-Firebase Auth provides backend services, SDKs, and UI libraries to authenticate users. Supports email/password, Google SSO, and many other identity providers. For CARIA, we need email/password + Google SSO for both elderly users and family members.
+Firebase Auth provides backend services, SDKs, and UI libraries to authenticate users. Supports email/password, Google SSO, and many other identity providers. For OLAF, we need email/password + Google SSO for both elderly users and family members.
 
 ### Frontend Setup (Next.js)
 
@@ -168,7 +168,7 @@ Firestore is a NoSQL document database organized into:
 - Max writes per second per document: 1
 - Max field nesting: 20 levels
 
-### CARIA Data Model Validation
+### OLAF Data Model Validation
 
 The design doc's Firestore schema is well-structured. Here's the validated model with annotations:
 
@@ -187,7 +187,7 @@ familyLinks/{linkId}                    ← Top-level collection for cross-user 
 alerts/{alertId}                        ← Top-level collection for cross-user queries
 ```
 
-**Assessment:** Schema is correct for CARIA's use case. Subcollections for conversations, memories, and health logs are the right pattern — they allow independent querying and pagination without loading the entire user document.
+**Assessment:** Schema is correct for OLAF's use case. Subcollections for conversations, memories, and health logs are the right pattern — they allow independent querying and pagination without loading the entire user document.
 
 ### Firestore Python SDK (Server-Side)
 
@@ -239,7 +239,7 @@ def on_new_alert(user_id: str, callback):
 
 ## 3. Firestore Security Rules
 
-### CARIA Security Rules Design
+### OLAF Security Rules Design
 
 The key challenge is multi-tenant family access: elderly users own their data, but linked family members need read access to specific subcollections.
 
@@ -341,9 +341,9 @@ service cloud.firestore {
 | Custom claims (`request.auth.token`) | No extra Firestore reads, fast | Max 1000 bytes, requires backend to update, propagates on next token refresh |
 | Document lookups (`exists()`/`get()`) | Real-time, no size limit | Extra Firestore reads per rule evaluation (costs $), max 10 lookups per rule |
 
-**Recommendation for CARIA:** Use custom claims for the primary family linkage (it's a short list of user IDs). Use document lookups only for granular permission checks (e.g., `hasFamilyPermission`). This minimizes read costs.
+**Recommendation for OLAF:** Use custom claims for the primary family linkage (it's a short list of user IDs). Use document lookups only for granular permission checks (e.g., `hasFamilyPermission`). This minimizes read costs.
 
-**Important:** Custom claims have a max size of 1000 bytes. For CARIA, storing a list of linked elderly user IDs is fine (each UID is ~28 chars, so ~35 linked users max). If a family member has more than ~35 linked users, fall back to document lookups.
+**Important:** Custom claims have a max size of 1000 bytes. For OLAF, storing a list of linked elderly user IDs is fine (each UID is ~28 chars, so ~35 linked users max). If a family member has more than ~35 linked users, fall back to document lookups.
 
 ---
 
@@ -351,7 +351,7 @@ service cloud.firestore {
 
 ### Overview
 
-FCM delivers push notifications to web browsers. Required for CARIA's AlertAgent to notify family members of emotional distress, missed medications, and health anomalies.
+FCM delivers push notifications to web browsers. Required for OLAF's AlertAgent to notify family members of emotional distress, missed medications, and health anomalies.
 
 ### PWA Service Worker Setup
 
@@ -374,11 +374,11 @@ const messaging = firebase.messaging();
 
 // Handle background messages
 messaging.onBackgroundMessage((payload) => {
-  const notificationTitle = payload.notification?.title || "CARIA Alert";
+  const notificationTitle = payload.notification?.title || "OLAF Alert";
   const notificationOptions = {
     body: payload.notification?.body || "",
-    icon: "/icons/caria-icon-192.png",
-    badge: "/icons/caria-badge-72.png",
+    icon: "/icons/olaf-icon-192.png",
+    badge: "/icons/olaf-badge-72.png",
     tag: payload.data?.alertType || "general",
     data: payload.data,
     // For urgent alerts, require interaction
@@ -455,8 +455,8 @@ def send_alert_notification(
         token=fcm_token,
         webpush=messaging.WebpushConfig(
             notification=messaging.WebpushNotification(
-                icon="/icons/caria-icon-192.png",
-                badge="/icons/caria-badge-72.png",
+                icon="/icons/olaf-icon-192.png",
+                badge="/icons/olaf-badge-72.png",
                 require_interaction=severity == "high",
             ),
             fcm_options=messaging.WebpushFCMOptions(
@@ -503,7 +503,7 @@ def send_to_family(elderly_user_id: str, title: str, body: str, severity: str):
 
 ### Deployment Configuration
 
-Cloud Run deploys from source code or Docker containers. For CARIA, we use a Dockerfile since we need Playwright (headless browser) for NavigatorAgent.
+Cloud Run deploys from source code or Docker containers. For OLAF, we use a Dockerfile since we need Playwright (headless browser) for NavigatorAgent.
 
 #### Dockerfile
 
@@ -582,7 +582,7 @@ pydantic>=2.10.0
 
 ```bash
 # Set project
-gcloud config set project caria-hackathon
+gcloud config set project olaf-hackathon
 
 # Enable required APIs
 gcloud services enable \
@@ -595,7 +595,7 @@ gcloud services enable \
   fcm.googleapis.com
 
 # Deploy from source (auto-builds container)
-gcloud run deploy caria-backend \
+gcloud run deploy olaf-backend \
   --source . \
   --region us-central1 \
   --allow-unauthenticated \
@@ -605,11 +605,11 @@ gcloud run deploy caria-backend \
   --concurrency 100 \
   --min-instances 0 \
   --max-instances 5 \
-  --set-env-vars "GOOGLE_CLOUD_PROJECT=caria-hackathon"
+  --set-env-vars "GOOGLE_CLOUD_PROJECT=olaf-hackathon"
 
 # Or deploy with pre-built image
-gcloud run deploy caria-backend \
-  --image us-central1-docker.pkg.dev/caria-hackathon/caria/backend:latest \
+gcloud run deploy olaf-backend \
+  --image us-central1-docker.pkg.dev/olaf-hackathon/caria/backend:latest \
   --region us-central1 \
   --allow-unauthenticated \
   --memory 2Gi \
@@ -621,10 +621,10 @@ gcloud run deploy caria-backend \
 
 ```bash
 # Set via gcloud or Cloud Console
-GOOGLE_CLOUD_PROJECT=caria-hackathon
+GOOGLE_CLOUD_PROJECT=olaf-hackathon
 GOOGLE_CLOUD_LOCATION=us-central1
-FIREBASE_PROJECT_ID=caria-hackathon
-GCS_BUCKET_NAME=caria-artifacts
+FIREBASE_PROJECT_ID=olaf-hackathon
+GCS_BUCKET_NAME=olaf-artifacts
 GEMINI_API_KEY=<for ephemeral token generation>
 ALLOWED_ORIGINS=https://caria.vercel.app,http://localhost:3000
 ```
@@ -635,24 +635,24 @@ Cloud Run uses a service account for GCP API access. The default Compute Engine 
 
 ```bash
 # Create service account
-gcloud iam service-accounts create caria-backend \
-  --display-name "CARIA Backend Service Account"
+gcloud iam service-accounts create olaf-backend \
+  --display-name "OLAF Backend Service Account"
 
 # Grant roles
-gcloud projects add-iam-policy-binding caria-hackathon \
-  --member "serviceAccount:caria-backend@caria-hackathon.iam.gserviceaccount.com" \
+gcloud projects add-iam-policy-binding olaf-hackathon \
+  --member "serviceAccount:olaf-backend@olaf-hackathon.iam.gserviceaccount.com" \
   --role "roles/datastore.user"          # Firestore
 
-gcloud projects add-iam-policy-binding caria-hackathon \
-  --member "serviceAccount:caria-backend@caria-hackathon.iam.gserviceaccount.com" \
+gcloud projects add-iam-policy-binding olaf-hackathon \
+  --member "serviceAccount:olaf-backend@olaf-hackathon.iam.gserviceaccount.com" \
   --role "roles/storage.objectAdmin"     # Cloud Storage
 
-gcloud projects add-iam-policy-binding caria-hackathon \
-  --member "serviceAccount:caria-backend@caria-hackathon.iam.gserviceaccount.com" \
+gcloud projects add-iam-policy-binding olaf-hackathon \
+  --member "serviceAccount:olaf-backend@olaf-hackathon.iam.gserviceaccount.com" \
   --role "roles/aiplatform.user"         # Vertex AI
 
-gcloud projects add-iam-policy-binding caria-hackathon \
-  --member "serviceAccount:caria-backend@caria-hackathon.iam.gserviceaccount.com" \
+gcloud projects add-iam-policy-binding olaf-hackathon \
+  --member "serviceAccount:olaf-backend@olaf-hackathon.iam.gserviceaccount.com" \
   --role "roles/firebase.sdkAdminServiceAgent"  # Firebase Admin
 ```
 
@@ -662,7 +662,7 @@ gcloud projects add-iam-policy-binding caria-hackathon \
 
 ### Key Finding: Cloud Run Fully Supports WebSockets
 
-**WebSockets work on Cloud Run with no additional configuration.** This is critical for CARIA's NavigatorAgent (screenshot streaming) and potential real-time features.
+**WebSockets work on Cloud Run with no additional configuration.** This is critical for OLAF's NavigatorAgent (screenshot streaming) and potential real-time features.
 
 ### Configuration Requirements
 
@@ -682,7 +682,7 @@ gcloud projects add-iam-policy-binding caria-hackathon \
 
 3. **Session affinity is best-effort.** WebSocket connections may occasionally route to different instances. For NavigatorAgent, this is fine since each session is self-contained.
 
-4. **No built-in pub/sub for multi-instance sync.** If multiple instances need to share WebSocket state, use Memorystore (Redis). For CARIA hackathon, a single instance is sufficient.
+4. **No built-in pub/sub for multi-instance sync.** If multiple instances need to share WebSocket state, use Memorystore (Redis). For OLAF hackathon, a single instance is sufficient.
 
 ### WebSocket Implementation for NavigatorAgent
 
@@ -738,7 +738,7 @@ async def navigator_websocket(
 
 ### Compatibility Verdict
 
-**Cloud Run WebSocket support is fully compatible with CARIA's NavigatorAgent design.** The 60-minute timeout is more than sufficient for browser navigation sessions. Screenshot streaming via WebSocket is the correct approach.
+**Cloud Run WebSocket support is fully compatible with OLAF's NavigatorAgent design.** The 60-minute timeout is more than sufficient for browser navigation sessions. Screenshot streaming via WebSocket is the correct approach.
 
 ---
 
@@ -753,7 +753,7 @@ async def navigator_websocket(
 | `imagen-4.0-generate-001` | Highest | Standard | ~$0.04 | Premium illustrations |
 | `imagen-4.0-fast-generate-001` | Good | Fast | ~$0.02 | Quick previews |
 
-**Recommendation for CARIA:** Use `imagen-3.0-generate-002` for story illustrations and `imagen-3.0-fast-generate-001` for daily health narrative images. Imagen 3 is sufficient quality and cheaper.
+**Recommendation for OLAF:** Use `imagen-3.0-generate-002` for story illustrations and `imagen-3.0-fast-generate-001` for daily health narrative images. Imagen 3 is sufficient quality and cheaper.
 
 ### Python SDK Integration
 
@@ -769,7 +769,7 @@ from google.genai.types import GenerateImagesConfig
 
 # Initialize with Vertex AI backend
 os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "True"
-os.environ["GOOGLE_CLOUD_PROJECT"] = "caria-hackathon"
+os.environ["GOOGLE_CLOUD_PROJECT"] = "olaf-hackathon"
 os.environ["GOOGLE_CLOUD_LOCATION"] = "us-central1"
 
 client = genai.Client()
@@ -805,7 +805,7 @@ async def generate_illustration(
 import vertexai
 from vertexai.preview.vision_models import ImageGenerationModel
 
-vertexai.init(project="caria-hackathon", location="us-central1")
+vertexai.init(project="olaf-hackathon", location="us-central1")
 model = ImageGenerationModel.from_pretrained("imagen-3.0-generate-002")
 
 def generate_illustration(prompt: str, style: str = "warm watercolor") -> bytes:
@@ -834,7 +834,7 @@ async def generate_and_store_illustration(
 
     # Upload to Cloud Storage
     client = storage.Client()
-    bucket = client.bucket("caria-artifacts")
+    bucket = client.bucket("olaf-artifacts")
     blob_name = f"illustrations/{user_id}/{uuid4()}.png"
     blob = bucket.blob(blob_name)
     blob.upload_from_string(image_bytes, content_type="image/png")
@@ -858,7 +858,7 @@ async def generate_and_store_illustration(
 | `enhance_prompt` | `True` (default) | Improves quality for short prompts |
 | `aspect_ratio` | `4:3` for illustrations, `16:9` for reports | Match display context |
 
-### Imagen Pricing Estimate for CARIA
+### Imagen Pricing Estimate for OLAF
 
 - Memory chapter: ~3 illustrations × $0.04 = $0.12
 - Daily health narrative: 1 illustration × $0.02 = $0.02
@@ -874,10 +874,10 @@ async def generate_and_store_illustration(
 
 ```bash
 # Create bucket
-gsutil mb -l us-central1 gs://caria-artifacts
+gsutil mb -l us-central1 gs://olaf-artifacts
 
 # Set CORS for browser uploads (if needed)
-gsutil cors set cors.json gs://caria-artifacts
+gsutil cors set cors.json gs://olaf-artifacts
 ```
 
 ```json
@@ -904,7 +904,7 @@ from google.cloud import storage
 def generate_download_url(blob_name: str, expiration_hours: int = 24) -> str:
     """Generate a signed URL for downloading a file."""
     client = storage.Client()
-    bucket = client.bucket("caria-artifacts")
+    bucket = client.bucket("olaf-artifacts")
     blob = bucket.blob(blob_name)
 
     url = blob.generate_signed_url(
@@ -917,7 +917,7 @@ def generate_download_url(blob_name: str, expiration_hours: int = 24) -> str:
 def generate_upload_url(blob_name: str, content_type: str = "image/png") -> str:
     """Generate a signed URL for uploading a file directly from browser."""
     client = storage.Client()
-    bucket = client.bucket("caria-artifacts")
+    bucket = client.bucket("olaf-artifacts")
     blob = bucket.blob(blob_name)
 
     url = blob.generate_signed_url(
@@ -932,7 +932,7 @@ def generate_upload_url(blob_name: str, content_type: str = "image/png") -> str:
 ### Storage Structure
 
 ```
-caria-artifacts/
+olaf-artifacts/
 ├── illustrations/
 │   └── {userId}/
 │       └── {imageId}.png
@@ -955,7 +955,7 @@ caria-artifacts/
 
 ```bash
 # Auto-delete navigator screenshots after 1 day
-gsutil lifecycle set lifecycle.json gs://caria-artifacts
+gsutil lifecycle set lifecycle.json gs://olaf-artifacts
 ```
 
 ```json
@@ -987,7 +987,7 @@ gsutil lifecycle set lifecycle.json gs://caria-artifacts
 
 ### Overview
 
-Cloud Scheduler is a managed cron service for triggering Cloud Run endpoints on a schedule. CARIA needs it for:
+Cloud Scheduler is a managed cron service for triggering Cloud Run endpoints on a schedule. OLAF needs it for:
 
 1. **Daily health narrative generation** (StorytellerAgent)
 2. **Weekly family report generation** (StorytellerAgent)
@@ -1000,27 +1000,27 @@ Cloud Scheduler is a managed cron service for triggering Cloud Run endpoints on 
 # Daily health narrative — 8 PM daily (after typical day ends)
 gcloud scheduler jobs create http daily-health-narrative \
   --schedule="0 20 * * *" \
-  --uri="https://caria-backend-xxxxx-uc.a.run.app/api/cron/daily-narrative" \
+  --uri="https://olaf-backend-xxxxx-uc.a.run.app/api/cron/daily-narrative" \
   --http-method=POST \
   --headers="Content-Type=application/json" \
-  --oidc-service-account-email="caria-backend@caria-hackathon.iam.gserviceaccount.com" \
+  --oidc-service-account-email="olaf-backend@olaf-hackathon.iam.gserviceaccount.com" \
   --location=us-central1
 
 # Weekly family report — Sunday 9 AM
 gcloud scheduler jobs create http weekly-family-report \
   --schedule="0 9 * * 0" \
-  --uri="https://caria-backend-xxxxx-uc.a.run.app/api/cron/weekly-report" \
+  --uri="https://olaf-backend-xxxxx-uc.a.run.app/api/cron/weekly-report" \
   --http-method=POST \
   --headers="Content-Type=application/json" \
-  --oidc-service-account-email="caria-backend@caria-hackathon.iam.gserviceaccount.com" \
+  --oidc-service-account-email="olaf-backend@olaf-hackathon.iam.gserviceaccount.com" \
   --location=us-central1
 
 # Inactivity check — every 6 hours
 gcloud scheduler jobs create http inactivity-check \
   --schedule="0 */6 * * *" \
-  --uri="https://caria-backend-xxxxx-uc.a.run.app/api/cron/inactivity-check" \
+  --uri="https://olaf-backend-xxxxx-uc.a.run.app/api/cron/inactivity-check" \
   --http-method=POST \
-  --oidc-service-account-email="caria-backend@caria-hackathon.iam.gserviceaccount.com" \
+  --oidc-service-account-email="olaf-backend@olaf-hackathon.iam.gserviceaccount.com" \
   --location=us-central1
 ```
 
@@ -1082,7 +1082,7 @@ async def check_inactivity():
 
 - **Free tier:** 3 jobs per billing account per month
 - **Beyond free tier:** $0.10/job/month
-- CARIA needs 3 jobs → **$0** (exactly within free tier)
+- OLAF needs 3 jobs → **$0** (exactly within free tier)
 
 ---
 
@@ -1153,7 +1153,7 @@ async def check_inactivity():
 
 **Mitigations:**
 - Set `min-instances: 1` during demo (keeps one warm instance)
-- Show a loading animation: "CARIA is preparing to help you navigate..."
+- Show a loading animation: "OLAF is preparing to help you navigate..."
 - Pre-warm: send a health check request before user initiates navigation
 
 #### Issue 2: Cloud Run Memory for Playwright
@@ -1186,7 +1186,7 @@ blob.make_public()  # If acceptable
 
 ### Phase 1: Project Setup (Day 1)
 
-- [ ] Create Google Cloud project (`caria-hackathon`)
+- [ ] Create Google Cloud project (`olaf-hackathon`)
 - [ ] Enable billing (use $300 free trial credit)
 - [ ] Enable APIs:
   - [ ] Cloud Run
@@ -1199,7 +1199,7 @@ blob.make_public()  # If acceptable
   - [ ] FCM
 - [ ] Create Firebase project (link to GCP project)
 - [ ] Create Firestore database (Native mode, `nam5` multi-region)
-- [ ] Create Cloud Storage bucket (`caria-artifacts`, US region)
+- [ ] Create Cloud Storage bucket (`olaf-artifacts`, US region)
 - [ ] Create service account with required roles
 
 ### Phase 2: Authentication (Day 1-2)

@@ -1,4 +1,4 @@
-"""CARIA — Navigator API endpoints.
+"""OLAF — Navigator API endpoints.
 
 POST /api/navigator/start — Start a new navigation session
 POST /api/navigator/confirm/{sessionId} — Confirm/reject sensitive action

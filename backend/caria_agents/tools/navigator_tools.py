@@ -1,4 +1,4 @@
-"""CARIA Navigator — ADK tool functions.
+"""OLAF Navigator — ADK tool functions.
 
 These tools control a headless Playwright browser for the Navigator agent.
 Each tool represents a browser action the agent can perform.

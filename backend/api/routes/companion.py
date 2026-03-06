@@ -1,4 +1,4 @@
-"""CARIA — Companion tool execution endpoints.
+"""OLAF — Companion tool execution endpoints.
 
 These endpoints are called from the browser when Gemini Live API issues
 function calls. The browser receives the tool call, executes it by calling

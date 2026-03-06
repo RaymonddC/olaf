@@ -340,7 +340,7 @@ export default function ReportsPage() {
             <EmptyState
               icon={FileText}
               title="No reports yet"
-              message={`Reports will appear here after ${elderlyName}'s first day using CARIA.`}
+              message={`Reports will appear here after ${elderlyName}'s first day using OLAF.`}
             />
           ) : (
             <div className="space-y-4">

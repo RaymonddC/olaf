@@ -1,4 +1,4 @@
-"""CARIA — Notification API endpoints.
+"""OLAF — Notification API endpoints.
 
 POST   /api/notifications/register-token — Store FCM device token
 DELETE /api/notifications/unregister-token — Remove FCM device token

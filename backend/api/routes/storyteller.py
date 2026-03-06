@@ -1,4 +1,4 @@
-"""CARIA — Storyteller API endpoints.
+"""OLAF — Storyteller API endpoints.
 
 POST /api/storyteller/create-memory — Trigger memory chapter creation
 POST /api/storyteller/create-daily-narrative — Trigger daily health narrative
@@ -47,7 +47,7 @@ async def _run_storyteller(
     """
     runner = Runner(
         agent=storyteller_agent,
-        app_name="caria",
+        app_name="olaf",
         session_service=_session_service,
     )
 
@@ -55,7 +55,7 @@ async def _run_storyteller(
 
     # Create session with user context
     session = await _session_service.create_session(
-        app_name="caria",
+        app_name="olaf",
         user_id=user_id,
         session_id=session_id,
     )

@@ -1,4 +1,4 @@
-"""CARIA Alert Manager Agent definition.
+"""OLAF Alert Manager Agent definition.
 
 Evaluates incoming signals and routes notifications to family members.
 Wrapped as AgentTool for explicit invocation by the coordinator.

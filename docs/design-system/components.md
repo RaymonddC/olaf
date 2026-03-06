@@ -1,4 +1,4 @@
-# CARIA Component Specifications
+# OLAF Component Specifications
 
 Detailed component API specs with Tailwind class strings for each variant and state.
 
@@ -453,7 +453,7 @@ Label: text-body-sm text-text-secondary
 
 ## Audio Visualizer
 
-Pulsing circle representing CARIA's voice companion.
+Pulsing circle representing OLAF's voice companion.
 
 ### Container
 
@@ -486,7 +486,7 @@ Label: text-body-sm font-medium
 
 ### Accessibility
 
-- `aria-label="CARIA voice companion - [state]"`
+- `aria-label="OLAF voice companion - [state]"`
 - `role="img"` on the visualizer
 - Respect `prefers-reduced-motion`: replace animation with static ring
 
@@ -777,9 +777,9 @@ flex flex-col items-center justify-center py-16 px-6 text-center
 
 | Context | Title | Message | Action |
 |---|---|---|---|
-| No memories | "No memories yet" | "Tell CARIA about your favorite memory to get started." | "Tell a Story" |
+| No memories | "No memories yet" | "Tell OLAF about your favorite memory to get started." | "Tell a Story" |
 | No alerts | "All clear" | "No alerts to show. That's great news!" | — |
-| No reports | "No reports yet" | "Reports will appear here after your first day with CARIA." | — |
+| No reports | "No reports yet" | "Reports will appear here after your first day with OLAF." | — |
 
 ### Accessibility
 

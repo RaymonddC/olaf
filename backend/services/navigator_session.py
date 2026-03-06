@@ -1,4 +1,4 @@
-"""CARIA — Navigator session manager.
+"""OLAF — Navigator session manager.
 
 Tracks active navigation sessions, coordinates between the browser service,
 WebSocket connections, and the NavigatorAgent confirmation flow.

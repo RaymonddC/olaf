@@ -30,7 +30,7 @@ export function ReportsSection({ reports, loading }: ReportsSectionProps) {
         <EmptyState
           icon={FileText}
           title="No reports yet"
-          message="Reports will appear here after the first day with CARIA."
+          message="Reports will appear here after the first day with OLAF."
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -1,4 +1,4 @@
-"""CARIA Alert Manager — ADK tool functions.
+"""OLAF Alert Manager — ADK tool functions.
 
 These tools handle alert evaluation, notification routing, and escalation.
 Used by the AlertAgent to notify family members about health/safety signals.

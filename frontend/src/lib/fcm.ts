@@ -85,7 +85,7 @@ export function onForegroundMessage(
   if (!messaging) return null;
 
   const unsubscribe = onMessage(messaging, (payload) => {
-    const title = payload.notification?.title ?? 'CARIA Alert';
+    const title = payload.notification?.title ?? 'OLAF Alert';
     const body = payload.notification?.body ?? '';
     const data = payload.data as Record<string, string> | undefined;
     callback({ title, body, data });

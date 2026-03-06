@@ -1,4 +1,4 @@
-"""CARIA Storyteller Agent definition.
+"""OLAF Storyteller Agent definition.
 
 Provides two invocation modes:
 1. storyteller_agent — A single LlmAgent with all tools (used by coordinator /

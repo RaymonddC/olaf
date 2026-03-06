@@ -1,4 +1,4 @@
-"""CARIA Navigator Agent definition.
+"""OLAF Navigator Agent definition.
 
 Navigates websites via headless browser for government portals,
 medical appointments, forms, and document retrieval.

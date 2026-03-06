@@ -1,4 +1,4 @@
-"""CARIA — Health API endpoints.
+"""OLAF — Health API endpoints.
 
 GET /api/health/logs — Get health logs for a date range
 GET /api/health/reports — Get generated health reports

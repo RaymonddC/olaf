@@ -1,4 +1,4 @@
-"""CARIA — Auth API endpoints.
+"""OLAF — Auth API endpoints.
 
 POST /api/auth/register — Create user profile after Firebase Auth registration
 POST /api/auth/family-link — Link a family member to an elderly user

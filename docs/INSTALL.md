@@ -1,6 +1,6 @@
-# CARIA — Installation Guide
+# OLAF — Installation Guide
 
-Complete step-by-step guide to get CARIA running locally from scratch.
+Complete step-by-step guide to get OLAF running locally from scratch.
 
 ---
 
@@ -39,7 +39,7 @@ You need two things from Google:
 ### 2b. Firebase Project
 
 1. Go to https://console.firebase.google.com
-2. Click **Add project** → name it (e.g. `caria-dev`) → **Create project**
+2. Click **Add project** → name it (e.g. `olaf-dev`) → **Create project**
 3. Enable these services:
 
 **Authentication:**
@@ -102,15 +102,15 @@ Open the file and fill in:
 ```env
 # Google AI
 GOOGLE_API_KEY=AIzaSy...          # Your Gemini API key from Step 2a
-GOOGLE_CLOUD_PROJECT=caria-dev-xxx # Your Firebase project ID
+GOOGLE_CLOUD_PROJECT=olaf-dev-xxx # Your Firebase project ID
 
 # Firebase Admin (leave blank — uses Application Default Credentials)
-FIREBASE_ADMIN_PROJECT_ID=caria-dev-xxx
+FIREBASE_ADMIN_PROJECT_ID=olaf-dev-xxx
 FIREBASE_ADMIN_CLIENT_EMAIL=
 FIREBASE_ADMIN_PRIVATE_KEY=
 
 # Cloud Storage (create a bucket in GCP Console, or use any name)
-GCS_ARTIFACTS_BUCKET=caria-artifacts
+GCS_ARTIFACTS_BUCKET=olaf-artifacts
 
 # App settings
 PORT=8080
@@ -129,7 +129,7 @@ python main.py
 You should see:
 ```
 INFO: Firebase Admin initialised with ADC
-INFO: CARIA backend started with 9 custom route groups
+INFO: OLAF backend started with 9 custom route groups
 INFO: Uvicorn running on http://0.0.0.0:8080
 ```
 
@@ -166,9 +166,9 @@ Fill in the Firebase web config from Step 2b:
 ```env
 # Firebase Web App Config (from Firebase Console → Project Settings → Your apps)
 NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSy...
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=caria-dev-xxx.firebaseapp.com
-NEXT_PUBLIC_FIREBASE_PROJECT_ID=caria-dev-xxx
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=caria-dev-xxx.firebasestorage.app
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=olaf-dev-xxx.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=olaf-dev-xxx
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=olaf-dev-xxx.firebasestorage.app
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789
 NEXT_PUBLIC_FIREBASE_APP_ID=1:123456789:web:abc123
 
@@ -176,7 +176,7 @@ NEXT_PUBLIC_FIREBASE_APP_ID=1:123456789:web:abc123
 NEXT_PUBLIC_API_URL=http://localhost:8080
 
 # Firebase Admin (leave blank for local dev)
-FIREBASE_ADMIN_PROJECT_ID=caria-dev-xxx
+FIREBASE_ADMIN_PROJECT_ID=olaf-dev-xxx
 FIREBASE_ADMIN_CLIENT_EMAIL=
 FIREBASE_ADMIN_PRIVATE_KEY=
 

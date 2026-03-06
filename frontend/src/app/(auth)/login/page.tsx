@@ -66,7 +66,7 @@ export default function LoginPage() {
             <Mic className="w-5 h-5 text-white" aria-hidden="true" />
           </div>
           <span className="text-h1 font-heading font-bold text-text-heading">
-            CARIA
+            OLAF
           </span>
         </div>
         <p className="text-body text-text-secondary">Your Care Companion</p>
@@ -205,7 +205,7 @@ export default function LoginPage() {
 
       {/* Register link */}
       <p className="text-center mt-6 text-body-sm text-text-secondary">
-        New to CARIA?{' '}
+        New to OLAF?{' '}
         <Link
           href="/register"
           className="text-primary-700 hover:text-primary-800 font-medium underline focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-300 rounded"

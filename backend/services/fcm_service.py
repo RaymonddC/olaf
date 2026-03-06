@@ -1,4 +1,4 @@
-"""CARIA — Firebase Cloud Messaging service.
+"""OLAF — Firebase Cloud Messaging service.
 
 Sends push notifications to family members via FCM.
 Supports alert, daily_report, and weekly_report notification types.
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class FCMService:
-    """Firebase Cloud Messaging service for CARIA push notifications."""
+    """Firebase Cloud Messaging service for OLAF push notifications."""
 
     def __init__(self, db: Optional[firestore.Client] = None):
         self.db = db or firestore.Client()
@@ -149,7 +149,7 @@ class FCMService:
                     priority="high" if notification_type == "alert" else "normal",
                     notification=messaging.AndroidNotification(
                         click_action="/dashboard",
-                        channel_id="caria_alerts",
+                        channel_id="olaf_alerts",
                     ),
                 ),
                 webpush=messaging.WebpushConfig(

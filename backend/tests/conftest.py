@@ -1,4 +1,4 @@
-"""Shared test fixtures for CARIA backend tests.
+"""Shared test fixtures for OLAF backend tests.
 
 We mock out the google-adk and google-genai packages at the sys.modules level
 before any backend module is imported.  This lets tests run without needing
@@ -278,7 +278,7 @@ def mock_fs():
 
 @pytest.fixture
 def app(mock_firebase, mock_fs):
-    """Build a test FastAPI app with only CARIA's custom routes (no ADK app).
+    """Build a test FastAPI app with only OLAF's custom routes (no ADK app).
 
     We also patch `get_firestore_service` in both the FastAPI DI layer and
     inside `companion_tools` (which calls it directly, outside DI).

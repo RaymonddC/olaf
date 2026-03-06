@@ -1,4 +1,4 @@
-# CARIA — Agent Orchestration
+# OLAF — Agent Orchestration
 
 ## 1. Agent Hierarchy
 
@@ -149,7 +149,7 @@ AlertAgent handles system-triggered signals, not user requests. Using `AgentTool
 
 ### 3.1 Session State Scoping
 
-| Prefix | Scope | CARIA Usage |
+| Prefix | Scope | OLAF Usage |
 |--------|-------|-------------|
 | (none) | Session | Current conversation context, temp vars |
 | `user:` | User (cross-session) | Medications, preferences, contacts, name, age |

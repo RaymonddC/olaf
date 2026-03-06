@@ -100,7 +100,7 @@ export default function MemoriesPage() {
           <EmptyState
             icon={BookOpen}
             title="No memories yet"
-            message="Tell CARIA about your favourite memory to get started. Your stories will be beautifully illustrated and saved here."
+            message="Tell OLAF about your favourite memory to get started. Your stories will be beautifully illustrated and saved here."
             action={{ label: 'Tell a Story', href: '/talk' }}
           />
         )}

@@ -1,10 +1,10 @@
-# CARIA — AI Elderly Care Companion
+# OLAF — AI Elderly Care Companion
 
 **Gemini Live Agent Challenge** | Deadline: March 16, 2026
 
 > "For the people who deserve more than a weekly phone call."
 
-CARIA is a voice-first AI companion for elderly users and the families who care for them. It combines real-time voice conversation, illustrated memory preservation, web navigation assistance, and intelligent family alerts — built on Gemini's Live API, Google ADK, Imagen 3, and a full Firebase stack.
+OLAF is a voice-first AI companion for elderly users and the families who care for them. It combines real-time voice conversation, illustrated memory preservation, web navigation assistance, and intelligent family alerts — built on Gemini's Live API, Google ADK, Imagen 3, and a full Firebase stack.
 
 ---
 
@@ -13,7 +13,7 @@ CARIA is a voice-first AI companion for elderly users and the families who care 
 | Feature | For whom | Description |
 |---|---|---|
 | **Voice Companion** | Elderly user | Real-time voice + vision companion via Gemini Live API. Daily health check-ins, medication scanning via webcam, reminders, emotional support. |
-| **Memory Journal** | Elderly user | Speak a memory to CARIA. An ADK SequentialAgent pipeline transforms it into an illustrated, watercolor-style life story chapter. |
+| **Memory Journal** | Elderly user | Speak a memory to OLAF. An ADK SequentialAgent pipeline transforms it into an illustrated, watercolor-style life story chapter. |
 | **Digital Navigator** | Elderly user | AI-controlled headless browser navigates government portals, medical booking sites, and forms on behalf of the user — with live screenshot streaming. |
 | **Family Dashboard** | Family members | Real-time alerts, health trends, medication adherence, memory chapter notifications, and push notifications via Firebase Cloud Messaging. |
 
@@ -402,17 +402,17 @@ cd frontend && npm run dev
 cd backend
 
 # Build
-docker build -t gcr.io/YOUR_PROJECT/caria-backend:latest .
+docker build -t gcr.io/YOUR_PROJECT/olaf-backend:latest .
 
 # Push
-docker push gcr.io/YOUR_PROJECT/caria-backend:latest
+docker push gcr.io/YOUR_PROJECT/olaf-backend:latest
 ```
 
 ### Deploy backend to Cloud Run
 
 ```bash
-gcloud run deploy caria-backend \
-  --image gcr.io/YOUR_PROJECT/caria-backend:latest \
+gcloud run deploy olaf-backend \
+  --image gcr.io/YOUR_PROJECT/olaf-backend:latest \
   --platform managed \
   --region us-central1 \
   --memory 2Gi \
@@ -447,10 +447,10 @@ Set environment variables in the Vercel dashboard matching `frontend/.env.local`
 
 ```bash
 cd frontend
-docker build -t gcr.io/YOUR_PROJECT/caria-frontend:latest .
+docker build -t gcr.io/YOUR_PROJECT/olaf-frontend:latest .
 
-gcloud run deploy caria-frontend \
-  --image gcr.io/YOUR_PROJECT/caria-frontend:latest \
+gcloud run deploy olaf-frontend \
+  --image gcr.io/YOUR_PROJECT/olaf-frontend:latest \
   --platform managed \
   --region us-central1 \
   --memory 512Mi \
@@ -505,9 +505,9 @@ mypy .                              # Type check (strict)
 - **WCAG AAA** contrast ratio target (7:1) — not AAA aspirational, AAA enforced
 - **48px minimum** touch targets — designed for tablet use with imprecise finger taps
 - **Three screens only** — Talk, Memories, Help — with consistent layout on every visit
-- **Voice-first** — every action triggerable by voice command to CARIA
+- **Voice-first** — every action triggerable by voice command to OLAF
 - **Always show loading states** — blank screens cause anxiety; all async operations show progress
-- **No jargon** — "Talk to CARIA", not "Initialize Voice Session"
+- **No jargon** — "Talk to OLAF", not "Initialize Voice Session"
 - **Forgiveness** — undo everything, confirm destructive actions, repeat anything without frustration
 - **Consistent audio feedback** — gentle sounds for confirmations and alerts
 

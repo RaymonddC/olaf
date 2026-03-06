@@ -1,4 +1,4 @@
-"""Navigation safety callback for the CARIA Navigator agent.
+"""Navigation safety callback for the OLAF Navigator agent.
 
 Validates URLs and actions before the NavigatorAgent executes them.
 """

@@ -1,4 +1,4 @@
-# CARIA — AI Elderly Care Companion
+# OLAF — AI Elderly Care Companion
 
 ## Design Document
 
@@ -10,7 +10,7 @@
 
 ## 1. Product Overview
 
-CARIA is an AI-powered elderly care companion that combines real-time voice conversation, creative storytelling, and digital navigation to serve elderly users and their families.
+OLAF is an AI-powered elderly care companion that combines real-time voice conversation, creative storytelling, and digital navigation to serve elderly users and their families.
 
 Three core agents work together:
 
@@ -164,7 +164,7 @@ Web dashboard for family members and caregivers.
 **System instruction (sent on WebSocket connect):**
 
 ```
-You are CARIA, a warm, patient elderly care companion. Speak slowly and clearly.
+You are OLAF, a warm, patient elderly care companion. Speak slowly and clearly.
 The user is {user.name}, age {user.age}.
 Their medications: {medications_list}.
 Today's reminders: {reminders_list}.
@@ -256,7 +256,7 @@ storyteller_agent = LlmAgent(
 **Instruction:**
 
 ```
-You are CARIA's storyteller. You transform raw data into warm, human-readable
+You are OLAF's storyteller. You transform raw data into warm, human-readable
 narratives and illustrated content.
 
 MEMORY CHAPTER:
@@ -367,7 +367,7 @@ navigator_agent = LlmAgent(
 **Instruction:**
 
 ```
-You are CARIA's digital navigator. You help elderly users interact with websites.
+You are OLAF's digital navigator. You help elderly users interact with websites.
 
 WORKFLOW:
 1. Navigate to requested URL
@@ -449,7 +449,7 @@ alert_agent = LlmAgent(
 **Instruction:**
 
 ```
-You evaluate incoming signals from other CARIA agents and decide the response.
+You evaluate incoming signals from other OLAF agents and decide the response.
 
 EMOTIONAL_DISTRESS:
 - low → log only, mention in daily report
@@ -590,7 +590,7 @@ AlertAgent
 - Large text (min 18px base), high contrast ratios (WCAG AAA)
 - Minimal navigation — max 3 main screens: Talk, Memories, Help
 - Voice-first — every action triggerable by voice
-- No jargon — "Talk to CARIA" not "Initialize Voice Session"
+- No jargon — "Talk to OLAF" not "Initialize Voice Session"
 - Forgiveness — undo everything, confirm destructive actions, repeat anything
 - Always show loading states — elderly users panic at blank screens
 - Big touch targets (min 48px) for tablet use
@@ -697,7 +697,7 @@ ADK has a built-in `GcsArtifactService` that stores versioned binary data in Clo
 ```python
 from google.adk.artifacts import GcsArtifactService
 
-artifact_service = GcsArtifactService(bucket_name="caria-artifacts")
+artifact_service = GcsArtifactService(bucket_name="olaf-artifacts")
 ```
 
 ### Update 5: Add Safety Callbacks for Navigator
@@ -729,9 +729,9 @@ return {"status": "pending", "operation_id": "abc123"}
 
 ### Update 7: Session State Scoping
 
-ADK supports state prefixes for different scopes. Use these for CARIA:
+ADK supports state prefixes for different scopes. Use these for OLAF:
 
-| Prefix | Scope | CARIA Use |
+| Prefix | Scope | OLAF Use |
 |---|---|---|
 | (none) | Session | Current conversation context |
 | `user:` | User (cross-session) | Medications, preferences, contacts |
@@ -752,7 +752,7 @@ app = get_fast_api_app(
     web=False
 )
 
-# Custom CARIA endpoints
+# Custom OLAF endpoints
 @app.post("/api/storyteller/create-memory")
 async def create_memory(request: MemoryRequest):
     # Trigger storyteller via Runner
@@ -857,10 +857,10 @@ Token created with `liveConnectConstraints` that lock system instruction, model,
 
 **Problem:** Cloud Run cold starts with a Playwright container (Chromium installed) can take 10-30 seconds. This delays the first NavigatorAgent request significantly, which is confusing for elderly users.
 
-**Fix:** During demo and production, set `min-instances: 1` for the Cloud Run service to keep one warm instance. Show a loading animation ("CARIA is preparing to help you navigate...") during any cold start. Optionally pre-warm with a health check before user initiates navigation.
+**Fix:** During demo and production, set `min-instances: 1` for the Cloud Run service to keep one warm instance. Show a loading animation ("OLAF is preparing to help you navigate...") during any cold start. Optionally pre-warm with a health check before user initiates navigation.
 
 ```bash
-gcloud run deploy caria-backend --min-instances 1
+gcloud run deploy olaf-backend --min-instances 1
 ```
 
 ### Update 17: Use Permanent URLs for Storybook Content
@@ -874,7 +874,7 @@ gcloud run deploy caria-backend --min-instances 1
 The backend requires specific Cloud Run settings for WebSocket support and Playwright:
 
 ```bash
-gcloud run deploy caria-backend \
+gcloud run deploy olaf-backend \
   --memory 2Gi \
   --cpu 2 \
   --timeout 3600 \

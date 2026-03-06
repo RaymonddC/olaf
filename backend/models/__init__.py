@@ -1,4 +1,4 @@
-"""CARIA data models."""
+"""OLAF data models."""
 
 from .api import ApiResponse
 from .firestore import UserProfile

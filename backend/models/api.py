@@ -1,4 +1,4 @@
-"""CARIA — Pydantic API request/response models.
+"""OLAF — Pydantic API request/response models.
 
 Matches the contracts in docs/architecture/api-contracts.md Section 11.
 Field names use snake_case in Python; camelCase aliases for JSON I/O.

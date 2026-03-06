@@ -8,7 +8,7 @@ interface AudioVisualizerProps {
 }
 
 /**
- * Pulsing circle representing CARIA's voice companion.
+ * Pulsing circle representing OLAF's voice companion.
  *
  * - Outer ring: animate-voice-pulse (breathing scale 1 → 1.08)
  * - Inner circle: primary-700, shows Mic when listening, Volume2 when speaking
@@ -38,7 +38,7 @@ export function AudioVisualizer({ status }: AudioVisualizerProps) {
   return (
     <div
       role="img"
-      aria-label={`CARIA voice companion - ${stateLabel}`}
+      aria-label={`OLAF voice companion - ${stateLabel}`}
       className="relative flex items-center justify-center w-48 h-48 md:w-56 md:h-56"
     >
       {/* Outer pulsing ring — only animates when session is active */}
@@ -62,7 +62,7 @@ export function AudioVisualizer({ status }: AudioVisualizerProps) {
         ].join(' ')}
       >
         <Icon className="w-8 h-8" aria-hidden="true" />
-        <span className="text-body-sm font-medium select-none">CARIA</span>
+        <span className="text-body-sm font-medium select-none">OLAF</span>
       </div>
     </div>
   );

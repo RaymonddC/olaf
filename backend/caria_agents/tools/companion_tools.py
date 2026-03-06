@@ -1,4 +1,4 @@
-"""CARIA Companion — Tool execution functions.
+"""OLAF Companion — Tool execution functions.
 
 These are NOT ADK tools — they are plain Python functions called by
 the REST API endpoints (/api/companion/*). The browser receives tool calls
@@ -376,7 +376,7 @@ async def log_conversation(
                                 "parts": [
                                     {
                                         "text": (
-                                            "Summarise this conversation between CARIA (an AI companion) and an elderly user "
+                                            "Summarise this conversation between OLAF (an AI companion) and an elderly user "
                                             "in 1-2 sentences. Also rate the user's overall mood on a scale of 1-10 "
                                             "(1=very distressed, 10=very happy). "
                                             f'Respond in JSON: {{"summary": "...", "moodScore": N}}\n\n'

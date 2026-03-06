@@ -1,4 +1,4 @@
-"""CARIA API middleware."""
+"""OLAF API middleware."""
 
 from .firebase_auth import get_current_user, require_role
 

@@ -1,11 +1,11 @@
-# CARIA — API Contracts
+# OLAF — API Contracts
 
 ## Overview
 
-The CARIA backend exposes two categories of endpoints:
+The OLAF backend exposes two categories of endpoints:
 
 1. **ADK Built-in** — `/run_sse`, `/run`, session management (provided by `get_fast_api_app()`)
-2. **Custom CARIA** — Feature-specific REST endpoints and WebSocket connections
+2. **Custom OLAF** — Feature-specific REST endpoints and WebSocket connections
 
 All custom endpoints require Firebase Authentication via `Authorization: Bearer <firebase_id_token>` header.
 

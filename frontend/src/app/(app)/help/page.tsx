@@ -192,7 +192,7 @@ export default function HelpPage() {
         <p className="text-body text-text-secondary text-center mt-8">
           Or just say{' '}
           <span className="text-primary-700 font-medium">&ldquo;Help me with…&rdquo;</span>{' '}
-          to CARIA
+          to OLAF
         </p>
       </PageShell>
     </>

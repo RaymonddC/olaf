@@ -1,7 +1,7 @@
 # Google Agent Development Kit (ADK) — Research Notes
 
 **Date:** 2026-02-28
-**Purpose:** Technical deep-dive for CARIA elderly care companion
+**Purpose:** Technical deep-dive for OLAF elderly care companion
 **ADK Version:** v1.26+ (Python)
 **Package:** `google-adk` (Apache 2.0)
 
@@ -19,7 +19,7 @@
 8. [Serving Agents via REST API (FastAPI)](#8-serving-agents-via-rest-api-fastapi)
 9. [Cloud Run Deployment](#9-cloud-run-deployment)
 10. [Testing & Evaluation](#10-testing--evaluation)
-11. [CARIA Architecture Mapping](#11-caria-architecture-mapping)
+11. [OLAF Architecture Mapping](#11-olaf-architecture-mapping)
 12. [Design Recommendations](#12-design-recommendations)
 
 ---
@@ -503,7 +503,7 @@ root_agent = Agent(
     name="caria_coordinator",
     model="gemini-2.5-flash",
     instruction="""
-    You coordinate CARIA's agent team.
+    You coordinate OLAF's agent team.
     - Story/memory/report requests → delegate to storyteller
     - Website navigation tasks → delegate to navigator
     - Alert evaluation → delegate to alert_manager
@@ -673,7 +673,7 @@ from google.adk.artifacts import InMemoryArtifactService, GcsArtifactService
 artifact_service = InMemoryArtifactService()
 
 # Production (Cloud Storage)
-artifact_service = GcsArtifactService(bucket_name="caria-artifacts")
+artifact_service = GcsArtifactService(bucket_name="olaf-artifacts")
 
 runner = Runner(
     agent=root_agent,
@@ -732,7 +732,7 @@ Callbacks intercept agent execution at key points for validation, logging, and s
 
 **Return `None`** = proceed normally. **Return value** = override.
 
-### Input Safety Guard (CARIA Example)
+### Input Safety Guard (OLAF Example)
 
 ```python
 from google.adk.agents.callback_context import CallbackContext
@@ -865,14 +865,14 @@ Navigate to `http://localhost:8000/docs` for interactive API documentation.
 ### Method 1: ADK CLI (Quick Deploy)
 
 ```bash
-export GOOGLE_CLOUD_PROJECT=caria-prod
+export GOOGLE_CLOUD_PROJECT=olaf-prod
 export GOOGLE_CLOUD_LOCATION=us-central1
 export GOOGLE_GENAI_USE_VERTEXAI=True
 
 adk deploy cloud_run \
   --project=$GOOGLE_CLOUD_PROJECT \
   --region=$GOOGLE_CLOUD_LOCATION \
-  --service_name=caria-agents \
+  --service_name=olaf-agents \
   --app_name=caria \
   path/to/agent/
 ```
@@ -884,7 +884,7 @@ This automatically: packages code → builds container → pushes to Artifact Re
 **Project structure:**
 
 ```
-caria-backend/
+olaf-backend/
 ├── caria_agents/
 │   ├── __init__.py          # from . import agent
 │   └── agent.py             # root_agent definition
@@ -931,12 +931,12 @@ fastapi
 **Deploy:**
 
 ```bash
-gcloud run deploy caria-agents \
+gcloud run deploy olaf-agents \
   --source . \
   --region us-central1 \
-  --project caria-prod \
+  --project olaf-prod \
   --allow-unauthenticated \
-  --set-env-vars="GOOGLE_CLOUD_PROJECT=caria-prod,GOOGLE_CLOUD_LOCATION=us-central1,GOOGLE_GENAI_USE_VERTEXAI=True" \
+  --set-env-vars="GOOGLE_CLOUD_PROJECT=olaf-prod,GOOGLE_CLOUD_LOCATION=us-central1,GOOGLE_GENAI_USE_VERTEXAI=True" \
   --set-secrets="GOOGLE_API_KEY=GOOGLE_API_KEY:latest" \
   --memory=2Gi \
   --cpu=2 \
@@ -948,19 +948,19 @@ gcloud run deploy caria-agents \
 ```bash
 # Store API key
 echo "your-api-key" | gcloud secrets create GOOGLE_API_KEY \
-  --project=caria-prod --data-file=-
+  --project=olaf-prod --data-file=-
 
 # Grant access to Cloud Run service account
 gcloud secrets add-iam-policy-binding GOOGLE_API_KEY \
-  --member="serviceAccount:YOUR_SA@caria-prod.iam.gserviceaccount.com" \
+  --member="serviceAccount:YOUR_SA@olaf-prod.iam.gserviceaccount.com" \
   --role="roles/secretmanager.secretAccessor" \
-  --project=caria-prod
+  --project=olaf-prod
 ```
 
 ### Testing Deployed Service
 
 ```bash
-APP_URL="https://caria-agents-abc123.a.run.app"
+APP_URL="https://olaf-agents-abc123.a.run.app"
 TOKEN=$(gcloud auth print-identity-token)
 
 # List apps
@@ -1044,11 +1044,11 @@ def test_log_health_checkin():
 
 ---
 
-## 11. CARIA Architecture Mapping
+## 11. OLAF Architecture Mapping
 
-### How CARIA's Agents Map to ADK
+### How OLAF's Agents Map to ADK
 
-| CARIA Agent | ADK Pattern | Notes |
+| OLAF Agent | ADK Pattern | Notes |
 |---|---|---|
 | CompanionAgent | **NOT ADK** — direct Gemini Live WebSocket | Browser-side, lowest latency |
 | StorytellerAgent | `LlmAgent` with tools | Standard ADK agent |
@@ -1121,9 +1121,9 @@ alert_agent = Agent(
 root_agent = Agent(
     model="gemini-2.5-flash",
     name="caria_coordinator",
-    description="CARIA's main coordinator that routes requests to specialized agents.",
+    description="OLAF's main coordinator that routes requests to specialized agents.",
     instruction="""
-    You coordinate CARIA's server-side agents.
+    You coordinate OLAF's server-side agents.
 
     ROUTING:
     - Story creation, memory journals, health narratives, reports → storyteller
@@ -1297,7 +1297,7 @@ Generated images, audio scripts, and reports should use `GcsArtifactService` wit
 ```python
 from google.adk.artifacts import GcsArtifactService
 
-artifact_service = GcsArtifactService(bucket_name="caria-artifacts")
+artifact_service = GcsArtifactService(bucket_name="olaf-artifacts")
 ```
 
 #### 6. Session State Strategy

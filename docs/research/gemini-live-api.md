@@ -1,7 +1,7 @@
 # Gemini Live API — Research Notes
 
 **Date:** 2026-02-28
-**Purpose:** Technical research for CARIA elderly care companion
+**Purpose:** Technical research for OLAF elderly care companion
 **Sources:** Google AI for Developers docs, Vertex AI docs, GitHub examples, Google Colab notebooks
 
 ---
@@ -91,7 +91,7 @@ The setup message is sent once immediately after WebSocket connection. It config
       "enableAffectiveDialog": true
     },
     "systemInstruction": {
-      "parts": [{ "text": "You are CARIA, a warm patient elderly care companion..." }]
+      "parts": [{ "text": "You are OLAF, a warm patient elderly care companion..." }]
     },
     "tools": [
       { "functionDeclarations": [...] },
@@ -232,7 +232,7 @@ Native audio models support all Google TTS voices. The core prebuilt voices are:
 | **Orus** | Clear |
 | **Zephyr** | Light |
 
-**CARIA recommendation:** `Kore` or `Leda` — professional yet warm for elderly users.
+**OLAF recommendation:** `Kore` or `Leda` — professional yet warm for elderly users.
 
 ### Audio Transcription
 
@@ -250,7 +250,7 @@ Transcriptions arrive as separate server messages:
 - `serverContent.inputTranscription.text` — what the user said
 - `serverContent.outputTranscription.text` — what the model said
 
-**Important for CARIA:** Enable both to log conversations for health reports and memory journal.
+**Important for OLAF:** Enable both to log conversations for health reports and memory journal.
 
 ---
 
@@ -335,7 +335,7 @@ await ws.send(json.dumps(msg))
 }
 ```
 
-**CARIA note:** Video is critical for medication bottle scanning. The model can read text from webcam frames when sent as JPEG at reasonable quality.
+**OLAF note:** Video is critical for medication bottle scanning. The model can read text from webcam frames when sent as JPEG at reasonable quality.
 
 ---
 
@@ -401,7 +401,7 @@ session.sendRealtimeInput({ activityEnd: {} });
 session.sendRealtimeInput({ audioStreamEnd: true });
 ```
 
-### CARIA Recommendation for Elderly Users
+### OLAF Recommendation for Elderly Users
 
 - Use `START_SENSITIVITY_LOW` — elderly users may make non-speech sounds (coughing, breathing)
 - Use `END_SENSITIVITY_LOW` with higher `silenceDurationMs` (500-1000ms) — elderly users pause more between words
@@ -545,7 +545,7 @@ session.sendToolResponse({
 - `WHEN_IDLE` — Wait until model finishes current response
 - `SILENT` — Absorb knowledge without interrupting
 
-**CARIA recommendation:**
+**OLAF recommendation:**
 - `analyze_medication` → blocking (user is waiting for answer)
 - `flag_emotional_distress` → `NON_BLOCKING` + `SILENT` (don't disrupt conversation)
 - `log_health_checkin` → `NON_BLOCKING` + `SILENT` (background logging)
@@ -661,7 +661,7 @@ if (message.goAway) {
 }
 ```
 
-### CARIA Long Conversation Strategy
+### OLAF Long Conversation Strategy
 
 1. Enable `contextWindowCompression` with `slidingWindow` on every session
 2. Enable `sessionResumption` on every session
@@ -752,7 +752,7 @@ token = client.auth_tokens.create(
         'live_connect_constraints': {
             'model': 'gemini-2.5-flash-native-audio-preview-12-2025',
             'config': {
-                'system_instruction': 'You are CARIA, a warm elderly care companion...',
+                'system_instruction': 'You are OLAF, a warm elderly care companion...',
                 'session_resumption': {},
                 'temperature': 0.7,
                 'response_modalities': ['AUDIO'],
@@ -798,11 +798,11 @@ const ws = new WebSocket(
 
 Or via header: `Authorization: Token <ephemeral_token>`
 
-### CARIA Token Strategy
+### OLAF Token Strategy
 
 1. User logs in via Firebase Auth
 2. Frontend calls `POST /api/gemini/token` (authenticated)
-3. Backend validates Firebase token, creates ephemeral token with locked CARIA config
+3. Backend validates Firebase token, creates ephemeral token with locked OLAF config
 4. Frontend connects directly to Gemini Live API
 5. Token expires after 30 min; frontend requests new token on reconnect
 6. System instructions + tools are locked server-side (user can't tamper)
@@ -833,7 +833,7 @@ Supported models: `gemini-2.5-flash-native-audio-preview-12-2025`, `gemini-2.5-f
 - **Native audio:** Model directly understands and generates audio. Better voice quality, tone, emotion. Supports affective dialog. 128k context. Fewer tool types supported.
 - **Half-cascade:** Speech-to-text → LLM → text-to-speech pipeline. More tool support but higher latency. 32k context.
 
-**CARIA uses native audio** for the lowest latency and most natural voice interaction with elderly users.
+**OLAF uses native audio** for the lowest latency and most natural voice interaction with elderly users.
 
 ---
 
@@ -859,7 +859,7 @@ Supported models: `gemini-2.5-flash-native-audio-preview-12-2025`, `gemini-2.5-f
 
 **Note:** Specific Live API RPM/TPM numbers are not publicly documented. Check Google AI Studio for your project's active limits.
 
-### Cost Estimate for CARIA
+### Cost Estimate for OLAF
 
 A 15-minute voice session at ~16kHz PCM:
 - ~30MB raw audio input → ~1.5M audio tokens input
@@ -873,7 +873,7 @@ A 15-minute voice session at ~16kHz PCM:
 
 ## 12. Client-to-Server vs Server-to-Server Architecture
 
-### Client-to-Server (Recommended for CARIA)
+### Client-to-Server (Recommended for OLAF)
 
 ```
 Browser → WebSocket → Gemini Live API
@@ -907,7 +907,7 @@ Browser → WebSocket → Your Server → WebSocket → Gemini Live API
 - Must handle WebSocket scaling yourself
 - More complex infrastructure
 
-### CARIA Architecture Decision
+### OLAF Architecture Decision
 
 **Client-to-server** with locked ephemeral tokens. The backend only handles:
 1. Ephemeral token provisioning (locked config)
@@ -916,21 +916,21 @@ Browser → WebSocket → Your Server → WebSocket → Gemini Live API
 
 ---
 
-## 13. Complete Working Example — CARIA Voice Companion
+## 13. Complete Working Example — OLAF Voice Companion
 
 ### Browser Client (TypeScript)
 
 ```typescript
 import { GoogleGenAI, Modality } from '@google/genai';
 
-interface CARIACompanionConfig {
+interface OLAFCompanionConfig {
   userId: string;
   firebaseToken: string;
   onTranscript: (who: 'user' | 'model', text: string) => void;
   onStatusChange: (status: 'connecting' | 'connected' | 'disconnected') => void;
 }
 
-class CARIACompanion {
+class OLAFCompanion {
   private session: any = null;
   private audioContext: AudioContext | null = null;
   private mediaStream: MediaStream | null = null;
@@ -938,7 +938,7 @@ class CARIACompanion {
   private audioPlaybackQueue: ArrayBuffer[] = [];
   private isPlaying = false;
 
-  constructor(private config: CARIACompanionConfig) {}
+  constructor(private config: OLAFCompanionConfig) {}
 
   async connect() {
     this.config.onStatusChange('connecting');

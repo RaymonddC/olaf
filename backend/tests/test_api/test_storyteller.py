@@ -14,7 +14,7 @@ def _make_memory(memory_id: str) -> MemoryChapterDoc:
         memory_id=memory_id,
         title="My Wedding Day",
         narrative_text="It was a beautiful summer day in 1968...",
-        illustration_urls=["https://storage.googleapis.com/caria-artifacts/img/abc.jpg"],
+        illustration_urls=["https://storage.googleapis.com/olaf-artifacts/img/abc.jpg"],
         snippet="It was a beautiful summer day in 1968",
         tags=["wedding", "family", "1968"],
         status="complete",

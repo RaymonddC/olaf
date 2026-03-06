@@ -1,4 +1,4 @@
-"""CARIA agent tools."""
+"""OLAF agent tools."""
 
 from .storyteller_tools import (
     generate_illustration,

@@ -1,6 +1,6 @@
-"""CARIA Backend — FastAPI entry point.
+"""OLAF Backend — FastAPI entry point.
 
-Combines ADK's built-in agent endpoints with custom CARIA API routes.
+Combines ADK's built-in agent endpoints with custom OLAF API routes.
 Initialises Firebase Admin SDK and mounts all route handlers.
 """
 
@@ -76,7 +76,7 @@ def create_app():
         web=settings.enable_dev_ui,
     )
 
-    # ── Custom CARIA API routes ─────────────────────────────────────────
+    # ── Custom OLAF API routes ─────────────────────────────────────────
     from api.routes import (
         auth,
         gemini_token,
@@ -104,7 +104,7 @@ def create_app():
     async def health_check():
         return {"status": "healthy"}
 
-    logger.info("CARIA backend started with %d custom route groups", 9)
+    logger.info("OLAF backend started with %d custom route groups", 9)
     return app
 
 

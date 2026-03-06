@@ -1,4 +1,4 @@
-"""CARIA — Firestore service layer.
+"""OLAF — Firestore service layer.
 
 Provides CRUD operations for all Firestore collections using the
 subcollection pattern: users/{uid}/conversations/{id}, etc.
@@ -35,7 +35,7 @@ def _new_id() -> str:
 
 
 class FirestoreService:
-    """Encapsulates all Firestore CRUD operations for CARIA."""
+    """Encapsulates all Firestore CRUD operations for OLAF."""
 
     def __init__(self, db: firestore.Client | None = None):
         self.db = db or firestore.Client()

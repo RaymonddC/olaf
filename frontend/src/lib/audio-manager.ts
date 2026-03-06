@@ -89,7 +89,7 @@ export class AudioManager {
    * Start microphone capture and prepare playback context.
    *
    * @param onAudioChunk - Called with base64-encoded 16 kHz PCM chunks
-   * @param onPlaybackStateChange - Called when CARIA starts/stops speaking
+   * @param onPlaybackStateChange - Called when OLAF starts/stops speaking
    */
   async start(
     onAudioChunk: (base64: string) => void,

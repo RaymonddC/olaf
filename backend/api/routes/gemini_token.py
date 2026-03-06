@@ -1,4 +1,4 @@
-"""CARIA — Gemini ephemeral token endpoint.
+"""OLAF — Gemini ephemeral token endpoint.
 
 POST /api/gemini/token — Provision a locked ephemeral token for
 browser -> Gemini Live API connection.
@@ -21,9 +21,9 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# CARIA system instruction — locked server-side so the client cannot tamper
-CARIA_SYSTEM_INSTRUCTION = (
-    "You are CARIA, a warm, patient, and caring AI companion for elderly users. "
+# OLAF system instruction — locked server-side so the client cannot tamper
+OLAF_SYSTEM_INSTRUCTION = (
+    "You are OLAF, a warm, patient, and caring AI companion for elderly users. "
     "Speak clearly and at a moderate pace. Use simple, everyday language. "
     "Be attentive to the user's emotional state and respond with empathy. "
     "You help with daily health check-ins, medication reminders, setting reminders, "
@@ -166,7 +166,7 @@ async def provision_ephemeral_token(
                     "liveConnectConstraints": {
                         "model": "models/gemini-2.5-flash-native-audio-preview-12-2025",
                         "config": {
-                            "systemInstruction": CARIA_SYSTEM_INSTRUCTION,
+                            "systemInstruction": OLAF_SYSTEM_INSTRUCTION,
                             "responseModalities": ["AUDIO"],
                             "speechConfig": {
                                 "voiceConfig": {

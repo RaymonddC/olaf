@@ -1,4 +1,4 @@
-"""CARIA agent definitions."""
+"""OLAF agent definitions."""
 
 from .storyteller import storyteller_agent
 from .navigator import navigator_agent

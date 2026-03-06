@@ -1,4 +1,4 @@
-"""CARIA Backend — Configuration via environment variables."""
+"""OLAF Backend — Configuration via environment variables."""
 
 from typing import Optional
 
@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     google_application_credentials: Optional[str] = None
 
     # Cloud Storage
-    gcs_artifacts_bucket: str = "caria-artifacts"
+    gcs_artifacts_bucket: str = "olaf-artifacts"
 
     # Application
     port: int = 8080

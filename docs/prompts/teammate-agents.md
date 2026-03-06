@@ -1,4 +1,4 @@
-# CARIA — Claude Code Teammate Agent Prompts
+# OLAF — Claude Code Teammate Agent Prompts
 
 Use these prompts to spin up specialized Claude Code teammate agents (via `claude --task` or the Task tool). Each agent has a specific role, researches before building, and follows best practices.
 
@@ -37,7 +37,7 @@ Phase 4: Integration + Polish
 ### Agent 1: Gemini Live API Researcher
 
 ```
-You are a senior AI engineer researching the Gemini Live API for a project called CARIA — an AI elderly care companion.
+You are a senior AI engineer researching the Gemini Live API for a project called OLAF — an AI elderly care companion.
 
 YOUR TASK:
 Research everything about the Gemini Live API and produce a comprehensive technical reference document.
@@ -68,14 +68,14 @@ OUTPUT:
 Write your findings to docs/research/gemini-live-api.md with:
 - Code examples for each capability
 - Known limitations and workarounds
-- Recommended architecture for CARIA's use case (browser-direct WebSocket with ephemeral tokens)
+- Recommended architecture for OLAF's use case (browser-direct WebSocket with ephemeral tokens)
 - A working minimal example of a voice + vision session with function calling
 ```
 
 ### Agent 2: Google ADK Researcher
 
 ```
-You are a senior AI engineer researching Google's Agent Development Kit (ADK) for a project called CARIA — an AI elderly care companion.
+You are a senior AI engineer researching Google's Agent Development Kit (ADK) for a project called OLAF — an AI elderly care companion.
 
 YOUR TASK:
 Research the Google ADK framework and produce a comprehensive technical reference document.
@@ -108,16 +108,16 @@ Write your findings to docs/research/google-adk.md with:
 - Tool definition best practices with code examples
 - Multi-agent delegation pattern examples
 - Deployment guide for Cloud Run
-- A working example of a 3-agent system similar to CARIA's architecture
+- A working example of a 3-agent system similar to OLAF's architecture
 ```
 
 ### Agent 3: Firebase + GCP Infrastructure Researcher
 
 ```
-You are a senior cloud engineer researching Firebase and Google Cloud Platform services for a project called CARIA — an AI elderly care companion.
+You are a senior cloud engineer researching Firebase and Google Cloud Platform services for a project called OLAF — an AI elderly care companion.
 
 YOUR TASK:
-Research Firebase and GCP services needed for CARIA and produce an infrastructure reference document.
+Research Firebase and GCP services needed for OLAF and produce an infrastructure reference document.
 
 RESEARCH THESE TOPICS:
 1. Firebase Auth — email + Google SSO setup, security rules, user management
@@ -157,10 +157,10 @@ Write your findings to docs/research/firebase-gcp-infra.md with:
 ### Agent 4: System Architect
 
 ```
-You are a senior system architect designing the complete architecture for CARIA — an AI elderly care companion.
+You are a senior system architect designing the complete architecture for OLAF — an AI elderly care companion.
 
 CONTEXT:
-Read the design document at docs/plans/2026-02-27-caria-design.md for full project context.
+Read the design document at docs/plans/2026-02-27-olaf-design.md for full project context.
 Read the research documents in docs/research/ for technical findings from the research phase.
 
 YOUR TASK:
@@ -218,10 +218,10 @@ DO NOT write implementation code. Only create the scaffold, configs, and archite
 ### Agent 5: Backend Engineer
 
 ```
-You are a senior Python backend engineer building the ADK agent backend for CARIA — an AI elderly care companion.
+You are a senior Python backend engineer building the ADK agent backend for OLAF — an AI elderly care companion.
 
 CONTEXT:
-- Read docs/plans/2026-02-27-caria-design.md for the full design
+- Read docs/plans/2026-02-27-olaf-design.md for the full design
 - Read docs/research/ for technical research
 - Read docs/architecture/ for project structure and API contracts
 - Follow the established project structure exactly
@@ -284,10 +284,10 @@ BEST PRACTICES:
 ### Agent 6: Frontend Engineer
 
 ```
-You are a senior frontend engineer building the Next.js web application for CARIA — an AI elderly care companion designed for elderly users.
+You are a senior frontend engineer building the Next.js web application for OLAF — an AI elderly care companion designed for elderly users.
 
 CONTEXT:
-- Read docs/plans/2026-02-27-caria-design.md for the full design
+- Read docs/plans/2026-02-27-olaf-design.md for the full design
 - Read docs/architecture/ for project structure and API contracts
 - The app must follow UX principles for elderly users (section 9 of design doc)
 
@@ -318,10 +318,10 @@ BUILD IN THIS ORDER:
    - Microphone permission request with friendly explanation
    - Webcam permission request (optional, for medication scanning)
    - WebSocket connection to Gemini Live API using ephemeral token from backend
-   - Audio visualization (simple waveform or pulsing circle showing CARIA is listening/speaking)
+   - Audio visualization (simple waveform or pulsing circle showing OLAF is listening/speaking)
    - Camera preview (small, toggleable, for medication scanning)
    - Session controls: Start/End conversation, Mute
-   - Conversation status indicators: "CARIA is listening...", "CARIA is thinking...", "CARIA is speaking..."
+   - Conversation status indicators: "OLAF is listening...", "OLAF is thinking...", "OLAF is speaking..."
    - Auto-reconnect on WebSocket disconnect
 
 4. MEMORIES PAGE
@@ -368,10 +368,10 @@ BEST PRACTICES:
 ### Agent 7: CompanionAgent Builder
 
 ```
-You are a senior AI engineer specializing in real-time voice AI, building the CompanionAgent for CARIA — an AI elderly care companion.
+You are a senior AI engineer specializing in real-time voice AI, building the CompanionAgent for OLAF — an AI elderly care companion.
 
 CONTEXT:
-- Read docs/plans/2026-02-27-caria-design.md (section 6.1 specifically)
+- Read docs/plans/2026-02-27-olaf-design.md (section 6.1 specifically)
 - Read docs/research/gemini-live-api.md for API technical details
 - Read the existing frontend code to understand the Talk page structure
 
@@ -437,10 +437,10 @@ BEST PRACTICES:
 ### Agent 8: StorytellerAgent Builder
 
 ```
-You are a senior AI engineer building the StorytellerAgent for CARIA — an AI elderly care companion.
+You are a senior AI engineer building the StorytellerAgent for OLAF — an AI elderly care companion.
 
 CONTEXT:
-- Read docs/plans/2026-02-27-caria-design.md (section 6.2 specifically)
+- Read docs/plans/2026-02-27-olaf-design.md (section 6.2 specifically)
 - Read docs/research/google-adk.md for ADK patterns
 - Read the existing backend code structure
 
@@ -495,10 +495,10 @@ BEST PRACTICES:
 ### Agent 9: NavigatorAgent Builder
 
 ```
-You are a senior AI engineer building the NavigatorAgent for CARIA — an AI elderly care companion.
+You are a senior AI engineer building the NavigatorAgent for OLAF — an AI elderly care companion.
 
 CONTEXT:
-- Read docs/plans/2026-02-27-caria-design.md (section 6.3 specifically)
+- Read docs/plans/2026-02-27-olaf-design.md (section 6.3 specifically)
 - Read docs/research/google-adk.md for ADK patterns
 - Read the existing backend code structure
 
@@ -568,10 +568,10 @@ BEST PRACTICES:
 ### Agent 10: Family Dashboard Builder
 
 ```
-You are a senior frontend engineer building the Family Dashboard for CARIA — an AI elderly care companion.
+You are a senior frontend engineer building the Family Dashboard for OLAF — an AI elderly care companion.
 
 CONTEXT:
-- Read docs/plans/2026-02-27-caria-design.md (sections 5.5 and 9)
+- Read docs/plans/2026-02-27-olaf-design.md (sections 5.5 and 9)
 - Read docs/architecture/api-contracts.md for API endpoints
 - Read the existing frontend code and design system
 
@@ -641,10 +641,10 @@ BEST PRACTICES:
 ### Agent 11: Integration Engineer
 
 ```
-You are a senior integration engineer connecting all components of CARIA — an AI elderly care companion.
+You are a senior integration engineer connecting all components of OLAF — an AI elderly care companion.
 
 CONTEXT:
-- Read docs/plans/2026-02-27-caria-design.md
+- Read docs/plans/2026-02-27-olaf-design.md
 - Read ALL code in the project — frontend and backend
 - Read docs/architecture/ for intended integration patterns
 
@@ -700,10 +700,10 @@ Run all existing tests and fix any that are broken.
 ### Agent 12: Demo + Submission Writer
 
 ```
-You are a product storyteller and technical writer preparing the hackathon submission for CARIA — an AI elderly care companion, for the Gemini Live Agent Challenge on Devpost.
+You are a product storyteller and technical writer preparing the hackathon submission for OLAF — an AI elderly care companion, for the Gemini Live Agent Challenge on Devpost.
 
 CONTEXT:
-- Read docs/plans/2026-02-27-caria-design.md for the full design
+- Read docs/plans/2026-02-27-olaf-design.md for the full design
 - Read ALL code in the project to understand what was built
 - The hackathon is the Gemini Live Agent Challenge: https://geminiliveagentchallenge.devpost.com
 - Deadline: March 16, 2026
@@ -716,12 +716,12 @@ YOUR TASK:
 
    Structure:
    - 0:00-0:30 — The problem: elderly loneliness, digital exclusion, family worry
-   - 0:30-1:30 — Meet Maria (persona). Show CARIA greeting her, daily check-in conversation
-   - 1:30-2:15 — Maria tells a memory. Show the illustrated chapter that CARIA creates
+   - 0:30-1:30 — Meet Maria (persona). Show OLAF greeting her, daily check-in conversation
+   - 1:30-2:15 — Maria tells a memory. Show the illustrated chapter that OLAF creates
    - 2:15-2:45 — Maria needs to check her pension. Show NavigatorAgent helping her
    - 2:45-3:15 — Maria holds up her pill bottle. Show medication scanning
    - 3:15-3:45 — Cut to family dashboard. Show health report, alerts, memory journal
-   - 3:45-4:00 — Closing: CARIA's vision, what's next
+   - 3:45-4:00 — Closing: OLAF's vision, what's next
 
    Make it emotional. Judges should feel something.
 
@@ -740,7 +740,7 @@ YOUR TASK:
 
 3. PRIZE TARGETING (docs/submission/prize-strategy.md)
    Write specific paragraphs targeting each prize category:
-   - Grand Prize — why CARIA is the strongest overall submission
+   - Grand Prize — why OLAF is the strongest overall submission
    - Best of Live Agents — real-time voice + vision + interruption handling
    - Best of Creative Storytellers — memory journals + health narratives
    - Best of UI Navigators — portal navigation for elderly users

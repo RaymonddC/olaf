@@ -1,4 +1,4 @@
-"""CARIA root agent definition.
+"""OLAF root agent definition.
 
 Exports `root_agent` as required by ADK convention.
 The coordinator routes requests to storyteller, navigator, or alert agents.

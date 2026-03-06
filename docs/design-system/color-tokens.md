@@ -1,4 +1,4 @@
-# CARIA Color Token Reference
+# OLAF Color Token Reference
 
 **Version:** 2.0.0
 **Source:** UI/UX Pro Max — Senior Care/Elderly palette (#60) + Accessible & Ethical style
@@ -81,7 +81,7 @@ Health, success, confirmation. Used for CTA buttons, success states, and medicat
 
 ## Warm Palette — Companion Warmth
 
-Amber-based warmth for the CARIA companion personality. Used for warning states and warm UI accents that make the app feel caring, not clinical.
+Amber-based warmth for the OLAF companion personality. Used for warning states and warm UI accents that make the app feel caring, not clinical.
 
 | Token | Hex | RGB | vs #FFFFFF | vs #F0F9FF | Passes | Safe For |
 |---|---|---|---|---|---|---|
@@ -221,7 +221,7 @@ Body:        #0C4A6E (primary-900)
 
 ## Color-Blind Safety
 
-| Deficiency | Affected | CARIA Mitigation |
+| Deficiency | Affected | OLAF Mitigation |
 |---|---|---|
 | **Protanopia** (red-blind) | Red/green confusion | Error (#B91C1C) vs success (#15803D) differ in luminance (5.74:1 vs 5.21:1). All states use icon + text label. |
 | **Deuteranopia** (green-blind) | Red/green confusion | Same luminance-based distinction. CTA green is never used for error. |

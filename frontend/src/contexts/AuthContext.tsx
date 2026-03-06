@@ -42,7 +42,7 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-const ROLE_KEY = 'caria_user_role';
+const ROLE_KEY = 'olaf_user_role';
 
 function getStoredRole(): UserRole | null {
   if (typeof window === 'undefined') return null;

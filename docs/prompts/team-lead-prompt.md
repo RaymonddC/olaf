@@ -1,12 +1,12 @@
-# CARIA — Team Lead Master Prompt
+# OLAF — Team Lead Master Prompt
 
-You are the **Team Lead** for building CARIA — an AI Elderly Care Companion. You will orchestrate a team of specialized Claude Code agents to research, architect, and build this project.
+You are the **Team Lead** for building OLAF — an AI Elderly Care Companion. You will orchestrate a team of specialized Claude Code agents to research, architect, and build this project.
 
 ---
 
 ## PROJECT OVERVIEW
 
-CARIA is a web application (Next.js PWA + Python ADK backend) for the **Gemini Live Agent Challenge** hackathon (Devpost). Deadline: **March 16, 2026**.
+OLAF is a web application (Next.js PWA + Python ADK backend) for the **Gemini Live Agent Challenge** hackathon (Devpost). Deadline: **March 16, 2026**.
 
 It has 4 AI agents:
 - **CompanionAgent** — real-time voice + vision companion via Gemini Live API (runs in browser, WebSocket direct)
@@ -16,7 +16,7 @@ It has 4 AI agents:
 
 Architecture: **Hybrid** — Gemini Live API direct from browser for voice, ADK on Cloud Run for everything else.
 
-**IMPORTANT:** Read `docs/plans/2026-02-27-caria-design.md` first — it contains the complete design with agent definitions, data model, tech stack, feature scope, and UX principles. That is your source of truth.
+**IMPORTANT:** Read `docs/plans/2026-02-27-olaf-design.md` first — it contains the complete design with agent definitions, data model, tech stack, feature scope, and UX principles. That is your source of truth.
 
 ---
 
@@ -48,9 +48,9 @@ mode: "bypassPermissions"
 ```
 Prompt:
 ```
-You are a senior AI engineer researching the Gemini Live API for CARIA — an AI elderly care companion.
+You are a senior AI engineer researching the Gemini Live API for OLAF — an AI elderly care companion.
 
-FIRST: Read docs/plans/2026-02-27-caria-design.md for full project context.
+FIRST: Read docs/plans/2026-02-27-olaf-design.md for full project context.
 
 YOUR TASK: Research the Gemini Live API thoroughly and write docs/research/gemini-live-api.md
 
@@ -77,7 +77,7 @@ OUTPUT to docs/research/gemini-live-api.md:
 - Technical specs for each capability
 - Working code examples (JavaScript/TypeScript for browser, Python for server)
 - Known limitations and workarounds
-- Recommended approach for CARIA (browser-direct WebSocket with ephemeral tokens)
+- Recommended approach for OLAF (browser-direct WebSocket with ephemeral tokens)
 - Minimal working example of voice + vision + function calling
 
 THEN: Re-read the design doc and check if the CompanionAgent design (section 6.1) is compatible with what the API actually supports. If you find discrepancies, update the design doc — add your changes under a "## Design Updates (Post-Research)" section at the bottom.
@@ -90,9 +90,9 @@ mode: "bypassPermissions"
 ```
 Prompt:
 ```
-You are a senior AI engineer researching Google's Agent Development Kit (ADK) for CARIA — an AI elderly care companion.
+You are a senior AI engineer researching Google's Agent Development Kit (ADK) for OLAF — an AI elderly care companion.
 
-FIRST: Read docs/plans/2026-02-27-caria-design.md for full project context.
+FIRST: Read docs/plans/2026-02-27-olaf-design.md for full project context.
 
 YOUR TASK: Research the Google ADK framework and write docs/research/google-adk.md
 
@@ -121,7 +121,7 @@ OUTPUT to docs/research/google-adk.md:
 - Session and state management
 - Cloud Run deployment configuration
 - How to serve agents via REST API
-- Working multi-agent example similar to CARIA's architecture
+- Working multi-agent example similar to OLAF's architecture
 
 THEN: Re-read the design doc and check if the agent hierarchy (Root → Storyteller/Navigator/Alert) is the right pattern. Check if tool signatures are ADK-compatible. If you find improvements, update the design doc under "## Design Updates (Post-Research)".
 ```
@@ -133,9 +133,9 @@ mode: "bypassPermissions"
 ```
 Prompt:
 ```
-You are a senior cloud engineer researching Firebase and GCP services for CARIA — an AI elderly care companion.
+You are a senior cloud engineer researching Firebase and GCP services for OLAF — an AI elderly care companion.
 
-FIRST: Read docs/plans/2026-02-27-caria-design.md for full project context.
+FIRST: Read docs/plans/2026-02-27-olaf-design.md for full project context.
 
 YOUR TASK: Research all Firebase/GCP services and write docs/research/firebase-gcp-infra.md
 
@@ -183,10 +183,10 @@ mode: "bypassPermissions"
 ```
 Prompt:
 ```
-You are a senior system architect for CARIA — an AI elderly care companion.
+You are a senior system architect for OLAF — an AI elderly care companion.
 
 FIRST: Read these documents in order:
-1. docs/plans/2026-02-27-caria-design.md (the design)
+1. docs/plans/2026-02-27-olaf-design.md (the design)
 2. docs/research/gemini-live-api.md (Gemini Live API research)
 3. docs/research/google-adk.md (ADK research)
 4. docs/research/firebase-gcp-infra.md (infrastructure research)
@@ -243,10 +243,10 @@ mode: "bypassPermissions"
 ```
 Prompt:
 ```
-You are a senior Python backend engineer building the ADK backend for CARIA.
+You are a senior Python backend engineer building the ADK backend for OLAF.
 
 FIRST: Read ALL docs in this order:
-1. docs/plans/2026-02-27-caria-design.md
+1. docs/plans/2026-02-27-olaf-design.md
 2. docs/research/ (all files)
 3. docs/architecture/ (all files — follow the project structure and API contracts EXACTLY)
 
@@ -314,10 +314,10 @@ mode: "bypassPermissions"
 ```
 Prompt:
 ```
-You are a senior frontend engineer building the Next.js app for CARIA — designed for elderly users.
+You are a senior frontend engineer building the Next.js app for OLAF — designed for elderly users.
 
 FIRST: Read ALL docs:
-1. docs/plans/2026-02-27-caria-design.md (especially section 9 — UX principles)
+1. docs/plans/2026-02-27-olaf-design.md (especially section 9 — UX principles)
 2. docs/architecture/ (project structure, API contracts)
 3. Look at the backend code to understand API shapes
 
@@ -345,7 +345,7 @@ BUILD IN THIS ORDER:
    - Audio visualization (pulsing circle or waveform)
    - Camera preview toggle for medication scanning
    - Session controls: Start/End, Mute
-   - Status: "CARIA is listening...", "thinking...", "speaking..."
+   - Status: "OLAF is listening...", "thinking...", "speaking..."
    - NOTE: The actual Gemini Live API connection will be built by companion-builder. Just create the UI shell and hooks interface.
 
 4. MEMORIES PAGE
@@ -382,10 +382,10 @@ mode: "bypassPermissions"
 ```
 Prompt:
 ```
-You are a senior AI engineer building the browser-side CompanionAgent for CARIA.
+You are a senior AI engineer building the browser-side CompanionAgent for OLAF.
 
 FIRST: Read:
-1. docs/plans/2026-02-27-caria-design.md (section 6.1)
+1. docs/plans/2026-02-27-olaf-design.md (section 6.1)
 2. docs/research/gemini-live-api.md
 3. The existing frontend code (especially the Talk page)
 
@@ -439,10 +439,10 @@ mode: "bypassPermissions"
 ```
 Prompt:
 ```
-You are a senior AI engineer building the StorytellerAgent for CARIA.
+You are a senior AI engineer building the StorytellerAgent for OLAF.
 
 FIRST: Read:
-1. docs/plans/2026-02-27-caria-design.md (section 6.2)
+1. docs/plans/2026-02-27-olaf-design.md (section 6.2)
 2. docs/research/google-adk.md
 3. The existing backend code structure
 
@@ -473,10 +473,10 @@ mode: "bypassPermissions"
 ```
 Prompt:
 ```
-You are a senior AI engineer building the NavigatorAgent for CARIA.
+You are a senior AI engineer building the NavigatorAgent for OLAF.
 
 FIRST: Read:
-1. docs/plans/2026-02-27-caria-design.md (section 6.3)
+1. docs/plans/2026-02-27-olaf-design.md (section 6.3)
 2. docs/research/google-adk.md
 3. The existing backend code structure
 
@@ -510,10 +510,10 @@ mode: "bypassPermissions"
 ```
 Prompt:
 ```
-You are a senior frontend engineer building the Family Dashboard for CARIA.
+You are a senior frontend engineer building the Family Dashboard for OLAF.
 
 FIRST: Read:
-1. docs/plans/2026-02-27-caria-design.md (sections 5.5, 9)
+1. docs/plans/2026-02-27-olaf-design.md (sections 5.5, 9)
 2. docs/architecture/api-contracts.md
 3. The existing frontend code and design system components
 
@@ -543,9 +543,9 @@ mode: "bypassPermissions"
 ```
 Prompt:
 ```
-You are a senior integration engineer for CARIA.
+You are a senior integration engineer for OLAF.
 
-Read docs/plans/2026-02-27-caria-design.md and ALL code in the project.
+Read docs/plans/2026-02-27-olaf-design.md and ALL code in the project.
 
 YOUR TASK: Connect all components and verify end-to-end flows work.
 
@@ -569,9 +569,9 @@ mode: "bypassPermissions"
 ```
 Prompt:
 ```
-You are a product storyteller preparing the hackathon submission for CARIA.
+You are a product storyteller preparing the hackathon submission for OLAF.
 
-Read docs/plans/2026-02-27-caria-design.md and ALL code to understand what was built.
+Read docs/plans/2026-02-27-olaf-design.md and ALL code to understand what was built.
 
 Hackathon: Gemini Live Agent Challenge (https://geminiliveagentchallenge.devpost.com)
 Deadline: March 16, 2026
@@ -606,7 +606,7 @@ After all phases, the project should have:
 ```
 olaf/
 ├── docs/
-│   ├── plans/2026-02-27-caria-design.md          (exists — the design)
+│   ├── plans/2026-02-27-olaf-design.md          (exists — the design)
 │   ├── research/
 │   │   ├── gemini-live-api.md                     (Phase 1)
 │   │   ├── google-adk.md                          (Phase 1)

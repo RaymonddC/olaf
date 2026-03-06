@@ -1,6 +1,6 @@
 {
-  "name": "CARIA — AI Care Companion",
-  "short_name": "CARIA",
+  "name": "OLAF — AI Care Companion",
+  "short_name": "OLAF",
   "description": "AI-powered elderly care companion with voice, stories, and navigation",
   "start_url": "/",
   "display": "standalone",

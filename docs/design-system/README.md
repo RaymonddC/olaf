@@ -1,4 +1,4 @@
-# CARIA Design System
+# OLAF Design System
 
 **Version:** 2.0.0
 **Last Updated:** 2026-03-01
@@ -25,12 +25,12 @@ Every design decision prioritizes the needs of users aged 65+. When there is a c
 | **Consistency** | Layout never shifts between visits. Navigation is always in the same place. Patterns repeat predictably. No content jumping (reserve space for async content). |
 | **Calm Feedback** | Always show loading states (skeleton screens, not spinners). Use gentle animations. No sudden movements, no auto-playing content. |
 | **Touch-Friendly** | Minimum 48x48px touch targets (exceeds WCAG 44px minimum). 8px+ gap between targets. Generous spacing to prevent mis-taps. |
-| **No Jargon** | "Talk to CARIA" not "Initialize Voice Session". Every label uses plain, familiar language. |
+| **No Jargon** | "Talk to OLAF" not "Initialize Voice Session". Every label uses plain, familiar language. |
 | **Semantic HTML** | Use `<nav>`, `<main>`, `<article>`, `<button>` — never div soup. Screen readers rely on semantics. |
 
 ### Accessibility Commitment (WCAG AAA Target)
 
-| Requirement | Standard | CARIA Target |
+| Requirement | Standard | OLAF Target |
 |---|---|---|
 | Normal text contrast | WCAG AA: 4.5:1 | **WCAG AAA: 7:1** |
 | Large text contrast (24px+) | WCAG AA: 3:1 | **WCAG AAA: 4.5:1** |
@@ -45,7 +45,7 @@ Every design decision prioritizes the needs of users aged 65+. When there is a c
 
 ### Anti-Patterns to Avoid
 
-From UI/UX Pro Max guidelines — these are **never allowed** in CARIA:
+From UI/UX Pro Max guidelines — these are **never allowed** in OLAF:
 
 - Small text below 14px
 - Complex multi-level navigation
@@ -449,16 +449,16 @@ transition: color, background-color, border-color, box-shadow 200ms ease-in-out;
 
 ```
 ┌─────────────────────────────────────┐
-│  CARIA                   [Settings] │  Header
+│  OLAF                   [Settings] │  Header
 │─────────────────────────────────────│
 │                                     │
 │    "Hi Margaret, how are you        │
-│     feeling today?"                 │  Status text (CARIA's last message)
+│     feeling today?"                 │  Status text (OLAF's last message)
 │                                     │
 │            ╭─────────╮              │
 │          ╭─┤         ├─╮            │  Outer: pulsing ring (animate-voice-pulse)
 │          │ │  [Mic]  │ │            │  Inner: primary-700 circle
-│          │ │  CARIA  │ │            │  Icon + label
+│          │ │  OLAF  │ │            │  Icon + label
 │          ╰─┤         ├─╯            │
 │            ╰─────────╯              │
 │                                     │
@@ -478,7 +478,7 @@ transition: color, background-color, border-color, box-shadow 200ms ease-in-out;
 - Voice visualizer: 192px (mobile) / 224px (tablet) pulsing circle
 - Mic button: 64px, primary-700, always visible
 - Camera toggle: secondary button, off by default
-- Status text: shows CARIA's last message as text (hearing-impaired support)
+- Status text: shows OLAF's last message as text (hearing-impaired support)
 - Skip link: "Skip to voice controls"
 
 ### Memories Page
@@ -510,7 +510,7 @@ transition: color, background-color, border-color, box-shadow 200ms ease-in-out;
 - Grid: `grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6`
 - Each card: MemoryChapterCard component, keyboard accessible
 - "Tell a Story" button: primary xl, top-right on desktop, full-width on mobile
-- Empty state: friendly message + "Tell CARIA about your favorite memory"
+- Empty state: friendly message + "Tell OLAF about your favorite memory"
 
 ### Help Page (Navigator)
 
@@ -591,7 +591,7 @@ transition: color, background-color, border-color, box-shadow 200ms ease-in-out;
 ```
 ┌─────────────────────────────────────┐
 │                                     │
-│              CARIA                  │  Logo
+│              OLAF                  │  Logo
 │        Your Care Companion          │  Tagline
 │                                     │
 │    ┌───────────────────────────┐    │

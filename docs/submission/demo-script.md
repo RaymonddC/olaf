@@ -1,4 +1,4 @@
-# CARIA — 4-Minute Demo Script
+# OLAF — 4-Minute Demo Script
 
 **Hackathon:** Gemini Live Agent Challenge
 **Target runtime:** 3:50 – 4:00
@@ -20,7 +20,7 @@
 >
 > Her name is Maria. She is 76 years old. And today — for the first time — she has someone to talk to who always has time."
 
-*[Fade in: CARIA logo. Soft ambient sound. Title card: "CARIA — AI Elderly Care Companion"]*
+*[Fade in: OLAF logo. Soft ambient sound. Title card: "OLAF — AI Elderly Care Companion"]*
 
 ---
 
@@ -30,17 +30,17 @@
 
 **Voiceover:**
 
-> "CARIA's talk page is Maria's front door. One button. That's it."
+> "OLAF's talk page is Maria's front door. One button. That's it."
 
 *[Demo: Maria taps the microphone. The circular AudioVisualizer begins its gentle pulse. Status shows "Connecting..." then "Listening".]*
 
 **Voiceover:**
 
-> "In the background, CARIA requests an ephemeral token from our backend — a cryptographically locked credential that lets the browser connect directly to Gemini's Live API WebSocket. Maria's audio never hits a proxy. The latency is as low as the API allows."
+> "In the background, OLAF requests an ephemeral token from our backend — a cryptographically locked credential that lets the browser connect directly to Gemini's Live API WebSocket. Maria's audio never hits a proxy. The latency is as low as the API allows."
 
-*[Demo: CARIA speaks in a warm voice ("Kore" voice, affective dialog enabled).]*
+*[Demo: OLAF speaks in a warm voice ("Kore" voice, affective dialog enabled).]*
 
-**CARIA (voice, slightly slow, warm):**
+**OLAF (voice, slightly slow, warm):**
 > "Good morning, Maria! How are you feeling today?"
 
 **Maria (voice):**
@@ -48,7 +48,7 @@
 
 *[In real time, the transcript appears below. The model is listening — VAD tuned to LOW sensitivity, 800ms silence threshold, so Maria can pause between words without being cut off.]*
 
-**CARIA:**
+**OLAF:**
 > "I'm sorry to hear that, Maria. Pain of about a five today? I'll make a note. You've had a few days like this — I'll mention it in the report for your daughter."
 
 *[Non-blocking in the background: `log_health_checkin` fires silently — mood tagged "tired", pain level 5, notes logged. Maria doesn't see the tool call. She just experiences a conversation.]*
@@ -68,16 +68,16 @@
 
 *[Camera button activates. JPEG frames at ~1 FPS stream to Gemini's multimodal input.]*
 
-**CARIA:**
+**OLAF:**
 > "I can see the label — Metformin 500mg, twice daily with meals. Your prescription shows you should take this at breakfast and dinner. Have you had breakfast yet?"
 
 **Maria:**
 > "Yes, about an hour ago."
 
-**CARIA:**
+**OLAF:**
 > "Then this morning's dose is the right time. Go ahead and take it now, and I'll remind you again this evening at six."
 
-*[`analyze_medication` fired as a blocking call — Gemini analyzed the label, cross-referenced against Maria's medication list from session state. `set_reminder` scheduled for 18:00, `WHEN_IDLE` scheduling so CARIA confirms at a natural pause.]*
+*[`analyze_medication` fired as a blocking call — Gemini analyzed the label, cross-referenced against Maria's medication list from session state. `set_reminder` scheduled for 18:00, `WHEN_IDLE` scheduling so OLAF confirms at a natural pause.]*
 
 **Voiceover:**
 
@@ -93,14 +93,14 @@
 
 > "But Maria isn't just a list of medications and health scores. She has a life. Forty years of marriage. Three grandchildren. A garden she's tended since 1982."
 
-*[Demo: We play back a brief clip of Maria speaking to CARIA.]*
+*[Demo: We play back a brief clip of Maria speaking to OLAF.]*
 
 **Maria (in session, earlier):**
 > "I remember the morning of my wedding. It rained all night, and my mother said it was bad luck. But when I walked out of the church, the sun came out, and James was standing there with his eyes just... full. That look. I've never forgotten it."
 
 **Voiceover:**
 
-> "When Maria finishes speaking, CARIA saves the transcript and triggers our StorytellerAgent pipeline — three specialized ADK agents working in sequence."
+> "When Maria finishes speaking, OLAF saves the transcript and triggers our StorytellerAgent pipeline — three specialized ADK agents working in sequence."
 
 *[Diagram overlay: `narrative_writer` → `illustrator` → `assembler`]*
 
@@ -116,7 +116,7 @@
 
 ## ACT 4 — The Digital Navigator (2:40 – 3:10)
 
-*[Screen: Navigator session. A live screenshot of a government portal is visible inside the CARIA interface. CARIA's description of what she's doing runs in a panel alongside.]*
+*[Screen: Navigator session. A live screenshot of a government portal is visible inside the OLAF interface. OLAF's description of what she's doing runs in a panel alongside.]*
 
 **Maria (speaking to companion):**
 > "Can you help me check my pension? I can never figure out that website."
@@ -125,17 +125,17 @@
 
 > "Maria just launched our NavigatorAgent — an ADK agent with a live Playwright headless browser running on Cloud Run. It navigates the real web on her behalf."
 
-**CARIA (voice, narrating):**
+**OLAF (voice, narrating):**
 > "I'm opening the pension portal now. I can see a 'Check Status' button — I'm clicking it. It's asking for your ID number. Can you read it out to me and I'll type it in?"
 
 *[Demo: Screenshots stream to the UI in real time. The navigator_guard callback validates every URL before the agent acts. The `ask_user_confirmation` tool pauses before any form submission.]*
 
-**CARIA:**
+**OLAF:**
 > "It says your next payment is scheduled for March 15th, for $1,247. Would you like me to read out the full statement?"
 
 **Voiceover:**
 
-> "The web is not designed for Maria. Government portals, medical booking systems, insurance documents — they assume mouse precision and twenty-year-old eyes. CARIA navigates them for her, narrating every step, never acting without her approval."
+> "The web is not designed for Maria. Government portals, medical booking systems, insurance documents — they assume mouse precision and twenty-year-old eyes. OLAF navigates them for her, narrating every step, never acting without her approval."
 
 ---
 
@@ -172,15 +172,15 @@
 
 **Voiceover:**
 
-> "CARIA is not an app. It is presence.
+> "OLAF is not an app. It is presence.
 >
 > It is the companion that never gets too busy. The memory keeper that never forgets. The navigator that sits beside you on every confusing website. The quiet watchman that tells your daughter when something seems wrong.
 >
 > Built with Gemini's Live API for real-time voice and vision. Google ADK for a four-agent intelligent backend. Imagen 3 for illustrated memories that last a lifetime.
 >
-> CARIA. For the people who deserve more than a weekly phone call."
+> OLAF. For the people who deserve more than a weekly phone call."
 
-*[Title card: CARIA. caria.care]*
+*[Title card: OLAF. caria.care]*
 
 ---
 
@@ -193,13 +193,13 @@
 4. Family dashboard — pre-populated with a week of demo data
 
 **Key visuals to emphasize:**
-- The AudioVisualizer pulse during CARIA speaking
+- The AudioVisualizer pulse during OLAF speaking
 - The watercolor illustration reveal on the memory chapter
 - The live screenshot streaming in the navigator panel
 - The alert card on the family dashboard with the three-day knee pain pattern
 
 **Voice:**
-- Use CARIA's actual Gemini voice (Kore voice, affective dialog enabled) for the in-product moments
+- Use OLAF's actual Gemini voice (Kore voice, affective dialog enabled) for the in-product moments
 - Voiceover should be a different human voice — warm, measured, not sales-y
 
 **Emotional beats to protect:**

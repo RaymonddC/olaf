@@ -7,7 +7,7 @@ interface ScreenshotViewerProps {
   pageUrl?: string;
   /** Page title for alt text */
   pageTitle?: string;
-  /** Agent narration — what CARIA is currently doing */
+  /** Agent narration — what OLAF is currently doing */
   narration?: string;
   /** Navigation progress 0–100 */
   progress?: number;

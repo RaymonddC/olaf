@@ -1,10 +1,10 @@
-# CARIA — Data Flow Diagrams
+# OLAF — Data Flow Diagrams
 
 ## 1. Voice Conversation → Health Log → Daily Report
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│ ELDERLY USER opens "Talk to CARIA"                                  │
+│ ELDERLY USER opens "Talk to OLAF"                                  │
 └──────────┬───────────────────────────────────────────────────────────┘
            │
            ▼
@@ -138,7 +138,7 @@
 │  }                                                                  │
 │                                                                     │
 │  Response: { status: "accepted", taskId: "task_abc" }               │
-│  UI shows: "CARIA is creating your story..."                        │
+│  UI shows: "OLAF is creating your story..."                        │
 └──────────┬───────────────────────────────────────────────────────────┘
            │
            ▼
@@ -191,9 +191,9 @@
 │    title: "My Wedding Day",                                        │
 │    narrativeText: "It was a warm June morning in 1972...",          │
 │    illustrationUrls: [                                              │
-│      "gs://caria-artifacts/illustrations/wedding_ceremony.png",    │
-│      "gs://caria-artifacts/illustrations/wedding_dance.png",       │
-│      "gs://caria-artifacts/illustrations/wedding_cake.png"         │
+│      "gs://olaf-artifacts/illustrations/wedding_ceremony.png",    │
+│      "gs://olaf-artifacts/illustrations/wedding_dance.png",       │
+│      "gs://olaf-artifacts/illustrations/wedding_cake.png"         │
 │    ],                                                               │
 │    audioScript: "Narrator script for TTS playback...",             │
 │    tags: ["wedding", "family", "1972"],                            │
@@ -244,7 +244,7 @@
 │                                                                     │
 │  Frontend switches to Navigator UI:                                 │
 │  ┌──────────────────────────────────────────┐                       │
-│  │  [Screenshot Viewer]  |  "CARIA is       │                       │
+│  │  [Screenshot Viewer]  |  "OLAF is       │                       │
 │  │  (live screenshots)   |   opening the    │                       │
 │  │                       |   pension portal  │                       │
 │  │                       |   for you..."     │                       │
@@ -450,7 +450,7 @@
 ┌──────────────────────────────────────────────────────────────────────┐
 │ USER (elderly or family)                                            │
 │                                                                     │
-│  1. Open CARIA PWA → redirected to /login                           │
+│  1. Open OLAF PWA → redirected to /login                           │
 │                                                                     │
 │  2. Sign in via Firebase Auth:                                      │
 │     ├── Email/password                                              │

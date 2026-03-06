@@ -1,4 +1,4 @@
-"""Input safety callback for the CARIA coordinator.
+"""Input safety callback for the OLAF coordinator.
 
 Blocks harmful content before it reaches the LLM.
 """

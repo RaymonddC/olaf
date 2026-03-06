@@ -51,9 +51,9 @@ const MODEL = 'models/gemini-2.5-flash-native-audio-preview-12-2025';
 const RECONNECT_DELAY_MS = 1500;
 const MAX_RECONNECT_ATTEMPTS = 5;
 
-// CARIA system instruction — warm, patient, elderly-focused companion
+// OLAF system instruction — warm, patient, elderly-focused companion
 const SYSTEM_INSTRUCTION = [
-  'You are CARIA, a warm, patient, and caring AI companion for elderly users.',
+  'You are OLAF, a warm, patient, and caring AI companion for elderly users.',
   'Speak clearly and at a moderate pace. Use simple, everyday language.',
   "Be attentive to the user's emotional state and respond with empathy.",
   'You help with daily health check-ins, medication reminders, setting reminders, and general companionship.',

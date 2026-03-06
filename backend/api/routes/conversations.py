@@ -1,4 +1,4 @@
-"""CARIA — Conversations API endpoints.
+"""OLAF — Conversations API endpoints.
 
 GET /api/companion/conversations — List conversation summaries for a user
 """

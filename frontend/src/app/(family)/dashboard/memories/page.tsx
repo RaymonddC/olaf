@@ -278,7 +278,7 @@ export default function FamilyMemoriesPage() {
           <EmptyState
             icon={BookOpen}
             title="No memories yet"
-            message={`${elderlyName} hasn't created any memory chapters yet. They'll appear here after their first storytelling session with CARIA.`}
+            message={`${elderlyName} hasn't created any memory chapters yet. They'll appear here after their first storytelling session with OLAF.`}
           />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

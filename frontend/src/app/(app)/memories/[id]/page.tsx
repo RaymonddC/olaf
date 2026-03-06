@@ -151,7 +151,7 @@ export default function MemoryDetailPage() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: memory?.title ?? 'A Memory from CARIA',
+          title: memory?.title ?? 'A Memory from OLAF',
           url,
         });
       } catch {

@@ -1,4 +1,4 @@
-# CARIA — Project Structure
+# OLAF — Project Structure
 
 ## Monorepo Layout
 
@@ -225,7 +225,7 @@ caria/
 │   │   ├── agent-orchestration.md
 │   │   └── data-flow.md
 │   ├── plans/
-│   │   └── 2026-02-27-caria-design.md
+│   │   └── 2026-02-27-olaf-design.md
 │   └── research/
 │       ├── gemini-live-api.md
 │       ├── google-adk.md

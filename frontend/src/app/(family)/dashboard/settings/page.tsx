@@ -38,7 +38,7 @@ const DEFAULT_PREFS: NotificationPrefs = {
   emailDigestEnabled: false,
 };
 
-const PREFS_STORAGE_KEY = 'caria_notification_prefs';
+const PREFS_STORAGE_KEY = 'olaf_notification_prefs';
 
 function loadPrefs(): NotificationPrefs {
   if (typeof window === 'undefined') return DEFAULT_PREFS;
@@ -210,7 +210,7 @@ export default function SettingsPage() {
             ) : (
               <div className="space-y-3">
                 <p className="text-body-sm text-text-secondary">
-                  Enable push notifications to receive real-time alerts when CARIA detects
+                  Enable push notifications to receive real-time alerts when OLAF detects
                   something important.
                 </p>
                 <Button

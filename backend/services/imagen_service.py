@@ -1,4 +1,4 @@
-"""CARIA — Vertex AI Imagen 3 service for illustration generation.
+"""OLAF — Vertex AI Imagen 3 service for illustration generation.
 
 Generates warm, watercolor-style illustrations for memory chapters and
 health narratives. Uploads results to Cloud Storage with permanent public URLs.
@@ -19,7 +19,7 @@ ART_DIRECTION = (
     "no harsh shadows, hand-painted feel"
 )
 
-BUCKET_NAME = os.getenv("GCS_BUCKET_NAME", "caria-artifacts")
+BUCKET_NAME = os.getenv("GCS_BUCKET_NAME", "olaf-artifacts")
 
 
 class ImagenService:

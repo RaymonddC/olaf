@@ -1,6 +1,6 @@
-# CARIA — Devpost Submission
+# OLAF — Devpost Submission
 
-**Project name:** CARIA — AI Elderly Care Companion
+**Project name:** OLAF — AI Elderly Care Companion
 **Tagline:** Real-time voice companion, illustrated memory keeper, and digital navigator for elderly users — and the families who love them.
 
 ---
@@ -13,30 +13,30 @@ We kept coming back to one recurring situation: an elderly parent who can't figu
 
 We wanted to build something that genuinely addressed all three of those problems at once. Not a chatbot that answers questions. A presence. Something warm, patient, and persistent — that never gets too busy, never loses its temper, never forgets.
 
-That's CARIA.
+That's OLAF.
 
 ---
 
 ## What It Does
 
-CARIA is an AI-powered elderly care companion deployed as a Progressive Web App. It combines four specialized AI agents into a unified experience for elderly users and their families.
+OLAF is an AI-powered elderly care companion deployed as a Progressive Web App. It combines four specialized AI agents into a unified experience for elderly users and their families.
 
 ### For the elderly user — three screens, voice-first:
 
 **1. Talk (Voice Companion)**
-A real-time voice and vision companion powered by Gemini Live API. The user taps one large button and begins talking. CARIA listens with patience tuned specifically for elderly interaction: low voice activity detection sensitivity, 800ms silence threshold, graceful handling of repetitive questions. The companion conducts daily health check-ins, manages medication and appointment reminders, and responds with genuine warmth.
+A real-time voice and vision companion powered by Gemini Live API. The user taps one large button and begins talking. OLAF listens with patience tuned specifically for elderly interaction: low voice activity detection sensitivity, 800ms silence threshold, graceful handling of repetitive questions. The companion conducts daily health check-ins, manages medication and appointment reminders, and responds with genuine warmth.
 
-A key feature is **medication scanning**: the user holds a pill bottle to their webcam, CARIA reads the label using Gemini's multimodal input, cross-references it against the user's prescription list (stored in session state), confirms the dosage, and sets an evening reminder — all in one conversational turn.
+A key feature is **medication scanning**: the user holds a pill bottle to their webcam, OLAF reads the label using Gemini's multimodal input, cross-references it against the user's prescription list (stored in session state), confirms the dosage, and sets an evening reminder — all in one conversational turn.
 
-Emotionally sensitive monitoring runs silently in the background. When CARIA detects signs of distress, loneliness, or confusion in the user's voice or words, it calls `flag_emotional_distress` as a NON_BLOCKING function call — the conversation continues naturally while the backend routes an alert to the family.
+Emotionally sensitive monitoring runs silently in the background. When OLAF detects signs of distress, loneliness, or confusion in the user's voice or words, it calls `flag_emotional_distress` as a NON_BLOCKING function call — the conversation continues naturally while the backend routes an alert to the family.
 
 **2. Memories (Illustrated Life Journal)**
-Users speak their memories to CARIA. After the conversation, a three-stage ADK SequentialAgent pipeline transforms the raw transcript: a `narrative_writer` agent reshapes the words into prose while preserving the user's voice; an `illustrator` agent generates scene prompts and calls Imagen 3 via Vertex AI; an `assembler` agent combines them into a permanent illustrated chapter stored in Cloud Storage.
+Users speak their memories to OLAF. After the conversation, a three-stage ADK SequentialAgent pipeline transforms the raw transcript: a `narrative_writer` agent reshapes the words into prose while preserving the user's voice; an `illustrator` agent generates scene prompts and calls Imagen 3 via Vertex AI; an `assembler` agent combines them into a permanent illustrated chapter stored in Cloud Storage.
 
 The result is a warmly illustrated life storybook — with chapters like "The Day It Rained, and Then the Sun Came Out" — that family members can read, and that will persist long after memory fades.
 
 **3. Help (Digital Navigator)**
-An ADK agent backed by a server-side Playwright headless Chromium browser. The user asks for help with any website — government pension portals, medical appointment booking, insurance documents, subsidy forms — and CARIA navigates it for them. Screenshots stream to the user's screen in real time. CARIA narrates every step in plain language ("I'm clicking the blue button that says Check Status"). The agent pauses and asks for confirmation before any login or form submission. A `before_tool_callback` validates every URL for safety before the browser acts.
+An ADK agent backed by a server-side Playwright headless Chromium browser. The user asks for help with any website — government pension portals, medical appointment booking, insurance documents, subsidy forms — and OLAF navigates it for them. Screenshots stream to the user's screen in real time. OLAF narrates every step in plain language ("I'm clicking the blue button that says Check Status"). The agent pauses and asks for confirmation before any login or form submission. A `before_tool_callback` validates every URL for safety before the browser acts.
 
 ### For the family — dashboard:
 
@@ -59,7 +59,7 @@ The PWA is built with Next.js 15 App Router and TypeScript. The design system is
 
 Our `GeminiLiveClient` class handles the full lifecycle of a Gemini Live session:
 
-- Fetches an ephemeral token from our backend (`POST /api/gemini/token`). The token is provisioned via the `v1alpha/authTokens` API with `liveConnectConstraints` that lock the model ID (`gemini-2.5-flash-native-audio-preview-12-2025`), system instruction, tool declarations, and voice configuration server-side. This prevents any client-side tampering with CARIA's behavior.
+- Fetches an ephemeral token from our backend (`POST /api/gemini/token`). The token is provisioned via the `v1alpha/authTokens` API with `liveConnectConstraints` that lock the model ID (`gemini-2.5-flash-native-audio-preview-12-2025`), system instruction, tool declarations, and voice configuration server-side. This prevents any client-side tampering with OLAF's behavior.
 - Opens a WebSocket to `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent`
 - Sends a setup message with: `contextWindowCompression: { slidingWindow: {} }` for unlimited session duration; `sessionResumption: {}` for seamless reconnection on `goAway`; `inputAudioTranscription` and `outputAudioTranscription` for full transcript capture; VAD configured with `START_SENSITIVITY_LOW` and `END_SENSITIVITY_LOW` and `silenceDurationMs: 800` for elderly-appropriate pacing; `enableAffectiveDialog: true` for emotionally resonant voice output.
 - Routes four function calls with three different scheduling behaviors: `analyze_medication` (blocking, INTERRUPT — user is waiting for the answer); `flag_emotional_distress` (NON_BLOCKING, SILENT — never disrupts the conversation); `log_health_checkin` (NON_BLOCKING, SILENT — background health logging); `set_reminder` (NON_BLOCKING, WHEN_IDLE — confirms to user at a natural pause).
@@ -125,9 +125,9 @@ User profiles, health logs, conversations, memory chapters, and reports are stor
 
 **Non-blocking tool calls without disrupting conversation.** We wanted health logging and distress flagging to happen invisibly. The `NON_BLOCKING` tool behavior combined with `SILENT` scheduling means Gemini absorbs the tool response without pausing speech or generating a verbal acknowledgment. Getting this routing exactly right — blocking for medication analysis, silent for distress flags, WHEN_IDLE for reminder confirmations — took careful iteration.
 
-**Ephemeral token provisioning.** Securing the Gemini Live API connection without exposing raw API keys to the browser required implementing the `v1alpha/authTokens` endpoint with `liveConnectConstraints`. This locks the system instruction, model, tools, and voice configuration server-side so no client can tamper with CARIA's behavior. We also implemented a development fallback that uses the API key directly, with clear documentation about the security trade-off.
+**Ephemeral token provisioning.** Securing the Gemini Live API connection without exposing raw API keys to the browser required implementing the `v1alpha/authTokens` endpoint with `liveConnectConstraints`. This locks the system instruction, model, tools, and voice configuration server-side so no client can tamper with OLAF's behavior. We also implemented a development fallback that uses the API key directly, with clear documentation about the security trade-off.
 
-**Playwright cold starts on Cloud Run.** Chromium containers take 10–30 seconds to cold-start, which is terrifying for an elderly user who sees a blank screen. The fix was `min-instances: 1` plus a loading animation with progress narration from CARIA herself ("I'm getting ready to help you navigate..."), turning a technical delay into a human moment.
+**Playwright cold starts on Cloud Run.** Chromium containers take 10–30 seconds to cold-start, which is terrifying for an elderly user who sees a blank screen. The fix was `min-instances: 1` plus a loading animation with progress narration from OLAF herself ("I'm getting ready to help you navigate..."), turning a technical delay into a human moment.
 
 **AlertAgent delegation model.** Our initial design had AlertAgent as a `sub_agent` alongside Storyteller and Navigator. After studying ADK's delegation mechanics, we realized `sub_agents` relies on LLM description matching, which is unreliable for system-triggered signals. Switching AlertAgent to `AgentTool` gave us explicit, deterministic invocation — the coordinator calls it when a signal arrives, not when the LLM guesses it should.
 
@@ -143,7 +143,7 @@ User profiles, health logs, conversations, memory chapters, and reports are stor
 
 **Four agents with correct orchestration patterns.** Getting the ADK hierarchy right — `sub_agents` for user-initiated delegation, `AgentTool` for system signals, `SequentialAgent` for deterministic pipelines, `before_tool_callback` for safety, `ToolContext` for stateful tools — is the kind of architectural work that doesn't show up in a screenshot but determines whether a multi-agent system actually works reliably.
 
-**The family dashboard as emotional bridge.** The family dashboard is not a monitoring tool. It's a connection. The memory chapter notification that tells Sarah her mother shared a story about her wedding day — that's the feature that makes families realize CARIA is something different.
+**The family dashboard as emotional bridge.** The family dashboard is not a monitoring tool. It's a connection. The memory chapter notification that tells Sarah her mother shared a story about her wedding day — that's the feature that makes families realize OLAF is something different.
 
 ---
 
@@ -151,7 +151,7 @@ User profiles, health logs, conversations, memory chapters, and reports are stor
 
 **The Gemini Live API is genuinely remarkable for real-time voice applications.** The latency, voice quality with affective dialog, and multimodal capabilities exceeded our expectations. The medication scan — reading a label through a webcam and cross-referencing a prescription in a single conversational turn — works better than we had any right to expect.
 
-**ADK's agent patterns are subtle but important.** The difference between `sub_agents` and `AgentTool`, between `output_key` and explicit state writes, between `before_model_callback` and `before_tool_callback` — these distinctions matter enormously for reliability. Building CARIA taught us that multi-agent architectures require the same architectural discipline as distributed systems.
+**ADK's agent patterns are subtle but important.** The difference between `sub_agents` and `AgentTool`, between `output_key` and explicit state writes, between `before_model_callback` and `before_tool_callback` — these distinctions matter enormously for reliability. Building OLAF taught us that multi-agent architectures require the same architectural discipline as distributed systems.
 
 **Elderly UX is a discipline, not a checklist.** Accessible design and elderly-appropriate design overlap but are not the same. Accessibility is about disability. Elderly UX is about a different relationship with technology — one built on unfamiliarity, anxiety about mistakes, need for consistency, and a deep preference for voice over tap. Every design decision we made for Maria would make the product better for every user.
 
@@ -163,13 +163,13 @@ User profiles, health logs, conversations, memory chapters, and reports are stor
 
 **React Native mobile app.** The PWA works well, but a native app enables always-on background reminders, push notifications without browser, and better camera access for medication scanning.
 
-**Fall detection.** With a dedicated tablet mount or always-on camera, CARIA can monitor for falls using computer vision. This requires native mobile for reliability — the PWA constraint was a deliberate hackathon scope decision.
+**Fall detection.** With a dedicated tablet mount or always-on camera, OLAF can monitor for falls using computer vision. This requires native mobile for reliability — the PWA constraint was a deliberate hackathon scope decision.
 
-**Multilingual support.** The global elderly population is not primarily English-speaking. Gemini's multilingual capabilities make this technically straightforward; the cultural adaptation of CARIA's personality is the interesting design challenge.
+**Multilingual support.** The global elderly population is not primarily English-speaking. Gemini's multilingual capabilities make this technically straightforward; the cultural adaptation of OLAF's personality is the interesting design challenge.
 
 **Retirement home deployment.** A multi-resident dashboard for facility caregivers, with aggregate health trend analysis and resident comparison tools, is a natural enterprise path.
 
-**Wearable integration.** Smartwatch heart rate and activity data fed into CARIA's health monitoring would dramatically improve the quality of daily health narratives and anomaly detection.
+**Wearable integration.** Smartwatch heart rate and activity data fed into OLAF's health monitoring would dramatically improve the quality of daily health narratives and anomaly detection.
 
 **HIPAA compliance layer.** For the US healthcare market, a proper HIPAA BAA with enhanced audit logging and data residency controls opens the clinical partnership channel.
 

@@ -1,4 +1,4 @@
-"""CARIA agent callbacks."""
+"""OLAF agent callbacks."""
 
 from .safety import safety_before_model
 from .navigator_guard import validate_navigation_safety

@@ -68,7 +68,7 @@ export default function RegisterPage() {
             <Mic className="w-5 h-5 text-white" aria-hidden="true" />
           </div>
           <span className="text-h1 font-heading font-bold text-text-heading">
-            CARIA
+            OLAF
           </span>
         </div>
         <p className="text-body text-text-secondary">Create your account</p>
@@ -171,7 +171,7 @@ export default function RegisterPage() {
             placeholder="e.g. 72"
             autoComplete="age"
             error={fieldErrors.age}
-            helperText="Helps CARIA personalise conversations for you"
+            helperText="Helps OLAF personalise conversations for you"
             min="18"
             max="120"
           />

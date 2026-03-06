@@ -1,4 +1,4 @@
-"""CARIA — Pre-defined navigation task templates.
+"""OLAF — Pre-defined navigation task templates.
 
 Each template provides a starting URL, step hints, and expected flow
 so the NavigatorAgent can handle common tasks efficiently.

@@ -1,4 +1,4 @@
-"""CARIA — Playwright headless browser service.
+"""OLAF — Playwright headless browser service.
 
 Manages Chromium browser instances for the NavigatorAgent.
 Provides page navigation, interaction, and screenshot capture.

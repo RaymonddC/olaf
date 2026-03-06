@@ -1,4 +1,4 @@
-"""CARIA — Alerts API endpoints.
+"""OLAF — Alerts API endpoints.
 
 GET   /api/alerts — Get alerts for a user
 PATCH /api/alerts/{alertId}/acknowledge — Acknowledge an alert

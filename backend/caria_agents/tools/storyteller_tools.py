@@ -1,4 +1,4 @@
-"""CARIA Storyteller — ADK tool functions.
+"""OLAF Storyteller — ADK tool functions.
 
 These tools are called by the Storyteller agent during memory chapter creation,
 daily narrative generation, and weekly report compilation.

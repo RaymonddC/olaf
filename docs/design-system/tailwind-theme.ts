@@ -1,5 +1,5 @@
 /**
- * CARIA Design System — Tailwind Theme Configuration
+ * OLAF Design System — Tailwind Theme Configuration
  * Version: 2.0.0
  *
  * Source: UI/UX Pro Max — Senior Care/Elderly palette + Medical Clean typography

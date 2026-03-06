@@ -30,7 +30,7 @@ export function TalkContent() {
   // ── State ────────────────────────────────────────────────────────────────
   const [status, setStatus] = useState<CompanionStatus>('idle');
   const [lastModelMessage, setLastModelMessage] = useState(
-    'Tap the microphone to start talking with CARIA',
+    'Tap the microphone to start talking with OLAF',
   );
   const [sessionActive, setSessionActive] = useState(false);
   const [transcripts, setTranscripts] = useState<TranscriptEntry[]>([]);
@@ -107,7 +107,7 @@ export function TalkContent() {
             audio.clearPlaybackQueue();
           },
           onError: (err) => {
-            console.error('[CARIA]', err);
+            console.error('[OLAF]', err);
             setError(err.message);
           },
         },
@@ -129,7 +129,7 @@ export function TalkContent() {
       setSessionActive(true);
       setLastModelMessage('Hi there! How are you feeling today?');
     } catch (err) {
-      console.error('[CARIA] Session start failed:', err);
+      console.error('[OLAF] Session start failed:', err);
       setError(err instanceof Error ? err.message : 'Failed to start session');
       // Clean up partial state
       audioRef.current?.stop();
@@ -170,13 +170,13 @@ export function TalkContent() {
           }),
         });
       } catch (err) {
-        console.error('[CARIA] Failed to log conversation:', err);
+        console.error('[OLAF] Failed to log conversation:', err);
       }
     }
 
     setSessionActive(false);
     setStatus('idle');
-    setLastModelMessage('Tap the microphone to start talking with CARIA');
+    setLastModelMessage('Tap the microphone to start talking with OLAF');
     setTranscripts([]);
   }, [user, getToken]);
 
@@ -198,11 +198,11 @@ export function TalkContent() {
   const isConnecting = status === 'connecting';
   const micLabel = sessionActive
     ? 'End conversation'
-    : 'Start talking with CARIA';
+    : 'Start talking with OLAF';
 
   return (
     <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-      {/* CARIA's last spoken message — visible for hearing-impaired users */}
+      {/* OLAF's last spoken message — visible for hearing-impaired users */}
       <p
         className="text-body-lg text-text-primary font-medium mb-6 max-w-md px-4 leading-relaxed"
         aria-live="polite"

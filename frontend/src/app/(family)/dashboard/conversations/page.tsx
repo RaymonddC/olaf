@@ -279,7 +279,7 @@ export default function ConversationsPage() {
           <EmptyState
             icon={MessageSquare}
             title="No conversations yet"
-            message={`${elderlyName} hasn't had a conversation with CARIA yet. Conversations will appear here after their first session.`}
+            message={`${elderlyName} hasn't had a conversation with OLAF yet. Conversations will appear here after their first session.`}
           />
         ) : (
           <div className="space-y-4" role="list" aria-label="Conversation list">

@@ -1,4 +1,4 @@
-"""CARIA — Firestore document models.
+"""OLAF — Firestore document models.
 
 These represent the shape of documents stored in Firestore collections.
 They are used for serialisation/deserialisation, not for API validation.
