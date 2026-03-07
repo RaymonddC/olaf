@@ -208,6 +208,55 @@ async def flag_emotional_distress(
     }
 
 
+# ── call_for_help ────────────────────────────────────────────────────────────
+
+
+async def call_for_help(user_id: str, message: str = "") -> dict:
+    """Trigger an emergency alert and notify all family contacts immediately.
+
+    Creates a high-severity emotional_distress alert in Firestore and sends
+    an urgent FCM push notification to all linked family members.
+    """
+    fs = get_firestore_service()
+
+    alert_id = _new_id()
+    alert_message = message.strip() if message.strip() else "User has called for help and needs immediate assistance."
+    alert = AlertDoc(
+        alert_id=alert_id,
+        user_id=user_id,
+        type="emotional_distress",
+        severity="high",
+        message=alert_message,
+        source="companion",
+    )
+    await fs.create_alert(alert)
+
+    fcm = get_fcm_service()
+    result = await fcm.send_to_family(
+        elderly_user_id=user_id,
+        title="🚨 EMERGENCY: Help Needed",
+        body="Your loved one is calling for help and needs immediate assistance!",
+        notification_type="alert",
+        data={"alertId": alert_id, "severity": "high"},
+        urgent=True,
+    )
+
+    logger.info(
+        "Emergency help alert sent for user %s: alert_id=%s fcm=%s",
+        user_id,
+        alert_id,
+        result,
+    )
+
+    return {
+        "status": "success",
+        "data": {
+            "alert_id": alert_id,
+            "action": "emergency_alert",
+        },
+    }
+
+
 # ── log_health_checkin ──────────────────────────────────────────────────────
 
 
@@ -324,6 +373,40 @@ async def set_reminder(
         "data": {
             "reminder_id": reminder_id,
             "scheduled_time": scheduled_time.isoformat(),
+        },
+    }
+
+
+# ── share_update_with_family ────────────────────────────────────────────────
+
+
+async def share_update_with_family(user_id: str, message: str) -> dict:
+    """Share a positive update or message with the user's family via FCM.
+
+    Does NOT create an alert in Firestore — this is a positive update, not
+    an emergency. Sends a non-urgent FCM notification to all family contacts.
+    """
+    fcm = get_fcm_service()
+
+    result = await fcm.send_to_family(
+        elderly_user_id=user_id,
+        title="💬 Update from your loved one",
+        body=message,
+        notification_type="alert",
+        urgent=False,
+    )
+
+    logger.info(
+        "Family update sent for user %s: fcm_result=%s",
+        user_id,
+        result,
+    )
+
+    return {
+        "status": "success",
+        "data": {
+            "message": message,
+            "action": "update_sent",
         },
     }
 

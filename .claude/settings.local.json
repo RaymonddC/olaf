@@ -24,7 +24,8 @@
       "Bash(pip install pytest pytest-asyncio httpx --quiet)",
       "Bash(sudo apt:*)",
       "Bash(npm run:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(git pull:*)"
     ]
   }
 }

@@ -13,9 +13,11 @@ from google.adk.tools.tool_context import ToolContext
 from olaf_agents.instructions.companion import COMPANION_INSTRUCTION
 from olaf_agents.tools.companion_tools import (
     analyze_medication as _analyze_medication,
+    call_for_help as _call_for_help,
     flag_emotional_distress as _flag_distress,
     log_health_checkin as _log_checkin,
     set_reminder as _set_reminder,
+    share_update_with_family as _share_update_with_family,
 )
 
 _COMPANION_MODEL = "gemini-2.5-flash-native-audio-preview-09-2025"
@@ -62,6 +64,22 @@ async def set_reminder(
     return await _set_reminder(user_id, reminder_type, message, time)
 
 
+async def call_for_help(tool_context: ToolContext) -> dict:
+    """Trigger an emergency alert and notify the user's family immediately.
+
+    Call this without hesitation whenever the user indicates they need help,
+    have fallen, are in pain, or use any emergency phrase.
+    """
+    user_id: str = tool_context.state.get("user_id", "")
+    return await _call_for_help(user_id)
+
+
+async def share_update_with_family(message: str, tool_context: ToolContext) -> dict:
+    """Send a positive update or message to the user's family via notification."""
+    user_id: str = tool_context.state.get("user_id", "")
+    return await _share_update_with_family(user_id, message)
+
+
 # ── Agent definition ─────────────────────────────────────────────────────────
 
 companion_agent = Agent(
@@ -69,5 +87,12 @@ companion_agent = Agent(
     name="olaf_companion",
     description="OLAF — warm, patient AI companion for elderly users.",
     instruction=COMPANION_INSTRUCTION,
-    tools=[],  # TODO: re-add once tool support in live mode is confirmed
+    tools=[
+        analyze_medication,
+        call_for_help,
+        flag_emotional_distress,
+        log_health_checkin,
+        set_reminder,
+        share_update_with_family,
+    ],
 )
