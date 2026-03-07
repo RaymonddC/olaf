@@ -1,113 +1,59 @@
 'use client';
 
 import Image from 'next/image';
-import { useRouter } from 'next/navigation';
-import { useCallback, type KeyboardEvent } from 'react';
+import Link from 'next/link';
+import { BookOpen, Calendar } from 'lucide-react';
 
-interface MemoryChapterCardProps {
-  id: string;
-  title: string;
-  createdAt: string;
-  illustrationUrls: string[];
-  snippet: string;
-  className?: string;
+interface Props {
+    id: string;
+    title: string;
+    createdAt: string;
+    illustrationUrls: string[];
+    snippet: string;
 }
 
-function formatDate(iso: string): string {
-  try {
-    return new Date(iso).toLocaleDateString('en-US', {
-      month: 'long',
-      year: 'numeric',
-    });
-  } catch {
-    return iso;
-  }
+function fmtDate(iso: string) {
+    try { return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); } catch { return iso; }
 }
 
-export function MemoryChapterCard({
-  id,
-  title,
-  createdAt,
-  illustrationUrls,
-  snippet,
-  className = '',
-}: MemoryChapterCardProps) {
-  const router = useRouter();
-  const thumbnailUrl = illustrationUrls[0] ?? null;
+export function MemoryChapterCard({ id, title, createdAt, illustrationUrls, snippet }: Props) {
+    const hasImg = illustrationUrls?.length > 0;
 
-  const handleClick = useCallback(() => {
-    router.push(`/memories/${id}`);
-  }, [router, id]);
-
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        handleClick();
-      }
-    },
-    [handleClick],
-  );
-
-  return (
-    <article
-      role="button"
-      tabIndex={0}
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
-      aria-label={`Memory: ${title}`}
-      className={[
-        'bg-bg-surface rounded-2xl shadow-md overflow-hidden',
-        'cursor-pointer hover:shadow-lg transition-shadow duration-200',
-        'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-300',
-        className,
-      ].join(' ')}
-    >
-      {/* Thumbnail */}
-      <div className="aspect-[4/3] w-full bg-bg-muted relative overflow-hidden">
-        {thumbnailUrl ? (
-          <Image
-            src={thumbnailUrl}
-            alt={`Illustration for ${title}`}
-            fill
-            sizes="(max-width: 768px) 100vw, 50vw"
-            className="object-cover"
-          />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <svg
-              className="w-12 h-12 text-primary-300"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={1.5}
-              aria-hidden="true"
-            >
-              <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-          </div>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="p-5">
-        <h3 className="text-h4 font-semibold text-text-heading line-clamp-2">
-          {title}
-        </h3>
-
-        <time
-          dateTime={createdAt}
-          className="block text-caption text-text-muted mt-1"
+    return (
+        <Link href={`/memories/${id}`}
+              className="group block rounded-[22px] overflow-hidden transition-all duration-300 hover:-translate-y-[3px] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-300"
+              style={{
+                  background: 'rgba(255,255,255,0.88)',
+                  backdropFilter: 'blur(24px)',
+                  border: '1px solid rgba(255,255,255,0.7)',
+                  boxShadow: '0 4px 20px rgba(15,23,42,0.04), 0 1px 4px rgba(15,23,42,0.02), inset 0 1px 0 rgba(255,255,255,0.9)',
+              }}
         >
-          {formatDate(createdAt)}
-        </time>
+            <div className="flex min-h-[140px]">
+                {/* Left illustration */}
+                <div className="w-[110px] flex-shrink-0 relative overflow-hidden"
+                     style={{ background: hasImg ? undefined : 'linear-gradient(160deg, #dbeafe, #ccfbf1)' }}>
+                    {hasImg ? (
+                        <Image src={illustrationUrls[0]} alt="" fill className="object-cover transition-transform duration-500 group-hover:scale-105" sizes="110px" />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                            <BookOpen className="w-9 h-9 text-primary-300" aria-hidden="true" />
+                        </div>
+                    )}
+                </div>
 
-        {snippet && (
-          <p className="text-body-sm text-text-secondary mt-2 line-clamp-3">
-            {snippet}
-          </p>
-        )}
-      </div>
-    </article>
-  );
+                {/* Content */}
+                <div className="flex-1 p-4 flex flex-col">
+                    <h3 className="text-[17px] font-heading font-bold text-text-heading leading-tight mb-1 group-hover:text-primary-700 transition-colors duration-200 line-clamp-2" style={{ letterSpacing: '-0.01em' }}>
+                        {title}
+                    </h3>
+                    <div className="flex items-center gap-1 mb-2">
+                        <Calendar className="w-3.5 h-3.5 text-text-muted" aria-hidden="true" />
+                        <time className="text-[13px] text-text-muted" dateTime={createdAt}>{fmtDate(createdAt)}</time>
+                    </div>
+                    <p className="text-[15px] text-text-secondary leading-snug flex-1 line-clamp-2">{snippet}</p>
+                </div>
+            </div>
+        </Link>
+    );
 }

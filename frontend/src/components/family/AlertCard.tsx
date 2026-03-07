@@ -1,110 +1,48 @@
 'use client';
 
-import { Info, AlertTriangle, AlertCircle } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import type { Alert } from '@/hooks/useApi';
+import { AlertTriangle, Info, AlertCircle, Check, Loader2 } from 'lucide-react';
 
-interface AlertCardProps {
-  alert: Alert;
-  onAcknowledge: (alertId: string) => void;
-  acknowledging?: boolean;
+interface Props {
+    id: string; type: string; severity: string; title: string; message: string;
+    createdAt: string; acknowledged: boolean; acknowledging: boolean;
+    onAcknowledge: (id: string) => void;
 }
 
-const severityConfig = {
-  low: {
-    container: 'bg-info-50 border-l-4 border-info-600 rounded-xl p-5',
-    icon: Info,
-    iconColor: 'text-primary-900',
-    textColor: 'text-primary-900',
-    role: 'status' as const,
-  },
-  medium: {
-    container: 'bg-warning-50 border-l-4 border-warning-600 rounded-xl p-5',
-    icon: AlertTriangle,
-    iconColor: 'text-warm-700',
-    textColor: 'text-warm-700',
-    role: 'status' as const,
-  },
-  high: {
-    container: 'bg-error-50 border-l-4 border-error-600 rounded-xl p-5',
-    icon: AlertCircle,
-    iconColor: 'text-error-700',
-    textColor: 'text-error-700',
-    role: 'alert' as const,
-  },
-} as const;
-
-const typeLabels: Record<Alert['type'], string> = {
-  emotional_distress: 'Emotional distress',
-  missed_medication: 'Missed medication',
-  health_anomaly: 'Health anomaly',
-  inactivity: 'Inactivity',
+const SEV: Record<string, { icon: typeof AlertTriangle; color: string; bg: string }> = {
+    high: { icon: AlertTriangle, color: '#e11d48', bg: '#fef2f2' },
+    medium: { icon: AlertCircle, color: '#d97706', bg: '#fffbeb' },
+    low: { icon: Info, color: '#1a6de0', bg: '#eff6ff' },
 };
 
-function formatTimestamp(iso: string): string {
-  try {
-    const date = new Date(iso);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60_000);
-
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins} minute${diffMins === 1 ? '' : 's'} ago`;
-
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
-
-    return date.toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
-    return '';
-  }
+function timeAgo(iso: string) {
+    try { const m = Math.floor((Date.now() - new Date(iso).getTime()) / 60000); if (m < 60) return `${m}m`; const h = Math.floor(m / 60); if (h < 24) return `${h}h`; return `${Math.floor(h / 24)}d`; } catch { return ''; }
 }
 
-export function AlertCard({ alert, onAcknowledge, acknowledging }: AlertCardProps) {
-  const config = severityConfig[alert.severity];
-  const Icon = config.icon;
-
-  return (
-    <div role={config.role} className={config.container}>
-      <div className="flex items-start gap-3">
-        <Icon
-          className={`w-6 h-6 flex-shrink-0 mt-0.5 ${config.iconColor}`}
-          aria-hidden="true"
-        />
-        <div className="flex-1 min-w-0">
-          <p className={`text-body font-semibold ${config.textColor}`}>
-            {typeLabels[alert.type]}
-          </p>
-          <p className="text-body-sm text-text-primary mt-1">
-            {alert.message}
-          </p>
-          {alert.createdAt && (
-            <time
-              dateTime={alert.createdAt}
-              className="text-caption text-text-muted mt-2 block"
-            >
-              {formatTimestamp(alert.createdAt)}
-            </time>
-          )}
-          {!alert.acknowledged && (
-            <Button
-              variant="primary"
-              size="lg"
-              className="mt-3"
-              loading={acknowledging}
-              onClick={() => onAcknowledge(alert.id)}
-              aria-label={`Acknowledge alert: ${alert.message}`}
-            >
-              Acknowledge
-            </Button>
-          )}
+export function AlertCard({ id, severity, title, message, createdAt, acknowledged, acknowledging, onAcknowledge }: Props) {
+    const s = SEV[severity] || SEV.low;
+    const Icon = s.icon;
+    return (
+        <div className={`glass rounded-[18px] p-4 ${acknowledged ? 'opacity-50' : ''}`} style={{ borderLeft: `4px solid ${s.color}`, background: s.bg + '60' }}>
+            <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-[12px] flex items-center justify-center flex-shrink-0" style={{ background: s.bg, color: s.color }}>
+                    <Icon className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                    <div className="flex justify-between items-start gap-2 mb-1">
+                        <h3 className="text-[16px] font-heading font-bold text-text-heading truncate">{title}</h3>
+                        <span className="text-[12px] text-text-muted flex-shrink-0">{timeAgo(createdAt)} ago</span>
+                    </div>
+                    <p className="text-[14px] text-text-secondary mb-3 leading-snug">{message}</p>
+                    {!acknowledged && (
+                        <button onClick={() => onAcknowledge(id)} disabled={acknowledging}
+                                className="inline-flex items-center gap-1.5 px-4 py-[7px] rounded-[10px] text-[14px] font-heading font-semibold text-white cursor-pointer disabled:opacity-60 min-h-[36px]"
+                                style={{ background: 'linear-gradient(135deg, #1a6de0, #1558b8)', boxShadow: '0 2px 8px rgba(26,109,224,0.15)' }}>
+                            {acknowledging ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                            Acknowledge
+                        </button>
+                    )}
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  );
+    );
 }

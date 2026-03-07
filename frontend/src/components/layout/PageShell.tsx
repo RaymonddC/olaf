@@ -1,37 +1,21 @@
-import { type ReactNode } from 'react';
+'use client';
+
+import type { ReactNode } from 'react';
 
 interface PageShellProps {
-  children: ReactNode;
-  id?: string;
-  /** Remove bottom padding for bottom nav (e.g. family pages) */
-  noBottomPad?: boolean;
-  className?: string;
+    children: ReactNode;
+    id?: string;
+    noBottomPad?: boolean;
 }
 
-/**
- * Page-level container. Sets max-width, horizontal padding, and bottom
- * padding so content is never hidden behind the fixed BottomNav.
- */
-export function PageShell({
-  children,
-  id = 'main-content',
-  noBottomPad = false,
-  className = '',
-}: PageShellProps) {
-  return (
-    <>
-      <main
-        id={id}
-        className={[
-          'w-full max-w-3xl mx-auto',
-          'px-4 md:px-6',
-          'pt-4 md:pt-6',
-          noBottomPad ? 'pb-8' : 'pb-24',   // 96px covers 80px nav + 16px safety
-          className,
-        ].join(' ')}
-      >
-        {children}
-      </main>
-    </>
-  );
+export function PageShell({ children, id, noBottomPad }: PageShellProps) {
+    return (
+        <main
+            id={id}
+            role="main"
+            className={`relative z-[1] px-5 pt-5 ${noBottomPad ? 'pb-8' : 'pb-28'}`}
+        >
+            {children}
+        </main>
+    );
 }

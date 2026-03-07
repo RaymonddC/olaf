@@ -1,71 +1,32 @@
 'use client';
 
-import type { CompanionStatus } from '@/lib/gemini-live';
+import type { CompanionStatus } from '@/lib/adk-live';
 
 interface StatusIndicatorProps {
   status: CompanionStatus;
 }
 
-const STATUS_CONFIG: Record<
-  CompanionStatus,
-  { dotClass: string; label: string; animate: boolean }
-> = {
-  listening: {
-    dotClass: 'bg-success-600',
-    label: 'Listening...',
-    animate: true,
-  },
-  thinking: {
-    dotClass: 'bg-warning-600',
-    label: 'Thinking...',
-    animate: true,
-  },
-  speaking: {
-    dotClass: 'bg-primary-600',
-    label: 'Speaking...',
-    animate: true,
-  },
-  idle: {
-    dotClass: 'bg-bg-muted',
-    label: 'Ready',
-    animate: false,
-  },
-  connecting: {
-    dotClass: 'bg-warning-600',
-    label: 'Connecting...',
-    animate: true,
-  },
-  error: {
-    dotClass: 'bg-error-600',
-    label: 'Connection lost',
-    animate: false,
-  },
+const STATUS_MAP: Record<CompanionStatus, { text: string; dotColor: string; animate: boolean }> = {
+  idle: { text: 'Ready to chat', dotColor: 'bg-text-muted', animate: false },
+  connecting: { text: 'Connecting...', dotColor: 'bg-warm-500', animate: true },
+  listening: { text: 'Listening...', dotColor: 'bg-accent-500', animate: true },
+  thinking: { text: 'Thinking...', dotColor: 'bg-warm-500', animate: true },
+  speaking: { text: 'Speaking...', dotColor: 'bg-primary-500', animate: true },
+  error: { text: 'Disconnected', dotColor: 'bg-error-600', animate: false },
 };
 
-/**
- * Visual indicator for the voice companion state.
- *
- * Shows a colored dot (optionally pulsing) and a text label.
- * Uses aria-live="polite" so screen readers announce state changes.
- *
- * Follows specs from docs/design-system/components.md
- */
 export function StatusIndicator({ status }: StatusIndicatorProps) {
-  const config = STATUS_CONFIG[status];
+  const config = STATUS_MAP[status];
 
   return (
-    <div aria-live="polite" className="flex items-center gap-2">
-      <span
-        aria-hidden="true"
-        className={[
-          'w-3 h-3 rounded-full',
-          config.dotClass,
-          config.animate
-            ? 'animate-status-pulse motion-reduce:animate-none'
-            : '',
-        ].join(' ')}
-      />
-      <span className="text-body-sm text-text-secondary">{config.label}</span>
+    <div className="inline-flex items-center gap-2" role="status" aria-live="polite">
+      <span className="relative flex h-3 w-3">
+        {config.animate && (
+          <span className={`absolute inset-0 rounded-full ${config.dotColor} opacity-60 animate-ping`} />
+        )}
+        <span className={`relative inline-flex rounded-full h-3 w-3 ${config.dotColor}`} />
+      </span>
+      <span className="text-body-sm text-text-secondary font-medium">{config.text}</span>
     </div>
   );
 }

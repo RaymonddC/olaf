@@ -1,67 +1,25 @@
+'use client';
+
 import Link from 'next/link';
-import { type LucideIcon } from 'lucide-react';
-import { Button } from './Button';
+import type { LucideIcon } from 'lucide-react';
 
-interface EmptyStateProps {
-  /** Lucide icon displayed as decorative illustration */
-  icon?: LucideIcon;
-  title: string;
-  message: string;
-  /** Optional CTA — provide either `href` (Link) or `onClick` (Button) */
-  action?: {
-    label: string;
-    href?: string;
-    onClick?: () => void;
-  };
-  className?: string;
-}
+interface Props { icon: LucideIcon; title: string; message: string; action?: { label: string; href: string }; }
 
-export function EmptyState({
-  icon: Icon,
-  title,
-  message,
-  action,
-  className = '',
-}: EmptyStateProps) {
-  return (
-    <div
-      className={`flex flex-col items-center justify-center py-16 px-6 text-center ${className}`}
-    >
-      {Icon && (
-        <div
-          className="w-24 h-24 mb-6 text-primary-300 flex items-center justify-center"
-          aria-hidden="true"
-        >
-          <Icon className="w-16 h-16" strokeWidth={1.5} />
+export function EmptyState({ icon: Icon, title, message, action }: Props) {
+    return (
+        <div className="flex flex-col items-center justify-center text-center py-16 px-4 animate-fade-up">
+            <div className="w-20 h-20 rounded-[22px] flex items-center justify-center mb-5" style={{ background: 'linear-gradient(135deg, #dbeafe, #ccfbf1)', border: '1.5px solid #e2e8f0' }}>
+                <Icon className="w-9 h-9 text-primary-500" />
+            </div>
+            <h2 className="text-h3 font-heading font-extrabold text-text-heading mb-2">{title}</h2>
+            <p className="text-body text-text-muted max-w-xs mb-6">{message}</p>
+            {action && (
+                <Link href={action.href}
+                      className="inline-flex items-center gap-2 px-7 py-3 rounded-2xl text-white font-heading font-semibold min-h-[48px]"
+                      style={{ background: 'linear-gradient(135deg, #1a6de0, #1558b8)', boxShadow: '0 6px 24px rgba(26,109,224,0.18)' }}>
+                    {action.label}
+                </Link>
+            )}
         </div>
-      )}
-
-      <h2 className="text-h3 text-text-heading font-semibold mb-2">{title}</h2>
-
-      <p className="text-body text-text-secondary max-w-sm mb-6 leading-relaxed">
-        {message}
-      </p>
-
-      {action &&
-        (action.href ? (
-          <Link
-            href={action.href}
-            className={[
-              'inline-flex items-center justify-center gap-2',
-              'bg-primary-700 text-white font-semibold rounded-xl shadow-md',
-              'px-6 py-3 text-body min-h-[48px]',
-              'hover:bg-primary-800 active:bg-primary-900',
-              'transition-colors duration-150',
-              'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-300',
-            ].join(' ')}
-          >
-            {action.label}
-          </Link>
-        ) : (
-          <Button variant="primary" size="lg" onClick={action.onClick}>
-            {action.label}
-          </Button>
-        ))}
-    </div>
-  );
+    );
 }

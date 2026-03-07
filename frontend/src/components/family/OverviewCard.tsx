@@ -1,120 +1,51 @@
 'use client';
 
-import { Heart, Pill, MessageSquare, Activity } from 'lucide-react';
-import { Card } from '@/components/ui/Card';
+import { Heart, MessageCircle, Activity } from 'lucide-react';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
-import type { HealthLog } from '@/hooks/useApi';
 
-interface OverviewCardProps {
-  healthLog: HealthLog | null;
-  lastConversationTime: string | null;
-  loading?: boolean;
+interface Props {
+    healthLog: { mood?: string; painLevel?: number; medicationsTaken?: string[]; notes?: string } | null;
+    lastConversationTime: string | null;
+    loading: boolean;
 }
 
-const moodDisplay: Record<string, { label: string; color: string }> = {
-  happy: { label: 'Happy and chatty', color: 'text-success-700' },
-  okay: { label: 'Feeling okay', color: 'text-info-700' },
-  sad: { label: 'Feeling sad', color: 'text-warning-700' },
-  anxious: { label: 'Feeling anxious', color: 'text-error-700' },
-  confused: { label: 'Feeling confused', color: 'text-warning-700' },
-  tired: { label: 'Feeling tired', color: 'text-text-muted' },
-};
+const MOOD: Record<string, string> = { happy:'😊', good:'🙂', okay:'😐', sad:'😢', anxious:'😟', tired:'😴', confused:'😵‍💫', pain:'😣' };
 
-function formatConversationTime(iso: string | null): string {
-  if (!iso) return 'No conversation today';
-  try {
-    const date = new Date(iso);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffMins = Math.floor(diffMs / 60_000);
+export function OverviewCard({ healthLog, lastConversationTime, loading }: Props) {
+    if (loading) return <div className="glass rounded-[22px] p-6"><LoadingSkeleton shape="card" /></div>;
 
-    if (diffMins < 1) return 'Just now';
-    if (diffMins < 60) return `${diffMins} minute${diffMins === 1 ? '' : 's'} ago`;
+    const mood = healthLog?.mood?.toLowerCase() ?? '';
+    const pain = healthLog?.painLevel;
+    const meds = healthLog?.medicationsTaken?.length ?? 0;
 
-    const diffHours = Math.floor(diffMins / 60);
-    if (diffHours < 24) return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
-
-    return date.toLocaleDateString('en-GB', {
-      day: 'numeric',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
-    return 'Unknown';
-  }
-}
-
-export function OverviewCard({ healthLog, lastConversationTime, loading }: OverviewCardProps) {
-  if (loading) {
     return (
-      <Card variant="elevated" as="section">
-        <div className="pb-4 border-b border-border mb-4">
-          <LoadingSkeleton shape="heading" width="w-48" />
+        <div className="glass rounded-[22px] p-6">
+            <div className="flex items-center gap-2.5 mb-5">
+                <div className="w-8 h-8 rounded-[10px] flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #eff6ff, #f0fdfa)' }}>
+                    <Heart className="w-4 h-4 text-primary-600" />
+                </div>
+                <h2 className="text-[18px] font-heading font-extrabold text-text-heading">Today&apos;s Overview</h2>
+            </div>
+            {!healthLog ? (
+                <p className="text-body text-text-muted">No check-in yet. OLAF will ask during their next conversation.</p>
+            ) : (
+                <div className="grid grid-cols-2 gap-3">
+                    {[
+                        { emoji: MOOD[mood] || '❓', label: 'Mood', value: mood || 'Unknown', bg: '#eff6ff80' },
+                        { icon: <Activity className="w-6 h-6 text-amber-600" />, label: 'Pain', value: pain != null ? `${pain}/10` : '—', bg: '#fffbeb80' },
+                        { emoji: '💊', label: 'Medications', value: meds > 0 ? `${meds} taken` : 'None', bg: '#f0fdf480' },
+                        { icon: <MessageCircle className="w-6 h-6 text-primary-500" />, label: 'Last talked', value: lastConversationTime ? 'Today' : 'None', bg: '#eff6ff60' },
+                    ].map((c, i) => (
+                        <div key={i} className="flex items-center gap-3 p-3 rounded-[16px]" style={{ background: c.bg }}>
+                            {c.emoji ? <span className="text-[28px]">{c.emoji}</span> : c.icon}
+                            <div>
+                                <div className="text-[12px] font-semibold text-text-muted uppercase" style={{ letterSpacing: '0.04em' }}>{c.label}</div>
+                                <div className="text-[17px] font-heading font-bold text-text-heading capitalize">{c.value}</div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
         </div>
-        <div className="space-y-3">
-          <LoadingSkeleton shape="text" />
-          <LoadingSkeleton shape="text" />
-          <LoadingSkeleton shape="text" />
-        </div>
-      </Card>
     );
-  }
-
-  const mood = healthLog?.mood
-    ? moodDisplay[healthLog.mood] ?? { label: healthLog.mood, color: 'text-text-primary' }
-    : { label: 'No check-in yet', color: 'text-text-muted' };
-
-  const medsTaken = healthLog?.medicationsTaken?.filter((m) => m.confirmed).length ?? 0;
-  const medsTotal = healthLog?.medicationsTaken?.length ?? 0;
-
-  const activitySummary = healthLog?.activityNotes || 'No activity recorded today';
-
-  return (
-    <Card variant="elevated" as="section">
-      <div className="pb-4 border-b border-border mb-4">
-        <h2 className="text-h3 text-text-heading font-semibold">
-          Today&apos;s overview
-        </h2>
-      </div>
-      <dl className="space-y-3">
-        <div className="flex items-center gap-3">
-          <dt className="flex items-center gap-2 text-body text-text-secondary w-40 flex-shrink-0">
-            <Heart className="w-5 h-5 text-success-600" aria-hidden="true" />
-            Mood
-          </dt>
-          <dd className={`text-body font-medium ${mood.color}`}>
-            {mood.label}
-          </dd>
-        </div>
-        <div className="flex items-center gap-3">
-          <dt className="flex items-center gap-2 text-body text-text-secondary w-40 flex-shrink-0">
-            <Pill className="w-5 h-5 text-info-700" aria-hidden="true" />
-            Medications
-          </dt>
-          <dd className="text-body font-medium text-text-primary">
-            {medsTotal > 0 ? `${medsTaken} of ${medsTotal} taken` : 'None scheduled'}
-          </dd>
-        </div>
-        <div className="flex items-center gap-3">
-          <dt className="flex items-center gap-2 text-body text-text-secondary w-40 flex-shrink-0">
-            <MessageSquare className="w-5 h-5 text-primary-700" aria-hidden="true" />
-            Last conversation
-          </dt>
-          <dd className="text-body font-medium text-text-primary">
-            {formatConversationTime(lastConversationTime)}
-          </dd>
-        </div>
-        <div className="flex items-center gap-3">
-          <dt className="flex items-center gap-2 text-body text-text-secondary w-40 flex-shrink-0">
-            <Activity className="w-5 h-5 text-warm-600" aria-hidden="true" />
-            Activity
-          </dt>
-          <dd className="text-body font-medium text-text-primary">
-            {activitySummary}
-          </dd>
-        </div>
-      </dl>
-    </Card>
-  );
 }

@@ -1,81 +1,36 @@
 'use client';
 
-import { AlertTriangle } from 'lucide-react';
-import { Badge } from '@/components/ui/Badge';
-import { EmptyState } from '@/components/ui/EmptyState';
-import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
+import { Bell } from 'lucide-react';
 import { AlertCard } from './AlertCard';
-import type { Alert } from '@/hooks/useApi';
+import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 
-interface AlertSectionProps {
-  alerts: Alert[];
-  loading?: boolean;
-  acknowledgingId: string | null;
-  onAcknowledge: (alertId: string) => void;
-}
+interface Alert { id: string; type: string; severity: string; title: string; message: string; createdAt: string; acknowledged: boolean; }
+interface Props { alerts: Alert[]; loading: boolean; acknowledgingId: string | null; onAcknowledge: (id: string) => void; }
 
-const severityOrder: Record<Alert['severity'], number> = {
-  high: 0,
-  medium: 1,
-  low: 2,
-};
+export function AlertSection({ alerts, loading, acknowledgingId, onAcknowledge }: Props) {
+    if (loading) return <div className="glass rounded-[22px] p-6"><LoadingSkeleton shape="text" lines={3} /></div>;
+    if (alerts.length === 0) return null;
 
-export function AlertSection({
-  alerts,
-  loading,
-  acknowledgingId,
-  onAcknowledge,
-}: AlertSectionProps) {
-  const unacknowledged = alerts.filter((a) => !a.acknowledged);
-  const sorted = [...unacknowledged].sort((a, b) => {
-    const sevDiff = severityOrder[a.severity] - severityOrder[b.severity];
-    if (sevDiff !== 0) return sevDiff;
-    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-  });
+    const active = alerts.filter(a => !a.acknowledged);
+    const recent = alerts.filter(a => a.acknowledged).slice(0, 2);
 
-  return (
-    <section aria-labelledby="alerts-heading">
-      <div className="flex items-center gap-2 mb-3">
-        <h2
-          id="alerts-heading"
-          className="text-h3 text-text-heading font-semibold"
-        >
-          Alerts
-        </h2>
-        {sorted.length > 0 && (
-          <Badge
-            variant={{ kind: 'severity', severity: sorted[0]?.severity ?? 'low' }}
-            size="sm"
-          >
-            {String(sorted.length)}
-          </Badge>
-        )}
-      </div>
-
-      {loading ? (
-        <div className="space-y-3">
-          <LoadingSkeleton shape="card" />
-          <LoadingSkeleton shape="card" />
-        </div>
-      ) : sorted.length === 0 ? (
-        <EmptyState
-          icon={AlertTriangle}
-          title="All clear"
-          message="No alerts to show. That's great news!"
-        />
-      ) : (
-        <div className="space-y-3" role="list" aria-label="Alert list">
-          {sorted.map((alert) => (
-            <div key={alert.id} role="listitem">
-              <AlertCard
-                alert={alert}
-                onAcknowledge={onAcknowledge}
-                acknowledging={acknowledgingId === alert.id}
-              />
+    return (
+        <div className="glass rounded-[22px] p-6">
+            <div className="flex items-center gap-2.5 mb-4">
+                <div className="w-8 h-8 rounded-[10px] flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #fffbeb, #fef2f2)' }}>
+                    <Bell className="w-4 h-4 text-amber-600" />
+                </div>
+                <h2 className="text-[18px] font-heading font-extrabold text-text-heading">
+                    Alerts
+                    {active.length > 0 && (
+                        <span className="ml-2 inline-flex items-center justify-center w-6 h-6 rounded-full bg-error-600 text-white text-[12px] font-bold">{active.length}</span>
+                    )}
+                </h2>
             </div>
-          ))}
+            <div className="space-y-3">
+                {active.map(a => <AlertCard key={a.id} {...a} acknowledging={acknowledgingId === a.id} onAcknowledge={onAcknowledge} />)}
+                {recent.map(a => <AlertCard key={a.id} {...a} acknowledging={false} onAcknowledge={onAcknowledge} />)}
+            </div>
         </div>
-      )}
-    </section>
-  );
+    );
 }

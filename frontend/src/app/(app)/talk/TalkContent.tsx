@@ -1,276 +1,207 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Mic, MicOff, Loader2 } from 'lucide-react';
+import { Mic, MicOff, Loader2, Camera } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import {
-  AdkLiveClient,
-  type CompanionStatus,
-  type TranscriptEntry,
-} from '@/lib/adk-live';
+import { AdkLiveClient, type CompanionStatus, type TranscriptEntry } from '@/lib/adk-live';
 import { AudioManager } from '@/lib/audio-manager';
-import { AudioVisualizer } from '@/components/companion/AudioVisualizer';
-import { StatusIndicator } from '@/components/companion/StatusIndicator';
 import { CameraToggle } from '@/components/companion/CameraToggle';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
+const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
 
-/**
- * TalkContent — Client component for the full voice companion UI.
- *
- * Wires together AdkLiveClient (ADK bidi-streaming WebSocket),
- * AudioManager (mic/playback) into a single interactive page.
- * Tool calls now execute server-side — no REST bridge needed.
- */
+const STATUS_MAP: Record<CompanionStatus, { label: string; color: string }> = {
+    idle: { label: 'Tap the microphone to begin', color: '#94a3b8' },
+    connecting: { label: 'Connecting...', color: '#d97706' },
+    listening: { label: 'Listening...', color: '#0d9488' },
+    thinking: { label: 'Thinking...', color: '#d97706' },
+    speaking: { label: 'OLAF is speaking...', color: '#1a6de0' },
+    error: { label: 'Connection lost', color: '#e11d48' },
+};
+
 export function TalkContent() {
-  const { user, getToken } = useAuth();
+    const { user, getToken } = useAuth();
+    const [status, setStatus] = useState<CompanionStatus>('idle');
+    const [active, setActive] = useState(false);
+    const [transcripts, setTranscripts] = useState<TranscriptEntry[]>([]);
+    const [error, setError] = useState<string | null>(null);
 
-  // ── State ────────────────────────────────────────────────────────────────
-  const [status, setStatus] = useState<CompanionStatus>('idle');
-  const [lastModelMessage, setLastModelMessage] = useState(
-    'Tap the microphone to start talking with OLAF',
-  );
-  const [sessionActive, setSessionActive] = useState(false);
-  const [transcripts, setTranscripts] = useState<TranscriptEntry[]>([]);
-  const [error, setError] = useState<string | null>(null);
+    const clientRef = useRef<AdkLiveClient | null>(null);
+    const audioRef = useRef<AudioManager | null>(null);
+    const transcriptsRef = useRef<TranscriptEntry[]>([]);
+    const sessionStartRef = useRef(0);
+    const silenceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const scrollRef = useRef<HTMLDivElement>(null);
 
-  // ── Refs (persist across renders without triggering them) ────────────────
-  const clientRef = useRef<AdkLiveClient | null>(null);
-  const audioRef = useRef<AudioManager | null>(null);
-  const transcriptsRef = useRef<TranscriptEntry[]>([]);
-  const sessionStartRef = useRef<number>(0);
+    useEffect(() => { transcriptsRef.current = transcripts; }, [transcripts]);
+    useEffect(() => { scrollRef.current?.scrollTo({ top: 9999, behavior: 'smooth' }); }, [transcripts]);
+    useEffect(() => () => { clientRef.current?.disconnect(); audioRef.current?.stop(); if (silenceRef.current) clearTimeout(silenceRef.current); }, []);
 
-  // Keep transcriptsRef in sync with state
-  useEffect(() => {
-    transcriptsRef.current = transcripts;
-  }, [transcripts]);
-
-  // ── Cleanup on unmount ───────────────────────────────────────────────────
-  useEffect(() => {
-    return () => {
-      clientRef.current?.disconnect();
-      audioRef.current?.stop();
-    };
-  }, []);
-
-  // ── Start voice session ──────────────────────────────────────────────────
-  const startSession = useCallback(async () => {
-    if (!user) return;
-    setError(null);
-
-    try {
-      // Create AudioManager and start mic capture
-      const audio = new AudioManager();
-      audioRef.current = audio;
-
-      // Create AdkLiveClient — connects to ADK bidi-streaming backend
-      const client = new AdkLiveClient({
-        apiBaseUrl: API_BASE_URL,
-        getAuthToken: getToken,
-        userId: user.uid,
-        callbacks: {
-          onStatusChange: (s) => setStatus(s),
-          onAudioChunk: (base64) => audio.queuePlayback(base64),
-          onTranscript: (entry) => {
-            setTranscripts((prev) => [...prev, entry]);
-            if (entry.role === 'model' && entry.text.trim()) {
-              setLastModelMessage(entry.text);
+    const resetSilence = useCallback(() => {
+        if (silenceRef.current) clearTimeout(silenceRef.current);
+        silenceRef.current = setTimeout(() => {
+            if (clientRef.current?.connected) {
+                setTranscripts(p => [...p, { role: 'model', text: "Are you still there? Take your time — I'm right here.", timestamp: new Date().toISOString() }]);
             }
-          },
-          onToolCall: (name, _args) => {
-            // Tools now execute server-side — just show activity in UI
-            console.log('[OLAF] tool executing server-side:', name);
-          },
-          onInterrupted: () => {
-            audio.clearPlaybackQueue();
-          },
-          onError: (err) => {
-            console.error('[OLAF]', err);
-            setError(err.message);
-          },
-        },
-      });
-      clientRef.current = client;
+        }, 30000);
+    }, []);
 
-      // Start mic capture — audio chunks flow to AdkLiveClient
-      await audio.start(
-        (base64) => client.sendAudio(base64),
-        (_speaking) => {
-          // Playback state is already tracked via onStatusChange
-        },
-      );
+    const startSession = useCallback(async () => {
+        if (!user) return;
+        setError(null);
+        try {
+            const audio = new AudioManager();
+            audioRef.current = audio;
+            const client = new AdkLiveClient({
+                apiBaseUrl: API, getAuthToken: getToken, userId: user.uid,
+                callbacks: {
+                    onStatusChange: s => { setStatus(s); if (s === 'listening') resetSilence(); },
+                    onAudioChunk: b64 => audio.queuePlayback(b64),
+                    onTranscript: entry => { setTranscripts(p => [...p, entry]); resetSilence(); },
+                    onToolCall: name => console.log('[OLAF] tool:', name),
+                    onInterrupted: () => audio.clearPlaybackQueue(),
+                    onError: err => { console.error(err); setError(err.message); },
+                },
+            });
+            clientRef.current = client;
+            await audio.start(b64 => client.sendAudio(b64), () => {});
+            await client.connect();
+            sessionStartRef.current = Date.now();
+            setActive(true);
+            setTranscripts([{ role: 'model', text: "Hi there! How are you feeling today?", timestamp: new Date().toISOString() }]);
+            resetSilence();
+        } catch (err) {
+            setError(err instanceof Error ? err.message : 'Failed to start');
+            audioRef.current?.stop(); audioRef.current = null; clientRef.current = null;
+        }
+    }, [user, getToken, resetSilence]);
 
-      // Connect to ADK bidi-streaming backend
-      await client.connect();
+    const stopSession = useCallback(async () => {
+        if (silenceRef.current) clearTimeout(silenceRef.current);
+        clientRef.current?.disconnect(); clientRef.current = null;
+        await audioRef.current?.stop(); audioRef.current = null;
+        const dur = Math.round((Date.now() - sessionStartRef.current) / 1000);
+        const t = transcriptsRef.current;
+        if (user && t.length > 0) {
+            try {
+                const tok = await getToken();
+                const h = { 'Content-Type': 'application/json', ...(tok ? { Authorization: `Bearer ${tok}` } : {}) };
+                await fetch(`${API}/api/companion/log-conversation`, { method: 'POST', headers: h, body: JSON.stringify({ userId: user.uid, sessionDuration: dur, transcript: t, flags: [] }) });
+                const txt = t.map(e => `${e.role === 'user' ? 'User' : 'OLAF'}: ${e.text}`).join('\n');
+                fetch(`${API}/api/storyteller/create-memory`, { method: 'POST', headers: h, body: JSON.stringify({ userId: user.uid, transcript: txt }) }).catch(() => {});
+            } catch {}
+        }
+        setActive(false); setStatus('idle'); setTranscripts([]);
+    }, [user, getToken]);
 
-      sessionStartRef.current = Date.now();
-      setSessionActive(true);
-      setLastModelMessage('Hi there! How are you feeling today?');
-    } catch (err) {
-      console.error('[OLAF] Session start failed:', err);
-      setError(err instanceof Error ? err.message : 'Failed to start session');
-      // Clean up partial state
-      audioRef.current?.stop();
-      audioRef.current = null;
-      clientRef.current = null;
-      setSessionActive(false);
-    }
-  }, [user, getToken]);
+    const toggle = useCallback(() => { active ? stopSession() : startSession(); }, [active, startSession, stopSession]);
+    const onFrame = useCallback((jpg: string) => { clientRef.current?.sendVideoFrame(jpg); }, []);
 
-  // ── Stop voice session ───────────────────────────────────────────────────
-  const stopSession = useCallback(async () => {
-    // Disconnect ADK stream (sends {"type":"end"} to backend)
-    clientRef.current?.disconnect();
-    clientRef.current = null;
+    const sc = STATUS_MAP[status];
+    const isConn = status === 'connecting';
 
-    // Stop audio
-    await audioRef.current?.stop();
-    audioRef.current = null;
+    return (
+        <div className="flex flex-col h-full relative">
+            {/* Transcript */}
+            <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-4 relative z-[1]">
+                {!active && transcripts.length === 0 && (
+                    <div className="flex flex-col items-center justify-center h-full text-center pb-16 animate-fade-up">
+                        {/* Conic orb */}
+                        <div className="relative w-[160px] h-[160px] mb-8">
+                            <div className="absolute inset-0 rounded-full animate-spin-slow opacity-50"
+                                 style={{ background: 'conic-gradient(from 0deg, #e8f1fd, #ccfbf1, #fef3c740, #e8f1fd)' }} />
+                            <div className="absolute inset-2 rounded-full"
+                                 style={{ background: 'radial-gradient(circle at 38% 32%, rgba(255,255,255,0.95), rgba(240,247,255,0.9) 60%, rgba(204,251,241,0.7))', boxShadow: '0 16px 64px rgba(26,109,224,0.15), inset 0 -4px 12px rgba(13,148,136,0.06)' }} />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="w-14 h-14 rounded-[18px] flex items-center justify-center"
+                                     style={{ background: 'linear-gradient(135deg, #1a6de0, #1558b8)', boxShadow: '0 4px 16px rgba(26,109,224,0.18)' }}>
+                                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round">
+                                        <circle cx="12" cy="10" r="3.5" /><path d="M6.5 19.5c0-3 2.5-5 5.5-5s5.5 2 5.5 5" />
+                                    </svg>
+                                </div>
+                            </div>
+                            {/* Sparkles */}
+                            <div className="absolute top-2 right-5 text-primary-500 animate-twinkle">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0L14.59 8.41L23 12L14.59 15.59L12 24L9.41 15.59L1 12L9.41 8.41Z" /></svg>
+                            </div>
+                            <div className="absolute bottom-4 left-3 text-accent-500 animate-twinkle-d">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0L14.59 8.41L23 12L14.59 15.59L12 24L9.41 15.59L1 12L9.41 8.41Z" /></svg>
+                            </div>
+                        </div>
+                        <h2 className="text-[28px] font-heading font-extrabold text-text-heading mb-2.5" style={{ letterSpacing: '-0.02em' }}>Talk to OLAF</h2>
+                        <p className="text-[17px] text-text-muted max-w-[300px] leading-relaxed">Your companion is here to listen, support, and remember every story you share.</p>
+                    </div>
+                )}
 
-    // Log the conversation to backend
-    const duration = Math.round((Date.now() - sessionStartRef.current) / 1000);
-    const currentTranscripts = transcriptsRef.current;
+                {transcripts.map((m, i) => (
+                    <div key={`${m.timestamp}-${i}`} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} mb-3.5 gap-2.5`}
+                         style={{ animation: `fadeUp 0.35s ease ${i * 60}ms forwards`, opacity: 0 }}>
+                        {m.role === 'model' && (
+                            <div className="w-9 h-9 rounded-[12px] flex items-center justify-center flex-shrink-0 mt-0.5"
+                                 style={{ background: 'linear-gradient(135deg, #1a6de0, #1558b8)', boxShadow: '0 3px 10px rgba(26,109,224,0.15)' }}>
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round">
+                                    <circle cx="12" cy="10" r="3.5" /><path d="M6.5 19.5c0-3 2.5-5 5.5-5s5.5 2 5.5 5" />
+                                </svg>
+                            </div>
+                        )}
+                        <div
+                            className={`max-w-[75%] px-5 py-3.5 text-[17px] leading-relaxed ${
+                                m.role === 'user'
+                                    ? 'rounded-[22px_22px_6px_22px] text-white'
+                                    : 'rounded-[22px_22px_22px_6px] text-text-primary'
+                            }`}
+                            style={m.role === 'user'
+                                ? { background: 'linear-gradient(135deg, #1a6de0, #1558b8)', boxShadow: '0 4px 20px rgba(26,109,224,0.18)' }
+                                : { background: 'rgba(255,255,255,0.92)', border: '1px solid rgba(241,245,249,0.9)', boxShadow: '0 2px 12px rgba(15,23,42,0.04)', backdropFilter: 'blur(16px)' }
+                            }
+                        >
+                            {m.text}
+                        </div>
+                    </div>
+                ))}
+            </div>
 
-    if (user && currentTranscripts.length > 0) {
-      try {
-        const authToken = await getToken();
-        const headers = {
-          'Content-Type': 'application/json',
-          ...(authToken ? { Authorization: `Bearer ${authToken}` } : {}),
-        };
+            {/* Controls */}
+            <div className="relative z-[2] px-5 pb-8 pt-3 text-center" style={{ background: 'linear-gradient(to top, rgba(240,244,248,0.95) 60%, transparent)' }}>
+                {active && (
+                    <div className="flex items-center justify-center gap-2 mb-4">
+                        <span className="w-2 h-2 rounded-full animate-pulse-dot" style={{ background: sc.color }} />
+                        <span className="text-[15px] font-heading font-semibold" style={{ color: sc.color }}>{sc.label}</span>
+                    </div>
+                )}
 
-        // Log the conversation
-        await fetch(`${API_BASE_URL}/api/companion/log-conversation`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
-            userId: user.uid,
-            sessionDuration: duration,
-            transcript: currentTranscripts,
-            flags: [],
-          }),
-        });
+                {error && <div role="alert" className="mb-4 px-4 py-3 rounded-2xl bg-error-50 border border-error-100 text-error-700 text-body-sm">{error}</div>}
 
-        // Trigger memory creation from the conversation transcript
-        const transcriptText = currentTranscripts
-          .map((e) => `${e.role === 'user' ? 'User' : 'OLAF'}: ${e.text}`)
-          .join('\n');
+                <div className="flex items-center justify-center gap-4">
+                    {active && (
+                        <CameraToggle sessionActive={active} onFrame={onFrame} disabled={isConn} />
+                    )}
 
-        fetch(`${API_BASE_URL}/api/storyteller/create-memory`, {
-          method: 'POST',
-          headers,
-          body: JSON.stringify({
-            userId: user.uid,
-            transcript: transcriptText,
-          }),
-        }).catch((err) => console.error('[OLAF] Failed to create memory:', err));
-      } catch (err) {
-        console.error('[OLAF] Failed to log conversation:', err);
-      }
-    }
+                    <div className="relative">
+                        {active && (
+                            <>
+                                <div className="absolute inset-[-16px] rounded-full animate-ripple" style={{ border: `2px solid ${sc.color}20` }} />
+                                <div className="absolute inset-[-32px] rounded-full animate-ripple-d1" style={{ border: `1.5px solid ${sc.color}12` }} />
+                                <div className="absolute inset-[-48px] rounded-full animate-ripple-d2" style={{ border: `1px solid ${sc.color}08` }} />
+                            </>
+                        )}
+                        <button type="button" onClick={toggle} disabled={isConn || !user} aria-label={active ? 'End conversation' : 'Start talking'}
+                                className="relative z-[2] w-[88px] h-[88px] rounded-full flex items-center justify-center cursor-pointer disabled:opacity-60 disabled:cursor-wait active:scale-95 transition-transform duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-300"
+                                style={{
+                                    background: active ? 'linear-gradient(135deg, #e11d48, #be123c)' : 'linear-gradient(135deg, #1a6de0, #1558b8)',
+                                    border: '5px solid rgba(255,255,255,0.9)',
+                                    boxShadow: active ? '0 8px 40px rgba(225,29,72,0.25)' : '0 8px 40px rgba(26,109,224,0.18)',
+                                }}>
+                            {isConn ? <Loader2 className="w-8 h-8 text-white animate-spin" /> : active ? <MicOff className="w-8 h-8 text-white" /> : <Mic className="w-8 h-8 text-white" />}
+                        </button>
+                    </div>
 
-    setSessionActive(false);
-    setStatus('idle');
-    setLastModelMessage('Tap the microphone to start talking with OLAF');
-    setTranscripts([]);
-  }, [user, getToken]);
+                    {active && <div className="w-12 h-12" />}
+                </div>
 
-  // ── Toggle session ───────────────────────────────────────────────────────
-  const toggleSession = useCallback(() => {
-    if (sessionActive) {
-      stopSession();
-    } else {
-      startSession();
-    }
-  }, [sessionActive, startSession, stopSession]);
-
-  // ── Camera frame handler ─────────────────────────────────────────────────
-  const handleCameraFrame = useCallback((jpegBase64: string) => {
-    clientRef.current?.sendVideoFrame(jpegBase64);
-  }, []);
-
-  // ── Mic button state ─────────────────────────────────────────────────────
-  const isConnecting = status === 'connecting';
-  const micLabel = sessionActive
-    ? 'End conversation'
-    : 'Start talking with OLAF';
-
-  return (
-    <div className="flex flex-col items-center justify-center text-center w-full">
-      {/* OLAF's last spoken message — visible for hearing-impaired users */}
-      <p
-        className="text-body-lg text-text-primary font-medium mb-6 max-w-md px-4 leading-relaxed"
-        aria-live="polite"
-      >
-        {lastModelMessage}
-      </p>
-
-      {/* Voice visualizer — pulsing circle */}
-      <div className="mb-4">
-        <AudioVisualizer status={status} />
-      </div>
-
-      {/* Status indicator */}
-      <div className="mb-8">
-        <StatusIndicator status={status} />
-      </div>
-
-      {/* Error message */}
-      {error && (
-        <div
-          role="alert"
-          className="mb-6 px-4 py-3 rounded-xl bg-error-50 border border-error-600 text-error-700 text-body-sm max-w-sm"
-        >
-          {error}
+                <p className="text-[14px] text-text-muted mt-3.5 font-heading font-medium">
+                    {active ? 'Tap to end conversation' : 'Tap the microphone to begin'}
+                </p>
+            </div>
         </div>
-      )}
-
-      {/* Control buttons — Mic + Camera */}
-      <div className="flex items-center gap-4">
-        {/* Primary mic button — 64px, always visible */}
-        <button
-          type="button"
-          onClick={toggleSession}
-          disabled={isConnecting || !user}
-          aria-label={micLabel}
-          className={[
-            'relative inline-flex items-center justify-center',
-            'w-16 h-16 rounded-full',
-            'font-semibold text-white shadow-md',
-            'transition-colors duration-150',
-            'focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-300',
-            sessionActive
-              ? 'bg-error-700 hover:bg-red-800 active:bg-red-900'
-              : 'bg-primary-700 hover:bg-primary-800 active:bg-primary-900',
-            isConnecting || !user
-              ? 'opacity-70 cursor-wait'
-              : 'cursor-pointer',
-          ].join(' ')}
-        >
-          {isConnecting ? (
-            <Loader2
-              className="w-7 h-7 animate-spin motion-reduce:animate-none"
-              aria-hidden="true"
-            />
-          ) : sessionActive ? (
-            <MicOff className="w-7 h-7" aria-hidden="true" />
-          ) : (
-            <Mic className="w-7 h-7" aria-hidden="true" />
-          )}
-        </button>
-
-        {/* Camera toggle */}
-        <CameraToggle
-          sessionActive={sessionActive}
-          onFrame={handleCameraFrame}
-          disabled={isConnecting}
-        />
-      </div>
-
-      {/* Mic button label below for clarity */}
-      <p className="text-caption text-text-muted mt-3 select-none">
-        {sessionActive ? 'Tap to end' : 'Tap to talk'}
-      </p>
-    </div>
-  );
+    );
 }

@@ -1,154 +1,44 @@
 'use client';
 
-import { useState } from 'react';
-import { ChevronDown, ChevronUp, Heart, Droplets } from 'lucide-react';
+import { Activity } from 'lucide-react';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
-import { MedicationCard } from './MedicationCard';
-import type { HealthLog } from '@/hooks/useApi';
 
-interface HealthLogsViewProps {
-  logs: HealthLog[];
-  loading?: boolean;
-}
+interface HealthLog { id: string; date: string; mood?: string; painLevel?: number; medicationsTaken?: string[]; }
+interface Props { logs: HealthLog[]; loading: boolean; }
 
-const moodLabels: Record<string, string> = {
-  happy: 'Happy',
-  okay: 'Okay',
-  sad: 'Sad',
-  anxious: 'Anxious',
-  confused: 'Confused',
-  tired: 'Tired',
-};
+const MOOD: Record<string, string> = { happy:'😊', good:'🙂', okay:'😐', sad:'😢', anxious:'😟', tired:'😴', confused:'😵‍💫', pain:'😣' };
 
-function formatDate(dateStr: string): string {
-  try {
-    const [year, month, day] = dateStr.split('-').map(Number);
-    const date = new Date(year, month - 1, day);
-    return date.toLocaleDateString('en-GB', {
-      weekday: 'short',
-      day: 'numeric',
-      month: 'short',
-    });
-  } catch {
-    return dateStr;
-  }
-}
+function fmtDay(iso: string) { try { return new Date(iso).toLocaleDateString('en-US', { weekday:'short' }); } catch { return iso; } }
 
-export function HealthLogsView({ logs, loading }: HealthLogsViewProps) {
-  const [expanded, setExpanded] = useState(false);
+export function HealthLogsView({ logs, loading }: Props) {
+    if (loading) return <div className="glass rounded-[22px] p-6"><LoadingSkeleton shape="text" lines={5} /></div>;
+    if (logs.length === 0) return null;
 
-  if (loading) {
     return (
-      <section aria-labelledby="health-logs-heading">
-        <LoadingSkeleton shape="heading" width="w-40" />
-        <div className="mt-3 space-y-3">
-          <LoadingSkeleton shape="card" />
-          <LoadingSkeleton shape="card" />
-        </div>
-      </section>
-    );
-  }
-
-  if (!logs.length) return null;
-
-  // Build mood trend text from logs
-  const moodTrend = logs
-    .slice(-7)
-    .map((l) => moodLabels[l.mood] ?? l.mood)
-    .join(' → ');
-
-  return (
-    <section aria-labelledby="health-logs-heading">
-      <button
-        onClick={() => setExpanded(!expanded)}
-        className={[
-          'w-full flex items-center justify-between',
-          'text-h3 text-text-heading font-semibold',
-          'py-2 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-300 rounded-xl',
-          'min-h-[48px]',
-        ].join(' ')}
-        aria-expanded={expanded}
-        aria-controls="health-logs-content"
-      >
-        <span id="health-logs-heading">Health logs</span>
-        {expanded ? (
-          <ChevronUp className="w-6 h-6 text-text-secondary" aria-hidden="true" />
-        ) : (
-          <ChevronDown className="w-6 h-6 text-text-secondary" aria-hidden="true" />
-        )}
-      </button>
-
-      {expanded && (
-        <div id="health-logs-content" className="mt-3 space-y-6">
-          {/* Mood trend */}
-          {moodTrend && (
-            <div className="flex items-start gap-3">
-              <Heart className="w-5 h-5 text-success-600 flex-shrink-0 mt-0.5" aria-hidden="true" />
-              <div>
-                <p className="text-body font-semibold text-text-heading">Mood trend</p>
-                <p className="text-body-sm text-text-primary mt-0.5">{moodTrend}</p>
-              </div>
+        <div className="glass rounded-[22px] p-6">
+            <div className="flex items-center gap-2.5 mb-5">
+                <div className="w-[34px] h-[34px] rounded-[12px] flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #f0fdfa, #eff6ff)' }}>
+                    <Activity className="w-[17px] h-[17px] text-teal-600" />
+                </div>
+                <span className="text-[18px] font-heading font-extrabold text-text-heading">This Week</span>
             </div>
-          )}
-
-          {/* Per-day logs */}
-          {logs.map((log) => {
-            const hydrationPct =
-              log.hydrationReminders.sent > 0
-                ? Math.round(
-                    (log.hydrationReminders.acknowledged / log.hydrationReminders.sent) * 100,
-                  )
-                : null;
-
-            return (
-              <div key={log.date} className="space-y-3">
-                <h3 className="text-h4 text-text-heading font-semibold">
-                  {formatDate(log.date)}
-                </h3>
-
-                {/* Pain level */}
-                {log.painLevel > 0 && (
-                  <p className="text-body-sm text-text-primary">
-                    Pain level: <span className="font-semibold">{log.painLevel}/10</span>
-                  </p>
-                )}
-
-                {/* Hydration */}
-                {hydrationPct !== null && (
-                  <div className="flex items-center gap-2 text-body-sm text-text-primary">
-                    <Droplets className="w-5 h-5 text-primary-500" aria-hidden="true" />
-                    <span>
-                      Hydration: {log.hydrationReminders.acknowledged} of{' '}
-                      {log.hydrationReminders.sent} reminders acknowledged ({hydrationPct}%)
-                    </span>
-                  </div>
-                )}
-
-                {/* Medications */}
-                {log.medicationsTaken.length > 0 && (
-                  <div className="space-y-2">
-                    {log.medicationsTaken.map((med, i) => (
-                      <MedicationCard
-                        key={`${log.date}-${med.name}-${i}`}
-                        name={med.name}
-                        time={med.time}
-                        status={med.confirmed ? 'taken' : 'missed'}
-                      />
-                    ))}
-                  </div>
-                )}
-
-                {/* Activity notes */}
-                {log.activityNotes && (
-                  <p className="text-body-sm text-text-secondary">
-                    {log.activityNotes}
-                  </p>
-                )}
-              </div>
-            );
-          })}
+            <div>
+                {logs.map((log, i) => {
+                    const p = log.painLevel ?? 0;
+                    const emoji = MOOD[log.mood?.toLowerCase() ?? ''] || '❓';
+                    const grad = p <= 2 ? 'linear-gradient(90deg, #34d399, #10b981)' : p <= 4 ? 'linear-gradient(90deg, #fbbf24, #f59e0b)' : 'linear-gradient(90deg, #f87171, #ef4444)';
+                    return (
+                        <div key={log.id} className="flex items-center gap-3" style={{ padding: '10px 0', borderBottom: i < logs.length - 1 ? '1px solid rgba(241,245,249,0.9)' : 'none' }}>
+                            <span className="w-9 text-[14px] text-text-muted font-medium">{fmtDay(log.date)}</span>
+                            <span className="text-[22px] w-8 text-center">{emoji}</span>
+                            <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'rgba(241,245,249,0.9)' }}>
+                                <div className="h-full rounded-full" style={{ width: `${p * 10}%`, background: grad, transition: 'width 0.8s cubic-bezier(0.4,0,0.2,1)' }} />
+                            </div>
+                            <span className="text-[14px] font-heading font-bold text-text-secondary w-9 text-right">{p}/10</span>
+                        </div>
+                    );
+                })}
+            </div>
         </div>
-      )}
-    </section>
-  );
+    );
 }

@@ -105,6 +105,68 @@ async def _create_memory_direct(
         narrative_text = transcript
         logger.info("Memory task %s: using raw transcript as narrative fallback", task_id)
 
+    # ── Generate Imagen 3 illustration for this memory ─────────────────────
+    illustration_urls: list[str] = []
+    if narrative_text and narrative_text != transcript:
+        try:
+            # Ask Gemini for an illustration scene prompt based on the narrative
+            scene_prompt_text = ""
+            if settings.google_api_key:
+                scene_req_prompt = (
+                    "Based on this narrative from an elderly person's memory, write a single "
+                    "vivid scene description (1-2 sentences) suitable as an image generation "
+                    "prompt. Focus on the most emotionally resonant visual moment. "
+                    "Do NOT include any text, words, or letters in the scene. "
+                    "Respond with ONLY the scene description, nothing else.\n\n"
+                    f"NARRATIVE:\n{narrative_text[:2000]}"
+                )
+                try:
+                    async with httpx.AsyncClient() as client:
+                        scene_resp = await client.post(
+                            "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
+                            headers={"x-goog-api-key": settings.google_api_key},
+                            json={
+                                "contents": [{"parts": [{"text": scene_req_prompt}]}],
+                                "generationConfig": {"temperature": 0.8, "maxOutputTokens": 200},
+                            },
+                            timeout=15,
+                        )
+                    if scene_resp.status_code == 200:
+                        scene_result = scene_resp.json()
+                        scene_prompt_text = (
+                            scene_result.get("candidates", [{}])[0]
+                            .get("content", {})
+                            .get("parts", [{}])[0]
+                            .get("text", "")
+                        ).strip()
+                        logger.info("Memory task %s: scene prompt generated: %s", task_id, scene_prompt_text[:100])
+                except Exception as e:
+                    logger.warning("Memory task %s: scene prompt generation failed: %s", task_id, e)
+
+            # Fallback scene prompt from title + first paragraph
+            if not scene_prompt_text:
+                scene_prompt_text = f"An elderly person's memory: {title}. {narrative_text[:300]}"
+
+            # Generate illustration via Imagen 3
+            from services.imagen_service import get_imagen_service, ImageGenerationError
+            imagen = get_imagen_service()
+            try:
+                url = await imagen.generate_and_store(
+                    prompt=scene_prompt_text,
+                    user_id=user_id,
+                    style="warm watercolor",
+                    aspect_ratio="4:3",
+                )
+                illustration_urls.append(url)
+                logger.info("Memory task %s: illustration generated: %s", task_id, url)
+            except ImageGenerationError as e:
+                logger.warning("Memory task %s: illustration generation failed: %s", task_id, e)
+            except Exception as e:
+                logger.warning("Memory task %s: illustration unexpected error: %s", task_id, e)
+
+        except Exception as e:
+            logger.warning("Memory task %s: illustration pipeline failed: %s", task_id, e)
+
     import uuid
     memory_id = uuid.uuid4().hex[:20]
     snippet = narrative_text[:200].rstrip()
@@ -116,13 +178,14 @@ async def _create_memory_direct(
         raw_transcript=transcript,
         snippet=snippet,
         tags=tags,
+        illustration_urls=illustration_urls,
         status="complete",
     )
 
     try:
         fs = get_firestore_service()
         await fs.save_memory(user_id, memory)
-        logger.info("Memory task %s: saved memory %s for user %s", task_id, memory_id, user_id)
+        logger.info("Memory task %s: saved memory %s for user %s (illustrations: %d)", task_id, memory_id, user_id, len(illustration_urls))
     except Exception:
         logger.exception("Memory task %s: failed to save memory for user %s", task_id, user_id)
 

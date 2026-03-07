@@ -1,68 +1,46 @@
 'use client';
 
-import { Mic, Volume2 } from 'lucide-react';
-import type { CompanionStatus } from '@/lib/gemini-live';
+import type { CompanionStatus } from '@/lib/adk-live';
 
 interface AudioVisualizerProps {
   status: CompanionStatus;
+  size?: 'sm' | 'md' | 'lg';
 }
 
-/**
- * Pulsing circle representing OLAF's voice companion.
- *
- * - Outer ring: animate-voice-pulse (breathing scale 1 → 1.08)
- * - Inner circle: primary-700, shows Mic when listening, Volume2 when speaking
- * - Respects prefers-reduced-motion
- *
- * Follows specs from docs/design-system/components.md
- */
-export function AudioVisualizer({ status }: AudioVisualizerProps) {
-  const isActive = status === 'listening' || status === 'thinking' || status === 'speaking';
-  const isSpeaking = status === 'speaking';
+const SIZE_MAP = {
+  sm: { outer: 'w-16 h-16', inner: 'w-10 h-10', icon: 'text-xl' },
+  md: { outer: 'w-24 h-24', inner: 'w-16 h-16', icon: 'text-3xl' },
+  lg: { outer: 'w-32 h-32', inner: 'w-20 h-20', icon: 'text-4xl' },
+};
 
-  const Icon = isSpeaking ? Volume2 : Mic;
+const STATUS_STYLES: Record<CompanionStatus, { gradient: string; ring: string; emoji: string }> = {
+  idle: { gradient: 'from-primary-100 to-primary-200', ring: '', emoji: '😊' },
+  connecting: { gradient: 'from-warm-100 to-warm-200', ring: 'animate-spin', emoji: '🔄' },
+  listening: { gradient: 'from-accent-100 to-accent-200', ring: 'animate-breathe', emoji: '👂' },
+  thinking: { gradient: 'from-warm-100 to-primary-200', ring: 'animate-gentle-pulse', emoji: '🤔' },
+  speaking: { gradient: 'from-primary-200 to-accent-200', ring: 'animate-gentle-pulse', emoji: '🗣️' },
+  error: { gradient: 'from-error-100 to-error-50', ring: '', emoji: '😔' },
+};
 
-  const stateLabel =
-    status === 'listening'
-      ? 'listening'
-      : status === 'thinking'
-        ? 'thinking'
-        : status === 'speaking'
-          ? 'speaking'
-          : status === 'connecting'
-            ? 'connecting'
-            : status === 'error'
-              ? 'error'
-              : 'idle';
+export function AudioVisualizer({ status, size = 'md' }: AudioVisualizerProps) {
+  const sizeConfig = SIZE_MAP[size];
+  const styleConfig = STATUS_STYLES[status];
 
   return (
-    <div
-      role="img"
-      aria-label={`OLAF voice companion - ${stateLabel}`}
-      className="relative flex items-center justify-center w-48 h-48 md:w-56 md:h-56"
-    >
-      {/* Outer pulsing ring — only animates when session is active */}
+    <div className="relative flex items-center justify-center" role="status" aria-label={`OLAF is ${status}`}>
+      {/* Outer pulse ring */}
+      {styleConfig.ring && (
+        <div
+          className={`absolute ${sizeConfig.outer} rounded-full bg-gradient-to-br ${styleConfig.gradient} opacity-40 ${styleConfig.ring}`}
+        />
+      )}
+      {/* Inner circle */}
       <div
-        className={[
-          'absolute inset-0 rounded-full bg-primary-200',
-          isActive
-            ? 'animate-voice-pulse motion-reduce:animate-none'
-            : '',
-        ].join(' ')}
-      />
-
-      {/* Inner stable circle */}
-      <div
-        className={[
-          'relative w-32 h-32 md:w-40 md:h-40 rounded-full',
-          'bg-primary-700 text-white',
-          'flex flex-col items-center justify-center gap-2',
-          'shadow-lg',
-          'transition-colors duration-200',
-        ].join(' ')}
+        className={`relative ${sizeConfig.inner} rounded-full bg-gradient-to-br ${styleConfig.gradient} flex items-center justify-center shadow-md`}
       >
-        <Icon className="w-8 h-8" aria-hidden="true" />
-        <span className="text-body-sm font-medium select-none">OLAF</span>
+        <span className={sizeConfig.icon} role="img" aria-hidden="true">
+          {styleConfig.emoji}
+        </span>
       </div>
     </div>
   );

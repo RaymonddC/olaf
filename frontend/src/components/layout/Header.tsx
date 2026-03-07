@@ -1,33 +1,38 @@
-import { type ReactNode } from 'react';
+'use client';
+
+import type { ReactNode } from 'react';
 
 interface HeaderProps {
-  title: string;
-  /** Optional action element (button, link, etc.) placed on the right */
-  action?: ReactNode;
-  className?: string;
+    title: string;
+    subtitle?: string;
+    action?: ReactNode;
 }
 
-/**
- * Simple top bar with page title + optional right-side action.
- * Sticky so it stays visible when scrolling.
- */
-export function Header({ title, action, className = '' }: HeaderProps) {
-  return (
-    <header
-      className={[
-        'sticky top-0 z-20',
-        'bg-bg-page/95 backdrop-blur-sm',
-        'border-b border-border',
-        'px-4 md:px-6 py-4',
-        'flex items-center justify-between',
-        'max-w-3xl mx-auto w-full',
-        className,
-      ].join(' ')}
-    >
-      <h1 className="text-h2 font-heading text-text-heading font-semibold truncate">
-        {title}
-      </h1>
-      {action && <div className="flex-shrink-0 ml-4">{action}</div>}
-    </header>
-  );
+export function Header({ title, subtitle, action }: HeaderProps) {
+    return (
+        <header
+            className="sticky top-0 z-20 flex items-center gap-3.5 px-5 py-3.5 min-h-[64px]"
+            style={{
+                background: 'rgba(240,244,248,0.8)',
+                backdropFilter: 'blur(24px)',
+                WebkitBackdropFilter: 'blur(24px)',
+                borderBottom: '1px solid rgba(241,245,249,0.9)',
+            }}
+        >
+            {/* OLAF logo mark */}
+            <div className="w-9 h-9 rounded-[11px] flex items-center justify-center flex-shrink-0"
+                 style={{ background: 'linear-gradient(135deg, #1a6de0, #1558b8)', boxShadow: '0 4px 16px rgba(26,109,224,0.18)' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round">
+                    <circle cx="12" cy="10" r="3.5" /><path d="M6.5 19.5c0-3 2.5-5 5.5-5s5.5 2 5.5 5" />
+                </svg>
+            </div>
+            <div className="min-w-0 flex-1">
+                <h1 className="text-[19px] font-heading font-extrabold text-text-heading truncate" style={{ letterSpacing: '-0.015em' }}>
+                    {title}
+                </h1>
+                {subtitle && <p className="text-[13px] text-text-muted truncate">{subtitle}</p>}
+            </div>
+            {action && <div className="flex-shrink-0 ml-2">{action}</div>}
+        </header>
+    );
 }

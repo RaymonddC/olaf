@@ -6,45 +6,38 @@ import { useAuth } from '@/contexts/AuthContext';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 
-/**
- * App route group layout — requires auth, shows BottomNav.
- * Redirects unauthenticated users to /login.
- */
 export default function AppLayout({ children }: { children: ReactNode }) {
-  const router = useRouter();
-  const { user, loading, role } = useAuth();
+    const router = useRouter();
+    const { user, loading, role } = useAuth();
 
-  useEffect(() => {
-    if (!loading && !user) {
-      router.replace('/login');
+    useEffect(() => {
+        if (!loading && !user) router.replace('/login');
+    }, [user, loading, router]);
+
+    useEffect(() => {
+        if (!loading && user && role === 'family') router.replace('/dashboard');
+    }, [user, loading, role, router]);
+
+    if (loading) {
+        return (
+            <div className="min-h-dvh flex items-center justify-center">
+                <div className="w-full max-w-sm px-6 space-y-4">
+                    <LoadingSkeleton shape="heading" />
+                    <LoadingSkeleton shape="text" lines={3} />
+                    <LoadingSkeleton shape="card" />
+                </div>
+            </div>
+        );
     }
-  }, [user, loading, router]);
 
-  // Family members belong on /dashboard, not the elder app
-  useEffect(() => {
-    if (!loading && user && role === 'family') {
-      router.replace('/dashboard');
-    }
-  }, [user, loading, role, router]);
+    if (!user) return null;
 
-  if (loading) {
     return (
-      <div className="min-h-dvh flex items-center justify-center bg-bg-page">
-        <div className="w-full max-w-sm px-6 space-y-4">
-          <LoadingSkeleton shape="heading" />
-          <LoadingSkeleton shape="text" lines={3} />
-          <LoadingSkeleton shape="card" />
+        <div className="relative z-[1] min-h-dvh">
+            <div className="max-w-[640px] mx-auto flex flex-col min-h-dvh">
+                {children}
+            </div>
+            <BottomNav />
         </div>
-      </div>
     );
-  }
-
-  if (!user) return null;
-
-  return (
-    <div className="min-h-dvh bg-bg-page">
-      {children}
-      <BottomNav />
-    </div>
-  );
 }
