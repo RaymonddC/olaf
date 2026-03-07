@@ -5,7 +5,7 @@
  * The API key is fetched from the backend so it never ships in the JS bundle.
  */
 
-import { GoogleGenAI, Modality } from '@google/genai';
+import { GoogleGenAI, Modality, type LiveServerMessage } from '@google/genai';
 
 export type CompanionStatus =
   | 'idle'
@@ -203,7 +203,8 @@ export class GeminiLiveClient {
           outputAudioTranscription: {},
           inputAudioTranscription: {},
           systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
-          tools: [{ functionDeclarations: TOOL_DECLARATIONS }],
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          tools: [{ functionDeclarations: TOOL_DECLARATIONS as any }],
         },
         callbacks: {
           onopen: () => {
@@ -212,8 +213,8 @@ export class GeminiLiveClient {
             this.reconnectAttempts = 0;
             this.config.callbacks.onStatusChange('listening');
           },
-          onmessage: (msg: Record<string, unknown>) => {
-            this.handleSdkMessage(msg);
+          onmessage: (msg: LiveServerMessage) => {
+            this.handleSdkMessage(msg as unknown as Record<string, unknown>);
           },
           onerror: (e: ErrorEvent) => {
             console.error('[GeminiLive] error', e);

@@ -60,9 +60,8 @@ export class AudioManager {
 
   // Playback
   private outputContext: AudioContext | null = null;
-  private playbackQueue: Float32Array[] = [];
-  private isPlaying = false;
-  private currentSource: AudioBufferSourceNode | null = null;
+  private nextPlayTime = 0;
+  private activeSourceCount = 0;
   private _isSpeaking = false;
 
   // Callbacks
@@ -147,43 +146,60 @@ export class AudioManager {
 
   /**
    * Queue a base64-encoded 24 kHz PCM chunk from Gemini for playback.
-   * Chunks are played sequentially for gapless audio.
+   * Chunks are scheduled precisely on the AudioContext clock for gapless audio.
    */
   queuePlayback(pcmBase64: string): void {
+    if (!this.outputContext) return;
+
     const int16 = base64ToInt16Array(pcmBase64);
     const float32 = new Float32Array(int16.length);
     for (let i = 0; i < int16.length; i++) {
       float32[i] = int16[i] / 32768;
     }
-    this.playbackQueue.push(float32);
 
-    if (!this.isPlaying) {
-      this.setSpeaking(true);
-      this.playNext();
+    const ctx = this.outputContext;
+    const buffer = ctx.createBuffer(1, float32.length, 24000);
+    buffer.getChannelData(0).set(float32);
+
+    const source = ctx.createBufferSource();
+    source.buffer = buffer;
+    source.connect(ctx.destination);
+
+    // Schedule chunk to play exactly at the end of the previous one
+    const now = ctx.currentTime;
+    if (this.nextPlayTime < now + 0.02) {
+      this.nextPlayTime = now + 0.02; // small lead-in to avoid underrun
     }
+    source.start(this.nextPlayTime);
+    this.nextPlayTime += buffer.duration;
+
+    this.activeSourceCount++;
+    if (!this._isSpeaking) this.setSpeaking(true);
+
+    source.onended = () => {
+      this.activeSourceCount--;
+      if (this.activeSourceCount <= 0) {
+        this.activeSourceCount = 0;
+        this.setSpeaking(false);
+      }
+    };
   }
 
   /** Clear the playback queue (called on interruption). */
   clearPlaybackQueue(): void {
-    this.playbackQueue = [];
-    if (this.currentSource) {
-      try {
-        this.currentSource.onended = null;
-        this.currentSource.stop();
-        this.currentSource.disconnect();
-      } catch {
-        // Already stopped
-      }
-      this.currentSource = null;
-    }
-    this.isPlaying = false;
+    // Reset the schedule — any already-started sources will finish naturally
+    // but we stop tracking them and reset speaking state immediately
+    this.nextPlayTime = 0;
+    this.activeSourceCount = 0;
     this.setSpeaking(false);
   }
 
   /** Stop capture, release microphone, and clean up audio contexts. */
   async stop(): Promise<void> {
     this._started = false;
-    this.clearPlaybackQueue();
+    this.nextPlayTime = 0;
+    this.activeSourceCount = 0;
+    this.setSpeaking(false);
 
     // Disconnect capture graph
     if (this.workletNode) {
@@ -220,30 +236,7 @@ export class AudioManager {
     }
   }
 
-  // ── Private playback helpers ─────────────────────────────────────────────
-
-  private playNext(): void {
-    if (this.playbackQueue.length === 0) {
-      this.isPlaying = false;
-      this.setSpeaking(false);
-      return;
-    }
-    if (!this.outputContext) return;
-
-    this.isPlaying = true;
-    const samples = this.playbackQueue.shift()!;
-
-    const buffer = this.outputContext.createBuffer(1, samples.length, 24000);
-    buffer.getChannelData(0).set(samples);
-
-    const source = this.outputContext.createBufferSource();
-    source.buffer = buffer;
-    source.connect(this.outputContext.destination);
-    source.onended = () => this.playNext();
-    source.start();
-
-    this.currentSource = source;
-  }
+  // ── Private helpers ──────────────────────────────────────────────────────
 
   private setSpeaking(speaking: boolean): void {
     if (this._isSpeaking !== speaking) {

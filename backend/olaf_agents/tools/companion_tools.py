@@ -13,6 +13,7 @@ import httpx
 
 from config import settings
 from models.firestore import AlertDoc, ConversationDoc, HealthLogDoc, ReminderDoc
+from services.fcm_service import get_fcm_service
 from services.firestore_service import get_firestore_service
 
 logger = logging.getLogger(__name__)
@@ -175,31 +176,21 @@ async def flag_emotional_distress(
     action = "logged"
 
     if severity in ("medium", "high"):
-        # Look up family contacts for notification
-        family_links = await fs.get_family_links_for_elderly(user_id)
+        fcm = get_fcm_service()
+        urgent = severity == "high"
+        title = "⚠️ Urgent: OLAF Alert" if urgent else "OLAF Alert"
+        body = f"Your loved one may need attention: {observation[:120]}"
 
-        if family_links:
-            if severity == "high":
-                action = "urgent_alert"
-                # Notify ALL family contacts for urgent alerts
-                for link in family_links:
-                    family_user = await fs.get_user(link.family_user_id)
-                    if family_user and family_user.fcm_token:
-                        # FCM push notification would be sent here
-                        logger.info(
-                            "Urgent alert push queued for family member %s",
-                            link.family_user_id,
-                        )
-            else:
-                action = "notified_family"
-                # Notify primary family contact only
-                primary = family_links[0]
-                family_user = await fs.get_user(primary.family_user_id)
-                if family_user and family_user.fcm_token:
-                    logger.info(
-                        "Distress notification queued for family member %s",
-                        primary.family_user_id,
-                    )
+        result = await fcm.send_to_family(
+            elderly_user_id=user_id,
+            title=title,
+            body=body,
+            notification_type="alert",
+            data={"alertId": alert_id, "severity": severity},
+            urgent=urgent,
+        )
+        action = "urgent_alert" if urgent else "notified_family"
+        logger.info("FCM alert sent to family: %s", result)
 
     logger.info(
         "Emotional distress flagged for user %s: severity=%s action=%s",

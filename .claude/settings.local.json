@@ -21,7 +21,10 @@
       "Bash(npx next:*)",
       "Bash(python:*)",
       "Bash(python3:*)",
-      "Bash(pip install pytest pytest-asyncio httpx --quiet)"
+      "Bash(pip install pytest pytest-asyncio httpx --quiet)",
+      "Bash(sudo apt:*)",
+      "Bash(npm run:*)",
+      "Bash(npm install:*)"
     ]
   }
 }
