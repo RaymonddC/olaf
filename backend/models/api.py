@@ -230,6 +230,7 @@ class MemoryChapter(CamelModel):
     id: str
     title: str
     narrative_text: str
+    raw_transcript: str = ""
     illustration_urls: list[str] = []
     audio_script: str = ""
     tags: list[str] = []

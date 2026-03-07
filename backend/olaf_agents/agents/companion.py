@@ -18,7 +18,7 @@ from olaf_agents.tools.companion_tools import (
     set_reminder as _set_reminder,
 )
 
-_COMPANION_MODEL = "gemini-2.5-flash-native-audio-latest"
+_COMPANION_MODEL = "gemini-2.5-flash-native-audio-preview-09-2025"
 
 
 # ── ADK tool wrappers — read user_id from session state ─────────────────────

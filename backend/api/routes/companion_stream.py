@@ -46,6 +46,7 @@ from google.genai import types
 
 from config import settings
 from olaf_agents.agents.companion import companion_agent
+from services.firestore_service import get_firestore_service
 
 # Ensure ADK reads the correct backend from env before Runner is created.
 # ADK respects GOOGLE_GENAI_USE_VERTEXAI, GOOGLE_CLOUD_PROJECT, and
@@ -79,6 +80,8 @@ _runner = Runner(
 _run_config = RunConfig(
     response_modalities=[types.Modality.AUDIO],
     streaming_mode=StreamingMode.BIDI,
+    input_audio_transcription=types.AudioTranscriptionConfig(),   # transcribe user speech
+    output_audio_transcription=types.AudioTranscriptionConfig(),  # transcribe OLAF's actual speech
 )
 
 
@@ -108,11 +111,26 @@ async def companion_stream(
     await websocket.accept()
     logger.info("Companion stream connected: user=%s", user_id)
 
-    # ── ADK session — store user_id in state so tools can read it ───────────
+    # ── Fetch memory bank — inject into session state for instruction ────────
+    try:
+        fs = get_firestore_service()
+        memories, _ = await fs.list_memories(user_id, limit=5)
+        if memories:
+            lines = [f"- {m.title}: {(m.raw_transcript or m.narrative_text or m.snippet)[:800]}" for m in memories]
+            memory_bank = "Things you know about this user from past conversations:\n" + "\n".join(lines)
+            logger.info("Memory bank loaded: %d memories for user=%s", len(memories), user_id)
+        else:
+            memory_bank = "No stored memories yet — this may be one of your first conversations."
+            logger.info("Memory bank: no memories found for user=%s", user_id)
+    except Exception as exc:
+        logger.warning("Could not fetch memories for user %s: %s", user_id, exc)
+        memory_bank = ""
+
+    # ── ADK session — store user_id and memory_bank in state ─────────────────
     session = await _session_service.create_session(
         app_name="olaf_companion",
         user_id=user_id,
-        state={"user_id": user_id},
+        state={"user_id": user_id, "memory_bank": memory_bank},
     )
 
     live_request_queue = LiveRequestQueue()
@@ -169,7 +187,7 @@ async def companion_stream(
                 live_request_queue=live_request_queue,
                 run_config=_run_config,
             ):
-                # Audio chunks
+                # Audio chunks (skip model text parts — those are internal thinking, not speech)
                 if event.content and event.content.parts:
                     for part in event.content.parts:
                         if getattr(part, "inline_data", None):
@@ -180,13 +198,25 @@ async def companion_stream(
                                 ).decode(),
                             })
 
-                        elif getattr(part, "text", None):
-                            role = "user" if event.author == "user" else "model"
-                            await websocket.send_json({
-                                "type": "transcript",
-                                "role": role,
-                                "text": part.text,
-                            })
+                # User speech transcription — only send complete utterances (finished=True)
+                if getattr(event, "input_transcription", None):
+                    t = event.input_transcription
+                    if getattr(t, "text", None) and getattr(t, "finished", False):
+                        await websocket.send_json({
+                            "type": "transcript",
+                            "role": "user",
+                            "text": t.text,
+                        })
+
+                # OLAF speech transcription — what was actually spoken aloud
+                if getattr(event, "output_transcription", None):
+                    t = event.output_transcription
+                    if getattr(t, "text", None) and getattr(t, "finished", False):
+                        await websocket.send_json({
+                            "type": "transcript",
+                            "role": "model",
+                            "text": t.text,
+                        })
 
                 # Tool calls — let the browser show activity indicator
                 if getattr(event, "tool_calls", None):
