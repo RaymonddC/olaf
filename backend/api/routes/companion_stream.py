@@ -35,6 +35,7 @@ import base64
 import json
 import logging
 import os
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
 from firebase_admin import auth as firebase_auth
@@ -126,14 +127,83 @@ async def companion_stream(
         logger.warning("Could not fetch memories for user %s: %s", user_id, exc)
         memory_bank = ""
 
-    # ── ADK session — store user_id and memory_bank in state ─────────────────
+    # ── Build daily briefing — time-of-day + pending reminders ───────────────
+    try:
+        import zoneinfo
+
+        now_utc = datetime.now(timezone.utc)
+
+        # Use user's stored timezone if available, else fall back to UTC
+        user_tz_str = "UTC"
+        try:
+            user_profile = await fs.get_user(user_id)
+            if user_profile and user_profile.timezone:
+                user_tz_str = user_profile.timezone
+        except Exception:
+            pass
+
+        try:
+            user_tz = zoneinfo.ZoneInfo(user_tz_str)
+            now_local = now_utc.astimezone(user_tz)
+        except Exception:
+            now_local = now_utc
+
+        hour = now_local.hour
+        day_name = now_local.strftime("%A")
+
+        if 5 <= hour < 12:
+            time_of_day = "morning"
+        elif 12 <= hour < 17:
+            time_of_day = "afternoon"
+        elif 17 <= hour < 21:
+            time_of_day = "evening"
+        else:
+            time_of_day = "night"
+
+        time_label = f"{day_name} {time_of_day}, {now_local.strftime('%-I:%M %p')}"
+
+        try:
+            pending_reminders = await fs.get_reminders(user_id, status="pending")
+            # Filter to reminders scheduled for today (in user's local time)
+            today_str = now_local.strftime("%Y-%m-%d")
+            todays_reminders = [
+                r for r in pending_reminders
+                if r.scheduled_time.astimezone(now_local.tzinfo).strftime("%Y-%m-%d") == today_str
+            ]
+            if todays_reminders:
+                reminder_parts = [
+                    f"{r.message} at {r.scheduled_time.astimezone(now_local.tzinfo).strftime('%-I:%M %p')}"
+                    for r in todays_reminders
+                ]
+                reminders_line = "Pending reminders today: " + ", ".join(reminder_parts)
+            else:
+                reminders_line = "No pending reminders today."
+        except Exception as exc:
+            logger.warning("Could not fetch reminders for user %s: %s", user_id, exc)
+            reminders_line = "No pending reminders today."
+
+        daily_briefing = f"Current time: {time_label}\n{reminders_line}"
+        logger.info("Daily briefing built for user=%s: %s", user_id, daily_briefing)
+    except Exception as exc:
+        logger.warning("Could not build daily briefing for user %s: %s", user_id, exc)
+        daily_briefing = ""
+
+    # ── ADK session — store user_id, memory_bank, and daily_briefing in state ─
     session = await _session_service.create_session(
         app_name="olaf_companion",
         user_id=user_id,
-        state={"user_id": user_id, "memory_bank": memory_bank},
+        state={"user_id": user_id, "memory_bank": memory_bank, "daily_briefing": daily_briefing},
     )
 
     live_request_queue = LiveRequestQueue()
+
+    # ── Send initial trigger so OLAF speaks first ─────────────────────────────
+    live_request_queue.send_content(
+        types.Content(
+            role="user",
+            parts=[types.Part(text="__START_SESSION__")],
+        )
+    )
 
     # ── Upstream task: browser → LiveRequestQueue ────────────────────────────
     async def upstream() -> None:
