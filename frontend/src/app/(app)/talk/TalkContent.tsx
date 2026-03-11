@@ -161,7 +161,7 @@ export function TalkContent() {
             </div>
 
             {/* Controls */}
-            <div className="relative z-[2] px-5 pb-6 pt-4 text-center">
+            <div className="relative z-[2] px-5 pb-32 pt-4 text-center">
                 {active && (
                     <div className="flex items-center justify-center gap-2 mb-4">
                         <span className="w-2 h-2 rounded-full animate-pulse-dot" style={{ background: sc.color }} />

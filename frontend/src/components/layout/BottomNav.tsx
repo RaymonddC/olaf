@@ -14,10 +14,10 @@ export function BottomNav() {
     const pathname = usePathname();
 
     return (
-        <nav aria-label="Main navigation" className="fixed bottom-0 left-0 right-0 z-30 flex justify-center px-4"
+        <nav aria-label="Main navigation" className="fixed bottom-0 left-0 right-0 z-30 flex justify-center px-4 pointer-events-none"
              style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 24px)' }}>
             <div
-                className="flex items-center justify-around w-full max-w-[420px] lg:max-w-lg py-2 lg:py-3 px-2 rounded-3xl"
+                className="flex items-center justify-around w-full max-w-[420px] lg:max-w-lg py-2 lg:py-3 px-2 rounded-3xl pointer-events-auto"
                 style={{
                     background: 'rgba(255,255,255,0.92)',
                     backdropFilter: 'blur(28px)',
