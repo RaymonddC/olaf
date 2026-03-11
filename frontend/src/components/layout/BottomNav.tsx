@@ -14,11 +14,12 @@ export function BottomNav() {
     const pathname = usePathname();
 
     return (
-        <nav aria-label="Main navigation" className="fixed bottom-0 left-0 right-0 z-30 flex justify-center px-4 pb-4 pb-safe">
+        <nav aria-label="Main navigation" className="fixed bottom-0 left-0 right-0 z-30 flex justify-center px-4"
+             style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 24px)' }}>
             <div
-                className="flex items-center justify-around w-full max-w-[420px] py-2 px-2 rounded-3xl"
+                className="flex items-center justify-around w-full max-w-[420px] lg:max-w-lg py-2 lg:py-3 px-2 rounded-3xl"
                 style={{
-                    background: 'rgba(255,255,255,0.82)',
+                    background: 'rgba(255,255,255,0.92)',
                     backdropFilter: 'blur(28px)',
                     WebkitBackdropFilter: 'blur(28px)',
                     border: '1px solid rgba(255,255,255,0.85)',
@@ -32,25 +33,25 @@ export function BottomNav() {
                             key={href}
                             href={href}
                             aria-current={isActive ? 'page' : undefined}
-                            className="flex flex-col items-center gap-[3px] py-2.5 px-6 rounded-[18px] min-w-[76px] min-h-[54px] justify-center"
+                            className="flex flex-col items-center gap-1 py-2.5 px-8 rounded-[18px] min-w-[76px] min-h-[54px] lg:min-h-[60px] justify-center"
                             style={{
-                                background: isActive ? 'linear-gradient(135deg, #1a6de0, #1558b8)' : 'transparent',
-                                boxShadow: isActive ? '0 4px 16px rgba(26,109,224,0.18)' : 'none',
+                                background: isActive ? 'rgba(26,109,224,0.12)' : 'transparent',
+                                boxShadow: isActive ? '0 2px 8px rgba(26,109,224,0.10)' : 'none',
                                 transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)',
                             }}
                         >
                             <Icon
                                 className="w-5 h-5"
                                 strokeWidth={isActive ? 2.5 : 2}
-                                color={isActive ? '#fff' : '#94a3b8'}
+                                color={isActive ? '#1a6de0' : '#94a3b8'}
                                 aria-hidden="true"
                             />
                             <span
                                 className="text-[12px] font-heading font-bold"
-                                style={{ color: isActive ? '#fff' : '#94a3b8' }}
+                                style={{ color: isActive ? '#1a6de0' : '#94a3b8' }}
                             >
-                {label}
-              </span>
+                                {label}
+                            </span>
                         </Link>
                     );
                 })}

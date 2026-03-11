@@ -34,7 +34,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
     return (
         <div className="relative z-[1] min-h-dvh">
-            <div className="max-w-[640px] mx-auto flex flex-col min-h-dvh">
+            {/* Content: full width on all screens, pages manage their own max-width */}
+            <div className="w-full flex flex-col min-h-dvh">
                 {children}
             </div>
             <BottomNav />

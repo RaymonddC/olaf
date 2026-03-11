@@ -69,7 +69,7 @@ export default function MemoriesPage() {
                 )}
 
                 {isLoading && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {[0,1,2,3].map(i => <MemoryCardSkeleton key={i} />)}
                     </div>
                 )}
@@ -85,7 +85,7 @@ export default function MemoriesPage() {
                         {groups.map(({ label, items }) => (
                             <section key={label}>
                                 <h2 className="text-[12px] font-heading font-semibold text-text-muted uppercase tracking-[0.05em] mb-3">{label}</h2>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {items.map((m, i) => (
                                         <div key={m.id} style={{ animation: `fadeUp 0.45s ease ${i * 60}ms forwards`, opacity: 0 }}>
                                             <MemoryChapterCard id={m.id} title={m.title} createdAt={m.createdAt} illustrationUrls={m.illustrationUrls} snippet={m.snippet} />

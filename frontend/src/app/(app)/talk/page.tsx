@@ -5,7 +5,7 @@ export const metadata = { title: 'Talk — OLAF' };
 
 export default function TalkPage() {
     return (
-        <div className="flex flex-col h-dvh">
+        <div className="flex flex-col h-dvh pb-32">
             <Header title="OLAF" />
             <div className="flex-1 overflow-hidden">
                 <TalkContent />
