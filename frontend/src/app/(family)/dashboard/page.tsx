@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { LogOut, Heart, Bell, Activity } from 'lucide-react';
 import { Header } from '@/components/layout/Header';
-import { PageShell } from '@/components/layout/PageShell';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { OverviewCard } from '@/components/family/OverviewCard';
 import { AlertSection } from '@/components/family/AlertSection';
@@ -65,18 +64,20 @@ export default function FamilyDashboardPage() {
     }, [user, toast]);
 
     if (meLoad) return (
-        <div className="relative z-[1] min-h-dvh">
+        <div className="flex flex-col h-dvh">
             <Header title="Loading..." />
-            <PageShell noBottomPad><div className="space-y-6"><LoadingSkeleton shape="card" /><LoadingSkeleton shape="card" /></div></PageShell>
+            <div className="flex-1 overflow-y-auto px-5 py-5 lg:px-10 lg:py-8">
+                <div className="max-w-[800px] mx-auto space-y-6"><LoadingSkeleton shape="card" /><LoadingSkeleton shape="card" /></div>
+            </div>
         </div>
     );
 
     if (!meLoad && profile && !eId) return (
-        <div className="relative z-[1] min-h-dvh">
+        <div className="flex flex-col h-dvh">
             <Header title="Family Dashboard" action={
                 <button onClick={async () => { await signOut(); router.replace('/login'); }} className="flex items-center gap-2 px-4 py-2 rounded-xl text-body-sm font-semibold text-text-muted hover:bg-white/50 min-h-[48px] cursor-pointer"><LogOut className="w-5 h-5" /> Sign out</button>
             } />
-            <div className="min-h-[60vh] flex items-center justify-center px-6">
+            <div className="flex-1 overflow-y-auto flex items-center justify-center px-6">
                 <div className="text-center max-w-sm animate-fade-up">
                     <div className="w-20 h-20 rounded-[22px] mx-auto mb-5 flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #dbeafe, #ccfbf1)' }}>
                         <Heart className="w-9 h-9 text-primary-600" />
@@ -90,12 +91,12 @@ export default function FamilyDashboardPage() {
     );
 
     return (
-        <div className="relative z-[1] min-h-dvh">
+        <div className="flex flex-col h-dvh">
             <Header title={`${eName}'s care`} subtitle={greeting()} action={
                 <button onClick={async () => { await signOut(); router.replace('/login'); }} className="flex items-center gap-2 px-4 py-2 rounded-xl text-body-sm font-semibold text-text-muted hover:bg-white/50 min-h-[48px] cursor-pointer"><LogOut className="w-5 h-5" /> Sign out</button>
             } />
 
-            <PageShell noBottomPad>
+            <div className="flex-1 overflow-y-auto px-5 pt-5 pb-8 lg:px-10 lg:pt-8 lg:pb-10">
                 <div className="max-w-[800px] mx-auto space-y-5">
                     {/* Status chips */}
                     <div className="flex gap-2 flex-wrap">
@@ -135,7 +136,7 @@ export default function FamilyDashboardPage() {
                     <ReportsSection reports={reports} loading={repLoad} />
                     <HealthLogsView logs={weeklyLogs} loading={weekLoad} />
                 </div>
-            </PageShell>
+            </div>
         </div>
     );
 }
