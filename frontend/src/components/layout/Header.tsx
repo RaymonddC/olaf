@@ -13,10 +13,9 @@ export function Header({ title, subtitle, action }: HeaderProps) {
         <header
             className="sticky top-0 z-20 flex items-center gap-3.5 px-5 py-3.5 min-h-[64px]"
             style={{
-                background: 'rgba(240,244,248,0.8)',
+                background: 'rgba(240,244,248,0.6)',
                 backdropFilter: 'blur(24px)',
                 WebkitBackdropFilter: 'blur(24px)',
-                borderBottom: '1px solid rgba(241,245,249,0.9)',
             }}
         >
             {/* OLAF logo mark */}
