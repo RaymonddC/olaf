@@ -3,7 +3,7 @@
 import { AlertTriangle, Info, AlertCircle, Check, Loader2 } from 'lucide-react';
 
 interface Props {
-    id: string; type: string; severity: string; title: string; message: string;
+    id: string; type: string; severity: string; title?: string; message: string;
     createdAt: string; acknowledged: boolean; acknowledging: boolean;
     onAcknowledge: (id: string) => void;
 }
@@ -18,7 +18,7 @@ function timeAgo(iso: string) {
     try { const m = Math.floor((Date.now() - new Date(iso).getTime()) / 60000); if (m < 60) return `${m}m`; const h = Math.floor(m / 60); if (h < 24) return `${h}h`; return `${Math.floor(h / 24)}d`; } catch { return ''; }
 }
 
-export function AlertCard({ id, severity, title, message, createdAt, acknowledged, acknowledging, onAcknowledge }: Props) {
+export function AlertCard({ id, type, severity, title, message, createdAt, acknowledged, acknowledging, onAcknowledge }: Props) {
     const s = SEV[severity] || SEV.low;
     const Icon = s.icon;
     return (
@@ -29,7 +29,7 @@ export function AlertCard({ id, severity, title, message, createdAt, acknowledge
                 </div>
                 <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start gap-2 mb-1">
-                        <h3 className="text-[16px] font-heading font-bold text-text-heading truncate">{title}</h3>
+                        <h3 className="text-[16px] font-heading font-bold text-text-heading truncate">{title ?? type.replace(/_/g, ' ')}</h3>
                         <span className="text-[12px] text-text-muted flex-shrink-0">{timeAgo(createdAt)} ago</span>
                     </div>
                     <p className="text-[14px] text-text-secondary mb-3 leading-snug">{message}</p>

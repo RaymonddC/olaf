@@ -211,7 +211,7 @@ export default function AlertsPage() {
                   {acknowledged.slice(0, 10).map((alert) => (
                     <div key={alert.id} role="listitem">
                       <AlertCard
-                        alert={alert}
+                        {...alert}
                         onAcknowledge={handleAcknowledge}
                         acknowledging={false}
                       />

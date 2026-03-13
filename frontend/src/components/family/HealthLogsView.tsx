@@ -3,7 +3,7 @@
 import { Activity } from 'lucide-react';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 
-interface HealthLog { id: string; date: string; mood?: string; painLevel?: number; medicationsTaken?: string[]; }
+interface HealthLog { id?: string; date: string; mood?: string; painLevel?: number; medicationsTaken?: { name: string; time: string; confirmed: boolean }[]; }
 interface Props { logs: HealthLog[]; loading: boolean; }
 
 const MOOD: Record<string, string> = { happy:'😊', good:'🙂', okay:'😐', sad:'😢', anxious:'😟', tired:'😴', confused:'😵‍💫', pain:'😣' };

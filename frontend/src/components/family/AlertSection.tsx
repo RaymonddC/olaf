@@ -4,7 +4,7 @@ import { Bell } from 'lucide-react';
 import { AlertCard } from './AlertCard';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 
-interface Alert { id: string; type: string; severity: string; title: string; message: string; createdAt: string; acknowledged: boolean; }
+interface Alert { id: string; type: string; severity: string; title?: string; message: string; createdAt: string; acknowledged: boolean; }
 interface Props { alerts: Alert[]; loading: boolean; acknowledgingId: string | null; onAcknowledge: (id: string) => void; }
 
 export function AlertSection({ alerts, loading, acknowledgingId, onAcknowledge }: Props) {

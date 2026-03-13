@@ -60,6 +60,7 @@ export interface HydrationReminders {
 }
 
 export interface HealthLog {
+  id?: string;
   date: string;
   mood: string;
   moodScore: number;
@@ -86,6 +87,7 @@ export interface Alert {
   userId: string;
   type: 'emotional_distress' | 'missed_medication' | 'health_anomaly' | 'inactivity';
   severity: 'low' | 'medium' | 'high';
+  title?: string;
   message: string;
   source: 'companion' | 'storyteller' | 'navigator' | 'system';
   acknowledged: boolean;
