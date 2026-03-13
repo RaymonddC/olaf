@@ -18,8 +18,7 @@ steps:
       - --cpu=2
       - --timeout=300
       - --concurrency=80
-      - --set-env-vars=GOOGLE_CLOUD_PROJECT=olaf-dev-7a5d4,GOOGLE_CLOUD_LOCATION=us-central1,GOOGLE_GENAI_USE_VERTEXAI=False,GCS_ARTIFACTS_BUCKET=olaf-artifacts,LOG_LEVEL=info,ENABLE_DEV_UI=false
-      - --set-env-vars=ALLOWED_ORIGINS=http://localhost:3000^,https://olaf-dev-7a5d4.web.app^,https://olaf-dev-7a5d4.firebaseapp.com
+      - --env-vars-file=backend/env.yaml
       - --update-secrets=GOOGLE_API_KEY=GOOGLE_API_KEY:latest,FIREBASE_ADMIN_PROJECT_ID=FIREBASE_ADMIN_PROJECT_ID:latest,FIREBASE_ADMIN_CLIENT_EMAIL=FIREBASE_ADMIN_CLIENT_EMAIL:latest,FIREBASE_ADMIN_PRIVATE_KEY=FIREBASE_ADMIN_PRIVATE_KEY:latest
 images:
   - 'gcr.io/$PROJECT_ID/olaf-backend'
