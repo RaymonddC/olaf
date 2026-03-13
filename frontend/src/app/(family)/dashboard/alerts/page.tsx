@@ -188,7 +188,7 @@ export default function AlertsPage() {
                     .map((alert) => (
                       <div key={alert.id} role="listitem">
                         <AlertCard
-                          alert={alert}
+                          {...alert}
                           onAcknowledge={handleAcknowledge}
                           acknowledging={acknowledgingId === alert.id}
                         />
