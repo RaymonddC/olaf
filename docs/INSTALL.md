@@ -217,6 +217,32 @@ pytest
 
 ---
 
+## Firebase Hosting — Blaze Plan (for dynamic routes)
+
+Firebase Hosting with Next.js webframeworks requires the **Blaze (pay-as-you-go) plan** if any page is server-rendered (dynamic). The free Spark plan does not support Cloud Functions, which Firebase uses to serve dynamic Next.js routes.
+
+**When you need this:**
+- Any page uses `getServerSideProps`, server components with data fetching, or dynamic routes that can't be statically generated at build time.
+
+**How to upgrade:**
+1. Go to https://console.firebase.google.com → select your project
+2. Click **Spark** (bottom-left) → **Upgrade** → select **Blaze**
+3. Add a billing account (credit card required — free tier still applies, ~$0 for low traffic)
+
+**After upgrading**, re-run:
+```bash
+firebase deploy --only hosting
+```
+
+**Free tier limits (Blaze):**
+- Cloud Functions: 2M invocations/month free
+- Hosting: 10 GB storage, 360 MB/day transfer free
+- Firestore: 1 GB storage, 50K reads/20K writes per day free
+
+For a hackathon / low-traffic app, you will very likely stay within the free tier.
+
+---
+
 ## Troubleshooting
 
 ### `pip install` fails with metadata error
