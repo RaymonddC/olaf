@@ -1,6 +1,6 @@
 steps:
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/olaf-backend', '.']
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/olaf-backend', './backend']
   - name: 'gcr.io/cloud-builders/docker'
     args: ['push', 'gcr.io/$PROJECT_ID/olaf-backend']
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
