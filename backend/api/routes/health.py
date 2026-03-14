@@ -6,7 +6,7 @@ GET /api/health/reminders — Get reminders
 """
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 from fastapi import APIRouter, Depends, Query
 
@@ -31,7 +31,7 @@ def _resolve_date_range(range_str: str) -> tuple[str, str]:
 
     Supports: 'today', 'week', 'month', or 'YYYY-MM-DD:YYYY-MM-DD'.
     """
-    today = datetime.now(timezone.utc).date()
+    today = datetime.now(UTC).date()
 
     if range_str == "today":
         date_str = today.isoformat()
@@ -64,15 +64,6 @@ async def get_health_logs(
 
     log_items = []
     for log in logs:
-        med_taken = [
-            MedicationTaken(
-                name=m.get("name", ""),
-                time=m.get("time", ""),
-                confirmed=m.get("confirmed", False),
-            ).model_dump(by_alias=True)
-            for m in log.medications_taken
-        ]
-
         log_items.append(
             HealthLog(
                 date=log.date,

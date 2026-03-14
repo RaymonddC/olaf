@@ -6,9 +6,8 @@ POST /api/navigator/stop/{sessionId} — End a navigation session
 WSS  /api/navigator/stream/{sessionId} — WebSocket screenshot stream
 """
 
-import asyncio
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Depends, HTTPException, Query, WebSocket, WebSocketDisconnect, status
 

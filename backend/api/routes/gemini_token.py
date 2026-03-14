@@ -8,7 +8,7 @@ token. The backend does NOT proxy audio. See docs/architecture/agent-orchestrati
 """
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
@@ -149,7 +149,7 @@ async def provision_ephemeral_token(
     if not settings.google_api_key:
         raise HTTPException(status_code=500, detail="Google API key not configured")
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     expires_at = now + timedelta(minutes=30)
     new_session_expires_at = now + timedelta(minutes=2)
 

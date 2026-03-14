@@ -35,7 +35,7 @@ import base64
 import json
 import logging
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
 from firebase_admin import auth as firebase_auth
@@ -118,8 +118,14 @@ async def companion_stream(
         fs = get_firestore_service()
         memories, _ = await fs.list_memories(user_id, limit=5)
         if memories:
-            lines = [f"- {m.title}: {(m.raw_transcript or m.narrative_text or m.snippet)[:800]}" for m in memories]
-            memory_bank = "Things you know about this user from past conversations:\n" + "\n".join(lines)
+            lines = [
+                f"- {m.title}: {(m.raw_transcript or m.narrative_text or m.snippet)[:800]}"
+                for m in memories
+            ]
+            memory_bank = (
+                "Things you know about this user from past conversations:\n"
+                + "\n".join(lines)
+            )
             logger.info("Memory bank loaded: %d memories for user=%s", len(memories), user_id)
         else:
             memory_bank = "No stored memories yet — this may be one of your first conversations."
@@ -132,7 +138,7 @@ async def companion_stream(
     try:
         import zoneinfo
 
-        now_utc = datetime.now(timezone.utc)
+        now_utc = datetime.now(UTC)
 
         # Use user's stored timezone if available, else fall back to UTC
         user_tz_str = "UTC"
@@ -173,7 +179,8 @@ async def companion_stream(
             ]
             if todays_reminders:
                 reminder_parts = [
-                    f"{r.message} at {r.scheduled_time.astimezone(now_local.tzinfo).strftime('%-I:%M %p')}"
+                    f"{r.message} at "
+                    f"{r.scheduled_time.astimezone(now_local.tzinfo).strftime('%-I:%M %p')}"
                     for r in todays_reminders
                 ]
                 reminders_line = "Pending reminders today: " + ", ".join(reminder_parts)
