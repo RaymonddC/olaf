@@ -5,7 +5,7 @@ Field names use snake_case in Python; camelCase aliases for JSON I/O.
 """
 
 from datetime import datetime
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -31,8 +31,8 @@ class CamelModel(BaseModel):
 
 class ApiResponse(BaseModel):
     status: Literal["success", "error", "accepted", "pending"]
-    data: Optional[Any] = None
-    error_message: Optional[str] = Field(None, alias="errorMessage")
+    data: Any | None = None
+    error_message: str | None = Field(None, alias="errorMessage")
 
     model_config = ConfigDict(populate_by_name=True)
 
@@ -45,7 +45,7 @@ class RegisterRequest(CamelModel):
     name: str
     timezone: str
     language: str
-    age: Optional[int] = None
+    age: int | None = None
 
 
 class FamilyLinkRequest(CamelModel):
@@ -58,7 +58,7 @@ class CreateElderAccountRequest(CamelModel):
     name: str
     email: str
     relationship: Literal["son", "daughter", "spouse", "caregiver", "other"]
-    age: Optional[int] = None
+    age: int | None = None
     timezone: str = "UTC"
     language: str = "en"
 
@@ -81,7 +81,7 @@ class UserProfileResponse(CamelModel):
     user_id: str
     role: Literal["elderly", "family"]
     name: str
-    age: Optional[int] = None
+    age: int | None = None
     linked_accounts: list[LinkedAccount] = []
 
 
@@ -193,7 +193,7 @@ class LogConversationResponse(CamelModel):
 class CreateMemoryRequest(CamelModel):
     user_id: str
     transcript: str
-    title: Optional[str] = None
+    title: str | None = None
 
 
 class TaskAcceptedResponse(CamelModel):
@@ -242,8 +242,8 @@ class MemoryChapter(CamelModel):
 class StartNavigatorRequest(CamelModel):
     user_id: str
     task: str
-    template_id: Optional[str] = None
-    start_url: Optional[str] = None
+    template_id: str | None = None
+    start_url: str | None = None
 
 
 class NavigatorSessionResponse(CamelModel):
@@ -323,7 +323,7 @@ class Alert(CamelModel):
     message: str
     source: Literal["companion", "storyteller", "navigator", "system"]
     acknowledged: bool = False
-    created_at: Optional[datetime] = None
+    created_at: datetime | None = None
 
 
 class Signal(BaseModel):

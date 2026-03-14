@@ -1,12 +1,10 @@
 """Integration tests for /api/auth/* endpoints."""
 
-from unittest.mock import MagicMock, patch
 
-import pytest
 from fastapi.testclient import TestClient
 
 from models.firestore import FamilyLink, UserProfile
-from tests.conftest import ELDERLY_HEADERS, FAMILY_HEADERS
+from tests.conftest import FAMILY_HEADERS
 
 
 def test_register_creates_user(client: TestClient, mock_fs):

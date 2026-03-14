@@ -7,8 +7,8 @@ WebSocket connections, and the NavigatorAgent confirmation flow.
 import asyncio
 import logging
 import uuid
-from datetime import datetime, timezone
-from typing import Any, Literal, Optional
+from datetime import UTC, datetime
+from typing import Literal
 
 from fastapi import WebSocket
 
@@ -31,8 +31,8 @@ class NavigatorSession:
         user_id: str,
         task: str,
         browser_session: BrowserSession,
-        template_id: Optional[str] = None,
-        start_url: Optional[str] = None,
+        template_id: str | None = None,
+        start_url: str | None = None,
     ):
         self.session_id = session_id
         self.user_id = user_id
@@ -41,24 +41,24 @@ class NavigatorSession:
         self.start_url = start_url
         self.browser_session = browser_session
         self.state: SessionState = "navigating"
-        self.websocket: Optional[WebSocket] = None
-        self.created_at = datetime.now(timezone.utc)
-        self.last_activity = datetime.now(timezone.utc)
+        self.websocket: WebSocket | None = None
+        self.created_at = datetime.now(UTC)
+        self.last_activity = datetime.now(UTC)
         self.step_count = 0
         self.total_steps = 0  # Estimated from template or default
 
         # Confirmation flow
-        self._pending_confirmation: Optional[dict] = None
+        self._pending_confirmation: dict | None = None
         self._confirmation_event = asyncio.Event()
-        self._confirmation_result: Optional[bool] = None
+        self._confirmation_result: bool | None = None
 
     def touch(self) -> None:
         """Update last activity timestamp."""
-        self.last_activity = datetime.now(timezone.utc)
+        self.last_activity = datetime.now(UTC)
 
     @property
     def is_expired(self) -> bool:
-        elapsed = (datetime.now(timezone.utc) - self.last_activity).total_seconds()
+        elapsed = (datetime.now(UTC) - self.last_activity).total_seconds()
         return elapsed > SESSION_TIMEOUT_SECONDS
 
     # ── WebSocket messaging ──────────────────────────────────────────────
@@ -76,7 +76,7 @@ class NavigatorSession:
                     "imageBase64": image_base64,
                     "pageUrl": page_url,
                     "pageTitle": page_title,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 },
             })
         except Exception as exc:
@@ -91,7 +91,7 @@ class NavigatorSession:
                 "type": "narration",
                 "data": {
                     "message": message,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "timestamp": datetime.now(UTC).isoformat(),
                 },
             })
         except Exception as exc:
@@ -139,7 +139,7 @@ class NavigatorSession:
                         "actionId": action_id,
                         "actionDescription": action_description,
                         "actionType": action_type,
-                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                        "timestamp": datetime.now(UTC).isoformat(),
                     },
                 })
             except Exception as exc:
@@ -152,7 +152,7 @@ class NavigatorSession:
                 self._confirmation_event.wait(),
                 timeout=SESSION_TIMEOUT_SECONDS,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning("Confirmation timed out for session %s", self.session_id)
             self._pending_confirmation = None
             self.state = "navigating"
@@ -183,7 +183,7 @@ class NavigatorSessionManager:
 
     def __init__(self) -> None:
         self._sessions: dict[str, NavigatorSession] = {}
-        self._cleanup_task: Optional[asyncio.Task] = None
+        self._cleanup_task: asyncio.Task | None = None
 
     @property
     def sessions(self) -> dict[str, NavigatorSession]:
@@ -193,8 +193,8 @@ class NavigatorSessionManager:
         self,
         user_id: str,
         task: str,
-        template_id: Optional[str] = None,
-        start_url: Optional[str] = None,
+        template_id: str | None = None,
+        start_url: str | None = None,
     ) -> NavigatorSession:
         """Create a new navigator session with a browser instance."""
         session_id = uuid.uuid4().hex[:16]
@@ -224,10 +224,10 @@ class NavigatorSessionManager:
         )
         return session
 
-    def get_session(self, session_id: str) -> Optional[NavigatorSession]:
+    def get_session(self, session_id: str) -> NavigatorSession | None:
         return self._sessions.get(session_id)
 
-    async def stop_session(self, session_id: str) -> Optional[str]:
+    async def stop_session(self, session_id: str) -> str | None:
         """Stop a session, clean up browser, return summary."""
         session = self._sessions.pop(session_id, None)
         if not session:
@@ -257,7 +257,7 @@ class NavigatorSessionManager:
 
 # ── Singleton ────────────────────────────────────────────────────────────────
 
-_session_manager: Optional[NavigatorSessionManager] = None
+_session_manager: NavigatorSessionManager | None = None
 
 
 def get_session_manager() -> NavigatorSessionManager:

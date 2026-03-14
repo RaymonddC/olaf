@@ -5,7 +5,6 @@ Supports alert, daily_report, and weekly_report notification types.
 """
 
 import logging
-from typing import Optional
 
 from google.cloud import firestore
 
@@ -15,7 +14,7 @@ logger = logging.getLogger(__name__)
 class FCMService:
     """Firebase Cloud Messaging service for OLAF push notifications."""
 
-    def __init__(self, db: Optional[firestore.Client] = None):
+    def __init__(self, db: firestore.Client | None = None):
         self.db = db or firestore.Client()
 
     # ── Token management ─────────────────────────────────────────────────
@@ -96,7 +95,7 @@ class FCMService:
         title: str,
         body: str,
         notification_type: str = "alert",
-        data: Optional[dict] = None,
+        data: dict | None = None,
     ) -> dict:
         """Send a push notification to a user via FCM.
 
@@ -131,7 +130,7 @@ class FCMService:
         title: str,
         body: str,
         notification_type: str,
-        data: Optional[dict] = None,
+        data: dict | None = None,
     ) -> dict:
         """Send a single FCM message to a device token."""
         try:
@@ -179,7 +178,7 @@ class FCMService:
         title: str,
         body: str,
         notification_type: str = "alert",
-        data: Optional[dict] = None,
+        data: dict | None = None,
         urgent: bool = False,
     ) -> dict:
         """Send notification to all family members linked to an elderly user.
@@ -222,7 +221,7 @@ class FCMService:
 
 
 # Singleton instance
-_service: Optional[FCMService] = None
+_service: FCMService | None = None
 
 
 def get_fcm_service() -> FCMService:

@@ -4,10 +4,8 @@ Tests cover tool execution endpoints called by the browser
 when Gemini Live API issues function calls.
 """
 
-from datetime import datetime, timezone
 from unittest.mock import AsyncMock, patch
 
-import pytest
 from fastapi.testclient import TestClient
 
 from models.firestore import UserProfile

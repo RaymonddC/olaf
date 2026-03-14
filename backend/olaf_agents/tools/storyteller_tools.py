@@ -55,7 +55,7 @@ async def generate_illustration(
         return {
             "status": "success",
             "illustration_url": url,
-            "message": f"Illustration generated and stored successfully",
+            "message": "Illustration generated and stored successfully",
         }
     except ImageGenerationError as e:
         logger.warning("Illustration generation failed: %s", e)

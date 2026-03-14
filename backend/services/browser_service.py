@@ -7,8 +7,6 @@ Provides page navigation, interaction, and screenshot capture.
 import asyncio
 import base64
 import logging
-from contextlib import asynccontextmanager
-from typing import Optional
 
 from playwright.async_api import Browser, BrowserContext, Page, Playwright, async_playwright
 
@@ -167,8 +165,8 @@ class BrowserService:
     """
 
     def __init__(self) -> None:
-        self._playwright: Optional[Playwright] = None
-        self._browser: Optional[Browser] = None
+        self._playwright: Playwright | None = None
+        self._browser: Browser | None = None
         self._sessions: dict[str, BrowserSession] = {}
         self._lock = asyncio.Lock()
 
@@ -239,7 +237,7 @@ class BrowserService:
         logger.info("Browser session %s created", session_id)
         return session
 
-    def get_session(self, session_id: str) -> Optional[BrowserSession]:
+    def get_session(self, session_id: str) -> BrowserSession | None:
         """Get an active browser session by ID."""
         return self._sessions.get(session_id)
 
@@ -254,7 +252,7 @@ class BrowserService:
 
 # ── Singleton ────────────────────────────────────────────────────────────────
 
-_browser_service: Optional[BrowserService] = None
+_browser_service: BrowserService | None = None
 
 
 def get_browser_service() -> BrowserService:

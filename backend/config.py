@@ -1,6 +1,5 @@
 """OLAF Backend — Configuration via environment variables."""
 
-from typing import Optional
 
 from pydantic_settings import BaseSettings
 
@@ -18,7 +17,7 @@ class Settings(BaseSettings):
     firebase_admin_project_id: str = ""
     firebase_admin_client_email: str = ""
     firebase_admin_private_key: str = ""
-    google_application_credentials: Optional[str] = None
+    google_application_credentials: str | None = None
 
     # Cloud Storage
     gcs_artifacts_bucket: str = "olaf-artifacts"

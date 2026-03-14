@@ -4,7 +4,6 @@ Each template provides a starting URL, step hints, and expected flow
 so the NavigatorAgent can handle common tasks efficiently.
 """
 
-from typing import Optional
 
 
 class NavigatorTemplate:
@@ -108,7 +107,7 @@ TEMPLATES: dict[str, NavigatorTemplate] = {
 }
 
 
-def get_template(template_id: str) -> Optional[NavigatorTemplate]:
+def get_template(template_id: str) -> NavigatorTemplate | None:
     """Get a navigation template by ID."""
     return TEMPLATES.get(template_id)
 

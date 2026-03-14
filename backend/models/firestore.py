@@ -5,7 +5,7 @@ They are used for serialisation/deserialisation, not for API validation.
 """
 
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Literal
 
 from pydantic import BaseModel, Field
 
@@ -16,12 +16,12 @@ class UserProfile(BaseModel):
     uid: str
     role: Literal["elderly", "family"]
     name: str
-    age: Optional[int] = None
+    age: int | None = None
     timezone: str = "UTC"
     language: str = "en"
     medications: list[str] = []
     profile_complete: bool = False
-    fcm_token: Optional[str] = None
+    fcm_token: str | None = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
@@ -103,7 +103,7 @@ class ReminderDoc(BaseModel):
     scheduled_time: datetime
     status: Literal["pending", "sent", "acknowledged"] = "pending"
     recurring: bool = False
-    recurrence_pattern: Optional[str] = None
+    recurrence_pattern: str | None = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
@@ -117,6 +117,6 @@ class AlertDoc(BaseModel):
     message: str
     source: Literal["companion", "storyteller", "navigator", "system"]
     acknowledged: bool = False
-    acknowledged_by: Optional[str] = None
-    acknowledged_at: Optional[datetime] = None
+    acknowledged_by: str | None = None
+    acknowledged_at: datetime | None = None
     created_at: datetime = Field(default_factory=datetime.utcnow)

@@ -6,7 +6,7 @@ Used by the AlertAgent to notify family members about health/safety signals.
 
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from google.adk.tools.tool_context import ToolContext
 
@@ -22,7 +22,7 @@ def _new_id() -> str:
 
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 # ── Signal evaluation ────────────────────────────────────────────────────────

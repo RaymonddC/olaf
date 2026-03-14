@@ -1,11 +1,10 @@
 """Integration tests for /api/storyteller/* endpoints."""
 
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
-import pytest
 from fastapi.testclient import TestClient
 
-from models.firestore import MemoryChapterDoc, UserProfile
+from models.firestore import MemoryChapterDoc
 from tests.conftest import ELDERLY_HEADERS, FAMILY_HEADERS
 
 

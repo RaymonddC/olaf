@@ -7,8 +7,8 @@ Uses the Firebase Admin SDK (google-cloud-firestore).
 
 import logging
 import uuid
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 from google.cloud import firestore
 
@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 
 
 def _utcnow() -> datetime:
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 def _new_id() -> str:
@@ -58,7 +58,7 @@ class FirestoreService:
         ref.set(profile.model_dump())
         return profile
 
-    async def get_user(self, uid: str) -> Optional[UserProfile]:
+    async def get_user(self, uid: str) -> UserProfile | None:
         """Get a user profile by UID."""
         doc = self._user_ref(uid).get()
         if not doc.exists:
@@ -128,7 +128,7 @@ class FirestoreService:
         ref.set(memory.model_dump())
         return memory
 
-    async def get_memory(self, uid: str, memory_id: str) -> Optional[MemoryChapterDoc]:
+    async def get_memory(self, uid: str, memory_id: str) -> MemoryChapterDoc | None:
         """Get a single memory chapter."""
         doc = self._subcollection(uid, "memories").document(memory_id).get()
         if not doc.exists:
@@ -167,7 +167,7 @@ class FirestoreService:
         ref.set(log.model_dump(), merge=True)
         return log
 
-    async def get_health_log(self, uid: str, date: str) -> Optional[HealthLogDoc]:
+    async def get_health_log(self, uid: str, date: str) -> HealthLogDoc | None:
         """Get a health log for a specific date."""
         doc = self._subcollection(uid, "healthLogs").document(date).get()
         if not doc.exists:
@@ -196,7 +196,7 @@ class FirestoreService:
         return report
 
     async def get_reports(
-        self, uid: str, report_type: Optional[str] = None, limit: int = 20
+        self, uid: str, report_type: str | None = None, limit: int = 20
     ) -> list[ReportDoc]:
         """Get health reports, optionally filtered by type."""
         query = self._subcollection(uid, "reports")
@@ -218,7 +218,7 @@ class FirestoreService:
         return reminder
 
     async def get_reminders(
-        self, uid: str, status: Optional[str] = None
+        self, uid: str, status: str | None = None
     ) -> list[ReminderDoc]:
         """Get reminders for a user, optionally filtered by status."""
         query = self._subcollection(uid, "reminders")
@@ -244,7 +244,7 @@ class FirestoreService:
     async def get_alerts(
         self,
         user_id: str,
-        acknowledged: Optional[bool] = None,
+        acknowledged: bool | None = None,
         limit: int = 50,
     ) -> list[AlertDoc]:
         """Get alerts for a user."""
@@ -260,7 +260,7 @@ class FirestoreService:
 
     async def acknowledge_alert(
         self, alert_id: str, acknowledged_by: str
-    ) -> Optional[AlertDoc]:
+    ) -> AlertDoc | None:
         """Acknowledge an alert. Returns the updated alert or None if not found."""
         ref = self.db.collection("alerts").document(alert_id)
         doc = ref.get()
@@ -278,7 +278,7 @@ class FirestoreService:
 
 
 # Singleton instance — initialised lazily to allow Firebase Admin to init first.
-_service: Optional[FirestoreService] = None
+_service: FirestoreService | None = None
 
 
 def get_firestore_service() -> FirestoreService:

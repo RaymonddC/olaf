@@ -4,7 +4,6 @@ Blocks harmful content before it reaches the LLM.
 """
 
 import logging
-from typing import Optional
 
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.models import LlmRequest, LlmResponse
@@ -26,7 +25,7 @@ BLOCKED_PATTERNS = [
 def safety_before_model(
     callback_context: CallbackContext,
     llm_request: LlmRequest,
-) -> Optional[LlmResponse]:
+) -> LlmResponse | None:
     """Block harmful or manipulative content before it reaches the LLM."""
     if not llm_request.contents:
         return None

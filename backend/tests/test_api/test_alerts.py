@@ -1,9 +1,8 @@
 """Integration tests for /api/alerts/* endpoints."""
 
-import pytest
 from fastapi.testclient import TestClient
 
-from models.firestore import AlertDoc, UserProfile
+from models.firestore import AlertDoc
 from tests.conftest import FAMILY_HEADERS
 
 

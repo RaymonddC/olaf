@@ -5,7 +5,6 @@ Each tool represents a browser action the agent can perform.
 """
 
 import logging
-from typing import Optional
 
 from google.adk.tools.tool_context import ToolContext
 
@@ -240,7 +239,7 @@ async def summarize_content(
     logger.info("summarize_content for purpose: %s", purpose)
 
     if session:
-        await session.send_narration(f"Summarising the content for you…")
+        await session.send_narration("Summarising the content for you…")
         session.touch()
 
     # The LLM agent itself will generate the summary — this tool provides the raw text

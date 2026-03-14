@@ -4,7 +4,6 @@ Validates URLs and actions before the NavigatorAgent executes them.
 """
 
 import logging
-from typing import Optional
 from urllib.parse import urlparse
 
 from google.adk.agents.callback_context import CallbackContext
@@ -30,7 +29,7 @@ def validate_navigation_safety(
     callback_context: CallbackContext,
     tool_name: str,
     tool_args: dict,
-) -> Optional[dict]:
+) -> dict | None:
     """Validate URLs and actions before NavigatorAgent executes them."""
     if tool_name == "navigate_to_url":
         url = tool_args.get("url", "")

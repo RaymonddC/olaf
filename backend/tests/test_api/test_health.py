@@ -1,16 +1,15 @@
 """Integration tests for /api/health/* endpoints."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
-import pytest
 from fastapi.testclient import TestClient
 
 from models.firestore import HealthLogDoc, ReminderDoc, ReportDoc
-from tests.conftest import ELDERLY_HEADERS, FAMILY_HEADERS
+from tests.conftest import FAMILY_HEADERS
 
 
 def _today() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    return datetime.now(UTC).strftime("%Y-%m-%d")
 
 
 def test_get_health_logs_today(client: TestClient, mock_fs):
@@ -105,7 +104,7 @@ def test_get_reminders(client: TestClient, mock_fs):
         reminder_id="rem-1",
         type="medication",
         message="Take morning pills",
-        scheduled_time=datetime.now(timezone.utc),
+        scheduled_time=datetime.now(UTC),
         status="pending",
     )
     mock_fs._reminders["elderly-user-456"] = {"rem-1": reminder}
