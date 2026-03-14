@@ -44,9 +44,9 @@ def _init_firebase() -> None:
         cred = credentials.Certificate(
             {
                 "type": "service_account",
-                "project_id": settings.firebase_admin_project_id,
-                "client_email": settings.firebase_admin_client_email,
-                "private_key": settings.firebase_admin_private_key.replace("\\n", "\n"),
+                "project_id": settings.firebase_admin_project_id.strip(),
+                "client_email": settings.firebase_admin_client_email.strip(),
+                "private_key": settings.firebase_admin_private_key.strip().replace("\\n", "\n"),
                 "token_uri": "https://oauth2.googleapis.com/token",
             }
         )
