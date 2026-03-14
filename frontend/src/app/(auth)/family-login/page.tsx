@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { Users } from 'lucide-react';
 import { useAuth, type UserRole } from '@/contexts/AuthContext';
@@ -16,13 +16,19 @@ import { api } from '@/lib/api';
  */
 export default function FamilyLoginPage() {
   const router = useRouter();
-  const { signIn, signInWithGoogle, setRole } = useAuth();
+  const { signIn, signInWithGoogle, setRole, user, loading: authLoading, role } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace(role === 'family' ? '/dashboard' : '/talk');
+    }
+  }, [user, authLoading, role, router]);
 
   const redirectAfterSignIn = async () => {
     try {
