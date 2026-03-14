@@ -1,7 +1,5 @@
 'use client';
 
-export const dynamic = 'force-static';
-
 import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -100,7 +98,6 @@ export default function MemoryDetailPage() {
 
   return (
     <div className="flex flex-col h-dvh">
-      {/* Header */}
       <header
         className="sticky top-0 z-20 flex items-center gap-3 px-5 py-3.5 min-h-[64px]"
         style={{
@@ -132,7 +129,6 @@ export default function MemoryDetailPage() {
         </button>
       </header>
 
-      {/* Scrollable content */}
       <div className="flex-1 overflow-y-auto px-5 py-6 pb-32 lg:px-12 lg:py-10 lg:pb-36">
         <div className="max-w-5xl mx-auto w-full">
 
@@ -152,17 +148,12 @@ export default function MemoryDetailPage() {
 
           {!isLoading && !isError && memory && (
             <article>
-              {/* Two-column on desktop: image left, content right */}
               <div className="lg:grid lg:grid-cols-[48%_1fr] lg:gap-12 lg:items-start">
-
-                {/* Image gallery */}
                 {memory.illustrationUrls.length > 0 && (
                   <div className="mb-6 lg:mb-0 lg:sticky lg:top-6">
                     <ImageGallery urls={memory.illustrationUrls} title={memory.title} />
                   </div>
                 )}
-
-                {/* Text content */}
                 <div className={memory.illustrationUrls.length === 0 ? 'lg:col-span-2 lg:max-w-3xl mx-auto' : ''}>
                   <h1 className="text-[26px] lg:text-[32px] font-heading font-extrabold text-text-heading leading-tight mb-2" style={{ letterSpacing: '-0.02em' }}>
                     {memory.title}
@@ -170,7 +161,6 @@ export default function MemoryDetailPage() {
                   <time dateTime={memory.createdAt} className="block text-[14px] lg:text-[15px] text-text-muted mb-6">
                     {formatDate(memory.createdAt)}
                   </time>
-
                   <div className="space-y-4">
                     {memory.narrativeText.split('\n\n').map((paragraph, i) => (
                       <p key={i} className="text-[17px] lg:text-[18px] text-text-primary leading-relaxed">
@@ -178,7 +168,6 @@ export default function MemoryDetailPage() {
                       </p>
                     ))}
                   </div>
-
                   {memory.tags.length > 0 && (
                     <div className="flex flex-wrap gap-2 pt-6 mt-6 border-t border-border-default">
                       {memory.tags.map(tag => (
