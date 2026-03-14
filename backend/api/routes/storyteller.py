@@ -187,7 +187,10 @@ async def _create_memory_direct(
     try:
         fs = get_firestore_service()
         await fs.save_memory(user_id, memory)
-        logger.info("Memory task %s: saved memory %s for user %s (illustrations: %d)", task_id, memory_id, user_id, len(illustration_urls))
+        logger.info(
+            "Memory task %s: saved memory %s for user %s (illustrations: %d)",
+            task_id, memory_id, user_id, len(illustration_urls),
+        )
     except Exception:
         logger.exception("Memory task %s: failed to save memory for user %s", task_id, user_id)
 

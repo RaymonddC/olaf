@@ -7,7 +7,7 @@ from Gemini Live API and executes them by hitting these REST endpoints.
 
 import logging
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import httpx
 
@@ -24,7 +24,7 @@ def _new_id() -> str:
 
 
 def _today() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    return datetime.now(UTC).strftime("%Y-%m-%d")
 
 
 # ── analyze_medication ──────────────────────────────────────────────────────
@@ -347,11 +347,11 @@ async def set_reminder(
             scheduled_time = datetime.fromisoformat(f"{today}T{time_str}:00+00:00")
     except ValueError:
         logger.warning("Could not parse reminder time '%s', using now + 1 hour", time_str)
-        scheduled_time = datetime.now(timezone.utc) + __import__("datetime").timedelta(hours=1)
+        scheduled_time = datetime.now(UTC) + __import__("datetime").timedelta(hours=1)
 
     # Ensure timezone-aware
     if scheduled_time.tzinfo is None:
-        scheduled_time = scheduled_time.replace(tzinfo=timezone.utc)
+        scheduled_time = scheduled_time.replace(tzinfo=UTC)
 
     reminder = ReminderDoc(
         reminder_id=reminder_id,
@@ -450,8 +450,9 @@ async def log_conversation(
                                 "parts": [
                                     {
                                         "text": (
-                                            "Summarise this conversation between OLAF (an AI companion) and an elderly user "
-                                            "in 1-2 sentences. Also rate the user's overall mood on a scale of 1-10 "
+                                            "Summarise this conversation between OLAF (an AI companion) "
+                                            "and an elderly user in 1-2 sentences. "
+                                            "Also rate the user's overall mood on a scale of 1-10 "
                                             "(1=very distressed, 10=very happy). "
                                             f'Respond in JSON: {{"summary": "...", "moodScore": N}}\n\n'
                                             f"Transcript:\n{transcript_text[:3000]}"
