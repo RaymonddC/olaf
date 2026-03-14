@@ -7,9 +7,8 @@ those heavy dependencies installed.
 
 import sys
 import types
-from datetime import datetime, timezone
-from typing import AsyncGenerator
-from unittest.mock import AsyncMock, MagicMock, patch
+from collections.abc import AsyncGenerator
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi import FastAPI
@@ -199,7 +198,7 @@ class MockFirestoreService:
 
     async def get_health_logs(self, uid: str, start_date: str, end_date: str):
         logs = list(self._health_logs.get(uid, {}).values())
-        return [l for l in logs if start_date <= l.date <= end_date]
+        return [log for log in logs if start_date <= log.date <= end_date]
 
     async def get_health_log(self, uid: str, date: str):
         return self._health_logs.get(uid, {}).get(date)

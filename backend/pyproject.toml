@@ -35,10 +35,14 @@ packages = ["api", "services", "models", "olaf_agents"]
 
 [tool.ruff]
 target-version = "py311"
-line-length = 100
+line-length = 120
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP"]
+ignore = ["E402"]  # load_dotenv() must run before config imports in main.py
+
+[tool.ruff.lint.per-file-ignores]
+"olaf_agents/instructions/*.py" = ["E501"]  # long string literals in LLM prompts
 
 [tool.mypy]
 python_version = "3.11"
