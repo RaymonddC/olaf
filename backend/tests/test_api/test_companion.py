@@ -4,14 +4,14 @@ Tests cover tool execution endpoints called by the browser
 when Gemini Live API issues function calls.
 """
 
-from unittest.mock import AsyncMock, patch
 from datetime import datetime, timezone
+from unittest.mock import AsyncMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
 
 from models.firestore import UserProfile
-from tests.conftest import FAMILY_HEADERS, ELDERLY_HEADERS
+from tests.conftest import ELDERLY_HEADERS, FAMILY_HEADERS
 
 
 def _make_elderly_user():

@@ -11,8 +11,8 @@ from datetime import datetime, timezone
 from google.adk.tools.tool_context import ToolContext
 
 from models.firestore import AlertDoc
-from services.firestore_service import get_firestore_service
 from services.fcm_service import get_fcm_service
+from services.firestore_service import get_firestore_service
 
 logger = logging.getLogger(__name__)
 

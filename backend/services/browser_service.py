@@ -10,7 +10,7 @@ import logging
 from contextlib import asynccontextmanager
 from typing import Optional
 
-from playwright.async_api import Browser, BrowserContext, Page, async_playwright, Playwright
+from playwright.async_api import Browser, BrowserContext, Page, Playwright, async_playwright
 
 logger = logging.getLogger(__name__)
 

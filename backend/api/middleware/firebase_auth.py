@@ -8,7 +8,6 @@ import logging
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-
 from firebase_admin import auth
 
 logger = logging.getLogger(__name__)

@@ -5,8 +5,8 @@ from datetime import datetime, timezone
 import pytest
 from fastapi.testclient import TestClient
 
-from models.firestore import HealthLogDoc, ReportDoc, ReminderDoc
-from tests.conftest import FAMILY_HEADERS, ELDERLY_HEADERS
+from models.firestore import HealthLogDoc, ReminderDoc, ReportDoc
+from tests.conftest import ELDERLY_HEADERS, FAMILY_HEADERS
 
 
 def _today() -> str:

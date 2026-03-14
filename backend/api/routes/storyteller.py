@@ -17,7 +17,6 @@ from google.genai import types
 
 from api.middleware.firebase_auth import get_current_user
 from config import settings
-from olaf_agents.agents.storyteller import storyteller_agent
 from models.api import (
     ApiResponse,
     CreateDailyNarrativeRequest,
@@ -26,6 +25,7 @@ from models.api import (
     MemoryChapter,
     MemoryListItem,
 )
+from olaf_agents.agents.storyteller import storyteller_agent
 from services.firestore_service import FirestoreService, get_firestore_service
 
 logger = logging.getLogger(__name__)
@@ -48,7 +48,9 @@ async def _create_memory_direct(
     to Firestore without depending on tool-calling behaviour.
     """
     import json
+
     import httpx
+
     from models.firestore import MemoryChapterDoc
     from services.firestore_service import get_firestore_service
 
@@ -148,7 +150,7 @@ async def _create_memory_direct(
                 scene_prompt_text = f"An elderly person's memory: {title}. {narrative_text[:300]}"
 
             # Generate illustration via Imagen 3
-            from services.imagen_service import get_imagen_service, ImageGenerationError
+            from services.imagen_service import ImageGenerationError, get_imagen_service
             imagen = get_imagen_service()
             try:
                 url = await imagen.generate_and_store(
@@ -383,8 +385,9 @@ async def debug_save_memory(
     user_id: str = Query(..., alias="userId"),
 ) -> ApiResponse:
     """Debug: directly save a test memory to Firestore, bypassing the agent."""
-    from models.firestore import MemoryChapterDoc
     import uuid
+
+    from models.firestore import MemoryChapterDoc
 
     memory_id = uuid.uuid4().hex[:20]
     memory = MemoryChapterDoc(

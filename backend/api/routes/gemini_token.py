@@ -10,8 +10,8 @@ token. The backend does NOT proxy audio. See docs/architecture/agent-orchestrati
 import logging
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException
 import httpx
+from fastapi import APIRouter, Depends, HTTPException
 
 from api.middleware.firebase_auth import get_current_user
 from config import settings

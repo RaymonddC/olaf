@@ -16,7 +16,6 @@ from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from httpx import ASGITransport, AsyncClient
 
-
 # ── Inject stub modules for google.adk / google.genai ─────────────────────────
 # Must happen before any backend code is imported.
 
@@ -285,8 +284,8 @@ def app(mock_firebase, mock_fs):
     """
     with patch("firebase_admin._apps", {"[DEFAULT]": MagicMock()}):
         # Import route modules (ADK stubs are already in sys.modules)
+        from api.routes import alerts, auth, companion, conversations, health, storyteller
         from services.firestore_service import get_firestore_service
-        from api.routes import auth, companion, conversations, storyteller, health, alerts
 
         test_app = FastAPI()
 

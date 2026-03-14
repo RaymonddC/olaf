@@ -10,13 +10,6 @@ import logging
 from fastapi import APIRouter, Depends
 
 from api.middleware.firebase_auth import get_current_user
-from olaf_agents.tools.companion_tools import (
-    analyze_medication,
-    flag_emotional_distress,
-    log_conversation,
-    log_health_checkin,
-    set_reminder,
-)
 from models.api import (
     AnalyzeMedicationRequest,
     ApiResponse,
@@ -24,6 +17,13 @@ from models.api import (
     HealthCheckinRequest,
     LogConversationRequest,
     SetReminderRequest,
+)
+from olaf_agents.tools.companion_tools import (
+    analyze_medication,
+    flag_emotional_distress,
+    log_conversation,
+    log_health_checkin,
+    set_reminder,
 )
 
 logger = logging.getLogger(__name__)

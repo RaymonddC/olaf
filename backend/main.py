@@ -8,9 +8,9 @@ import logging
 import os
 
 import firebase_admin
-from firebase_admin import credentials
 import uvicorn
 from dotenv import load_dotenv
+from firebase_admin import credentials
 
 load_dotenv()
 
@@ -78,16 +78,16 @@ def create_app():
 
     # ── Custom OLAF API routes ─────────────────────────────────────────
     from api.routes import (
+        alerts,
         auth,
-        gemini_token,
         companion,
         companion_stream,
         conversations,
-        storyteller,
-        navigator,
+        gemini_token,
         health,
-        alerts,
+        navigator,
         notifications,
+        storyteller,
     )
 
     app.include_router(auth.router, prefix="/api/auth", tags=["auth"])

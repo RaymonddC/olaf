@@ -6,7 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from models.firestore import MemoryChapterDoc, UserProfile
-from tests.conftest import FAMILY_HEADERS, ELDERLY_HEADERS
+from tests.conftest import ELDERLY_HEADERS, FAMILY_HEADERS
 
 
 def _make_memory(memory_id: str) -> MemoryChapterDoc:

@@ -13,10 +13,20 @@ from google.adk.tools.tool_context import ToolContext
 from olaf_agents.instructions.companion import COMPANION_INSTRUCTION
 from olaf_agents.tools.companion_tools import (
     analyze_medication as _analyze_medication,
+)
+from olaf_agents.tools.companion_tools import (
     call_for_help as _call_for_help,
+)
+from olaf_agents.tools.companion_tools import (
     flag_emotional_distress as _flag_distress,
+)
+from olaf_agents.tools.companion_tools import (
     log_health_checkin as _log_checkin,
+)
+from olaf_agents.tools.companion_tools import (
     set_reminder as _set_reminder,
+)
+from olaf_agents.tools.companion_tools import (
     share_update_with_family as _share_update_with_family,
 )
 
