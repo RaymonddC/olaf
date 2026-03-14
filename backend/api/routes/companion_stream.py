@@ -105,7 +105,8 @@ async def companion_stream(
     try:
         decoded = firebase_auth.verify_id_token(token)
         user_id: str = decoded["uid"]
-    except Exception:
+    except Exception as auth_exc:
+        logger.error("Firebase auth failed for companion stream: %s", auth_exc)
         await websocket.close(code=4001, reason="Invalid auth token")
         return
 
