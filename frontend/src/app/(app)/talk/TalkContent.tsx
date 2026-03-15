@@ -248,10 +248,9 @@ export function TalkContent() {
                     body: JSON.stringify({ userId: user.uid, sessionDuration: dur, transcript: t, flags: [] }),
                 });
                 const txt = t.map(e => `${e.role === 'user' ? 'User' : 'OLAF'}: ${e.text}`).join('\n');
-                const userPhoto = latestFrameRef.current;
                 fetch(`${API}/api/storyteller/create-memory`, {
                     method: 'POST', headers: h,
-                    body: JSON.stringify({ userId: user.uid, transcript: txt, ...(userPhoto ? { userPhotoBase64: userPhoto } : {}) }),
+                    body: JSON.stringify({ userId: user.uid, transcript: txt }),
                 }).catch(() => {});
             } catch {}
         }
@@ -270,50 +269,49 @@ export function TalkContent() {
 
     const lastOlaf = [...transcripts].reverse().find(e => e.role === 'model');
 
-    // Orb size: slightly larger on desktop
-    const orbSize  = active ? 180 : 155;
-    const iconSize = active ? 64  : 56;
+    const orbSize  = active ? 100 : 120;
+    const iconSize = active ? 40  : 48;
 
     return (
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full overflow-hidden">
 
-            {/* ── Centre content ───────────────────────────────────────────── */}
-            <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6 lg:px-12 overflow-hidden">
-                <div className="w-full max-w-[480px] lg:max-w-[600px] flex flex-col items-center">
+            {/* ── Centre: Orb + transcript ────────────────────────────────── */}
+            <div className="flex-1 min-h-0 flex flex-col items-center justify-center px-6">
+                <div className="w-full max-w-[420px] lg:max-w-[520px] flex flex-col items-center gap-5 lg:gap-6">
 
                     {/* Orb */}
-                    <div className="relative flex-shrink-0 mb-6 lg:mb-10"
-                         style={{ width: orbSize, height: orbSize, transition: 'width 0.6s ease, height 0.6s ease' }}>
+                    <div className="relative flex-shrink-0"
+                         style={{ width: orbSize, height: orbSize, transition: 'width 0.5s ease, height 0.5s ease' }}>
                         <div className="absolute inset-0 rounded-full animate-spin-slow opacity-50"
                              style={{ background: 'conic-gradient(from 0deg, #e8f1fd, #ccfbf1, #fef3c740, #e8f1fd)' }} />
                         <div className="absolute inset-2 rounded-full"
                              style={{
                                  background: 'radial-gradient(circle at 38% 32%, rgba(255,255,255,0.95), rgba(240,247,255,0.9) 60%, rgba(204,251,241,0.7))',
                                  boxShadow: active
-                                     ? `0 0 0 10px ${sc.color}18, 0 20px 72px rgba(26,109,224,0.18)`
-                                     : '0 16px 64px rgba(26,109,224,0.12)',
-                                 transition: 'box-shadow 0.6s ease',
+                                     ? `0 0 0 8px ${sc.color}18, 0 16px 48px rgba(26,109,224,0.15)`
+                                     : '0 12px 48px rgba(26,109,224,0.10)',
+                                 transition: 'box-shadow 0.5s ease',
                              }} />
                         <div className="absolute inset-0 flex items-center justify-center">
-                            <div className="rounded-[20px] flex items-center justify-center flex-shrink-0"
+                            <div className="rounded-2xl flex items-center justify-center flex-shrink-0"
                                  style={{
                                      width: iconSize, height: iconSize,
                                      background: 'linear-gradient(135deg, #1a6de0, #1558b8)',
-                                     boxShadow: '0 4px 16px rgba(26,109,224,0.25)',
-                                     transition: 'width 0.6s ease, height 0.6s ease',
+                                     boxShadow: '0 4px 12px rgba(26,109,224,0.2)',
+                                     transition: 'width 0.5s ease, height 0.5s ease',
                                  }}>
-                                <svg width={active ? 32 : 28} height={active ? 32 : 28} viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round">
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round">
                                     <circle cx="12" cy="10" r="3.5" /><path d="M6.5 19.5c0-3 2.5-5 5.5-5s5.5 2 5.5 5" />
                                 </svg>
                             </div>
                         </div>
                         {!active && (
                             <>
-                                <div className="absolute top-2 right-5 text-primary-500 animate-twinkle">
-                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0L14.59 8.41L23 12L14.59 15.59L12 24L9.41 15.59L1 12L9.41 8.41Z" /></svg>
+                                <div className="absolute top-1 right-3 text-primary-500 animate-twinkle">
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0L14.59 8.41L23 12L14.59 15.59L12 24L9.41 15.59L1 12L9.41 8.41Z" /></svg>
                                 </div>
-                                <div className="absolute bottom-4 left-3 text-accent-500 animate-twinkle-d">
-                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0L14.59 8.41L23 12L14.59 15.59L12 24L9.41 15.59L1 12L9.41 8.41Z" /></svg>
+                                <div className="absolute bottom-3 left-2 text-accent-500 animate-twinkle-d">
+                                    <svg width="8" height="8" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0L14.59 8.41L23 12L14.59 15.59L12 24L9.41 15.59L1 12L9.41 8.41Z" /></svg>
                                 </div>
                             </>
                         )}
@@ -322,34 +320,32 @@ export function TalkContent() {
                     {/* Idle text */}
                     {!active && (
                         <div className="text-center">
-                            <h2 className="text-[28px] lg:text-[36px] font-heading font-bold text-text-heading mb-3"
+                            <h2 className="text-[24px] lg:text-[28px] font-heading font-bold text-text-heading mb-2"
                                 style={{ letterSpacing: '-0.01em' }}>
                                 Talk to OLAF
                             </h2>
-                            <p className="text-[18px] lg:text-[22px] text-text-muted max-w-[340px] leading-relaxed">
-                                Press the big button below to start talking
+                            <p className="text-[16px] lg:text-[18px] text-text-muted max-w-[300px] leading-relaxed">
+                                Press the button below to start talking
                             </p>
                         </div>
                     )}
 
-                    {/* Active: status label + typewriter subtitle */}
+                    {/* Active: status + typewriter (fixed height so orb stays put) */}
                     {active && (
-                        <div className="text-center w-full">
-                            {/* Status label */}
-                            <p className="text-[15px] lg:text-[17px] font-heading font-semibold mb-4 lg:mb-6"
-                               style={{ color: sc.color, minHeight: '24px', transition: 'color 0.4s ease' }}>
+                        <div className="text-center w-full overflow-hidden" style={{ minHeight: '120px' }}>
+                            <p className="text-[14px] lg:text-[15px] font-heading font-semibold mb-3"
+                               style={{ color: sc.color, minHeight: '20px', transition: 'color 0.4s ease' }}>
                                 {sc.label}
                             </p>
 
-                            {/* OLAF subtitle — typewriter, no remount between turns */}
                             {lastOlaf && (
-                                <div>
-                                    <p className="text-[12px] lg:text-[13px] font-heading font-bold tracking-[0.14em] uppercase mb-3"
+                                <div className="overflow-hidden">
+                                    <p className="text-[11px] font-heading font-bold tracking-[0.14em] uppercase mb-2"
                                        style={{ color: '#1a6de0' }}>
                                         OLAF
                                     </p>
-                                    <p className="text-[22px] lg:text-[28px] leading-[1.55] font-medium"
-                                       style={{ color: '#1e293b', minHeight: '1.55em' }}>
+                                    <p className="text-[15px] lg:text-[16px] leading-[1.6] font-medium max-h-[7.5em] overflow-y-auto"
+                                       style={{ color: '#1e293b' }}>
                                         <TypewriterText
                                             text={lastOlaf.text}
                                             entryKey={lastOlaf.timestamp}
@@ -358,53 +354,51 @@ export function TalkContent() {
                                     </p>
                                 </div>
                             )}
-
                         </div>
                     )}
 
                     {/* Error */}
                     {error && (
-                        <div role="alert" className="mt-6 px-6 py-4 rounded-2xl text-center max-w-sm"
+                        <div role="alert" className="px-5 py-3 rounded-2xl text-center max-w-sm"
                              style={{ background: '#fff1f2', border: '1px solid #fecdd3', color: '#be123c' }}>
-                            <p className="text-[17px] font-medium">{error}</p>
-                            <p className="text-[14px] mt-1 opacity-75">Please try again</p>
+                            <p className="text-[15px] font-medium">{error}</p>
+                            <p className="text-[13px] mt-1 opacity-75">Please try again</p>
                         </div>
                     )}
                 </div>
             </div>
 
-            {/* ── Controls ─────────────────────────────────────────────────── */}
-            <div className="flex-shrink-0 flex flex-col items-center gap-3 lg:gap-4 px-6 pt-2 pb-[130px] lg:pb-[120px]">
+            {/* ── Bottom: Controls ─────────────────────────────────────────── */}
+            <div className="flex-shrink-0 flex flex-col items-center gap-2 px-6 pb-28">
 
                 {active && <CameraToggle sessionActive={active} onFrame={onFrame} disabled={isConn} />}
 
-                {/* Big mic button */}
+                {/* Mic button */}
                 <div className="relative flex-shrink-0">
                     {active && (
                         <>
-                            <div className="absolute inset-[-16px] rounded-full animate-ripple" style={{ border: `2px solid ${sc.color}25` }} />
-                            <div className="absolute inset-[-32px] rounded-full animate-ripple-d1" style={{ border: `1.5px solid ${sc.color}15` }} />
+                            <div className="absolute inset-[-12px] rounded-full animate-ripple" style={{ border: `2px solid ${sc.color}25` }} />
+                            <div className="absolute inset-[-24px] rounded-full animate-ripple-d1" style={{ border: `1.5px solid ${sc.color}15` }} />
                         </>
                     )}
                     <button type="button" onClick={toggle} disabled={isConn || !user}
                             aria-label={active ? 'End conversation' : 'Start talking with OLAF'}
                             className="relative z-[2] rounded-full flex items-center justify-center cursor-pointer disabled:opacity-50 disabled:cursor-wait active:scale-95 transition-transform duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-300"
                             style={{
-                                width: '96px', height: '96px',
+                                width: '72px', height: '72px',
                                 background: active ? 'linear-gradient(135deg, #e11d48, #be123c)' : 'linear-gradient(135deg, #1a6de0, #1558b8)',
-                                border:    '5px solid rgba(255,255,255,0.95)',
-                                boxShadow: active ? '0 8px 40px rgba(225,29,72,0.30)' : '0 8px 40px rgba(26,109,224,0.22)',
+                                border:    '4px solid rgba(255,255,255,0.95)',
+                                boxShadow: active ? '0 6px 28px rgba(225,29,72,0.28)' : '0 6px 28px rgba(26,109,224,0.20)',
                             }}>
                         {isConn
-                            ? <Loader2 className="w-9 h-9 text-white animate-spin" />
+                            ? <Loader2 className="w-7 h-7 text-white animate-spin" />
                             : active
-                                ? <MicOff className="w-9 h-9 text-white" />
-                                : <Mic    className="w-9 h-9 text-white" />}
+                                ? <MicOff className="w-7 h-7 text-white" />
+                                : <Mic    className="w-7 h-7 text-white" />}
                     </button>
                 </div>
 
-                {/* Button label */}
-                <p className="text-[16px] lg:text-[18px] font-heading font-semibold text-text-muted text-center">
+                <p className="text-[14px] lg:text-[15px] font-heading font-semibold text-text-muted text-center">
                     {isConn  ? 'Getting ready…'   :
                      active  ? 'Tap to hang up'   :
                                'Tap to start talking'}

@@ -11,6 +11,8 @@
 }
 html { scroll-behavior: smooth; }
 body { overflow-x: hidden; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 .pb-safe { padding-bottom: env(safe-area-inset-bottom, 0px); }
 
 /* ── Mesh gradient background ───────────────────────────────────────── */

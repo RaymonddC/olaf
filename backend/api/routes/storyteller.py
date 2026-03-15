@@ -41,7 +41,6 @@ async def _create_memory_direct(
     transcript: str,
     title_hint: str,
     task_id: str,
-    user_photo_base64: str | None = None,
 ) -> None:
     """Create a memory chapter directly via Gemini REST API (no ADK agent).
 
@@ -181,35 +180,6 @@ async def _create_memory_direct(
         except Exception as e:
             logger.warning("Memory task %s: illustration pipeline failed: %s", task_id, e)
 
-    # ── Generate Nano Banana day-recap image ────────────────────────────────
-    if narrative_text and narrative_text != transcript:
-        try:
-            from services.imagen_service import ImageGenerationError, get_imagen_service
-            imagen = get_imagen_service()
-            recap_url = await imagen.generate_nano_banana_recap(
-                narrative=narrative_text,
-                user_id=user_id,
-            )
-            illustration_urls.append(recap_url)
-            logger.info("Memory task %s: Nano Banana recap generated: %s", task_id, recap_url)
-        except Exception as e:
-            logger.warning("Memory task %s: Nano Banana recap failed: %s", task_id, e)
-
-    # ── Upload user photo last — generated images come first ─────────────────
-    if user_photo_base64:
-        try:
-            import base64
-            from services.imagen_service import get_imagen_service
-            photo_bytes = base64.b64decode(user_photo_base64)
-            imagen = get_imagen_service()
-            photo_url = imagen.upload_to_storage(
-                photo_bytes, user_id, filename=f"user-{uuid.uuid4().hex[:12]}.jpg"
-            )
-            illustration_urls.append(photo_url)
-            logger.info("Memory task %s: user photo uploaded: %s", task_id, photo_url)
-        except Exception as e:
-            logger.warning("Memory task %s: user photo upload failed: %s", task_id, e)
-
     memory_id = uuid.uuid4().hex[:20]
     snippet = narrative_text[:200].rstrip()
 
@@ -290,7 +260,6 @@ async def create_memory(
         req.transcript,
         req.title or "",
         task_id,
-        req.user_photo_base64,
     )
 
     logger.info("Memory creation task %s started for user %s", task_id, req.user_id)
