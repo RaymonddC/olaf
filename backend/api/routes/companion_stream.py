@@ -81,8 +81,8 @@ _runner = Runner(
 _run_config = RunConfig(
     response_modalities=[types.Modality.AUDIO],
     streaming_mode=StreamingMode.BIDI,
-    input_audio_transcription=types.AudioTranscriptionConfig(),   # transcribe user speech
-    output_audio_transcription=types.AudioTranscriptionConfig(),  # transcribe OLAF's actual speech
+    input_audio_transcription=types.AudioTranscriptionConfig(),
+    output_audio_transcription=types.AudioTranscriptionConfig(),
 )
 
 
@@ -167,7 +167,7 @@ async def companion_stream(
         else:
             time_of_day = "night"
 
-        time_label = f"{day_name} {time_of_day}, {now_local.strftime('%-I:%M %p')}"
+        time_label = f"{day_name} {time_of_day}, {now_local.strftime('%I:%M %p').lstrip('0')}"
 
         try:
             pending_reminders = await fs.get_reminders(user_id, status="pending")
@@ -180,7 +180,7 @@ async def companion_stream(
             if todays_reminders:
                 reminder_parts = [
                     f"{r.message} at "
-                    f"{r.scheduled_time.astimezone(now_local.tzinfo).strftime('%-I:%M %p')}"
+                    f"{r.scheduled_time.astimezone(now_local.tzinfo).strftime('%I:%M %p').lstrip('0')}"
                     for r in todays_reminders
                 ]
                 reminders_line = "Pending reminders today: " + ", ".join(reminder_parts)

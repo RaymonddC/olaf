@@ -40,6 +40,7 @@ export interface AdkLiveCallbacks {
   onTranscript: (entry: TranscriptEntry) => void;
   onToolCall: (name: string, args: Record<string, unknown>) => void;
   onInterrupted: () => void;
+  onTurnComplete?: () => void;
   onError: (error: Error) => void;
 }
 
@@ -175,6 +176,7 @@ export class AdkLiveClient {
 
       case 'turn_complete':
         this.config.callbacks.onStatusChange('listening');
+        this.config.callbacks.onTurnComplete?.();
         break;
 
       case 'interrupted':

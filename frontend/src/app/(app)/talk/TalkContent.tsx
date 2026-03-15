@@ -69,12 +69,17 @@ export function TalkContent() {
                         resetSilence();
                     },
                     onToolCall: name => console.log('[OLAF] tool:', name),
-                    onInterrupted: () => audio.clearPlaybackQueue(),
+                    onInterrupted: () => { audio.clearPlaybackQueue(); audio.unblockPlayback(); },
+                    onTurnComplete: () => audio.unblockPlayback(),
                     onError: err => { console.error(err); setError(err.message); },
                 },
             });
             clientRef.current = client;
-            await audio.start(b64 => client.sendAudio(b64), () => {});
+            await audio.start(
+              b64 => client.sendAudio(b64),
+              undefined,
+              () => setStatus('listening'),
+            );
             await client.connect();
             sessionStartRef.current = Date.now();
             setActive(true);
