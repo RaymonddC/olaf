@@ -41,6 +41,7 @@ async def _create_memory_direct(
     transcript: str,
     title_hint: str,
     task_id: str,
+    user_photo_base64: str | None = None,
 ) -> None:
     """Create a memory chapter directly via Gemini REST API (no ADK agent).
 
@@ -107,11 +108,26 @@ async def _create_memory_direct(
         narrative_text = transcript
         logger.info("Memory task %s: using raw transcript as narrative fallback", task_id)
 
-    # ── Generate Imagen 3 illustration for this memory ─────────────────────
+    # ── Upload user photo (camera snapshot) if provided ────────────────────
     illustration_urls: list[str] = []
+    if user_photo_base64:
+        try:
+            import base64
+            from services.imagen_service import get_imagen_service
+            photo_bytes = base64.b64decode(user_photo_base64)
+            imagen = get_imagen_service()
+            photo_url = imagen.upload_to_storage(
+                photo_bytes, user_id, filename=f"user-{uuid.uuid4().hex[:12]}.jpg"
+            )
+            illustration_urls.append(photo_url)
+            logger.info("Memory task %s: user photo uploaded: %s", task_id, photo_url)
+        except Exception as e:
+            logger.warning("Memory task %s: user photo upload failed: %s", task_id, e)
+
+    # ── Generate scene illustration via gemini-2.5-flash-image ──────────────
     if narrative_text and narrative_text != transcript:
         try:
-            # Ask Gemini for an illustration scene prompt based on the narrative
+            # Ask Gemini for a focused scene prompt based on the narrative
             scene_prompt_text = ""
             if settings.google_api_key:
                 scene_req_prompt = (
@@ -149,27 +165,38 @@ async def _create_memory_direct(
             if not scene_prompt_text:
                 scene_prompt_text = f"An elderly person's memory: {title}. {narrative_text[:300]}"
 
-            # Generate illustration via Imagen 3
+            # Generate scene illustration via gemini-2.5-flash-image
             from services.imagen_service import ImageGenerationError, get_imagen_service
             imagen = get_imagen_service()
             try:
-                url = await imagen.generate_and_store(
-                    prompt=scene_prompt_text,
+                url = await imagen.generate_nano_banana_recap(
+                    narrative=scene_prompt_text,
                     user_id=user_id,
-                    style="warm watercolor",
-                    aspect_ratio="4:3",
                 )
                 illustration_urls.append(url)
-                logger.info("Memory task %s: illustration generated: %s", task_id, url)
+                logger.info("Memory task %s: scene illustration generated: %s", task_id, url)
             except ImageGenerationError as e:
-                logger.warning("Memory task %s: illustration generation failed: %s", task_id, e)
+                logger.warning("Memory task %s: scene illustration failed: %s", task_id, e)
             except Exception as e:
-                logger.warning("Memory task %s: illustration unexpected error: %s", task_id, e)
+                logger.warning("Memory task %s: scene illustration unexpected error: %s", task_id, e)
 
         except Exception as e:
             logger.warning("Memory task %s: illustration pipeline failed: %s", task_id, e)
 
-    import uuid
+    # ── Generate Nano Banana day-recap image ────────────────────────────────
+    if narrative_text and narrative_text != transcript:
+        try:
+            from services.imagen_service import ImageGenerationError, get_imagen_service
+            imagen = get_imagen_service()
+            recap_url = await imagen.generate_nano_banana_recap(
+                narrative=narrative_text,
+                user_id=user_id,
+            )
+            illustration_urls.append(recap_url)
+            logger.info("Memory task %s: Nano Banana recap generated: %s", task_id, recap_url)
+        except Exception as e:
+            logger.warning("Memory task %s: Nano Banana recap failed: %s", task_id, e)
+
     memory_id = uuid.uuid4().hex[:20]
     snippet = narrative_text[:200].rstrip()
 
@@ -250,6 +277,7 @@ async def create_memory(
         req.transcript,
         req.title or "",
         task_id,
+        req.user_photo_base64,
     )
 
     logger.info("Memory creation task %s started for user %s", task_id, req.user_id)

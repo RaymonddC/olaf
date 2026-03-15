@@ -6,9 +6,8 @@ health narratives. Uploads results to Cloud Storage with permanent public URLs.
 
 import logging
 import os
+import pathlib
 import uuid
-
-from google.cloud import storage
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +19,8 @@ ART_DIRECTION = (
 )
 
 BUCKET_NAME = os.getenv("GCS_ARTIFACTS_BUCKET", "olaf-artifacts")
+LOCAL_STATIC_DIR = pathlib.Path(__file__).parent.parent / "static" / "images"
+LOCAL_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8080")
 
 
 class ImagenService:
@@ -40,7 +41,11 @@ class ImagenService:
     @property
     def storage_client(self):
         if self._storage_client is None:
-            self._storage_client = storage.Client()
+            try:
+                from google.cloud import storage
+                self._storage_client = storage.Client()
+            except Exception:
+                self._storage_client = None
         return self._storage_client
 
     async def generate_illustration(
@@ -75,7 +80,6 @@ class ImagenService:
                     aspect_ratio=aspect_ratio,
                     safety_filter_level="block_medium_and_above",
                     person_generation="allow_adult",
-                    add_watermark=False,
                 ),
             )
 
@@ -96,7 +100,7 @@ class ImagenService:
         user_id: str,
         filename: str | None = None,
     ) -> str:
-        """Upload image bytes to Cloud Storage and return a permanent public URL.
+        """Upload image bytes — tries GCS first, falls back to local static dir.
 
         Args:
             image_bytes: Raw image data.
@@ -107,17 +111,99 @@ class ImagenService:
             Permanent public URL for the uploaded image.
         """
         if not filename:
-            filename = f"{uuid.uuid4().hex[:16]}.png"
+            ext = "jpg" if image_bytes[:3] == b"\xff\xd8\xff" else "png"
+            filename = f"{uuid.uuid4().hex[:16]}.{ext}"
 
-        blob_name = f"illustrations/{user_id}/{filename}"
+        # ── Try GCS first ────────────────────────────────────────────────
+        if self.storage_client is not None:
+            try:
+                blob_name = f"illustrations/{user_id}/{filename}"
+                bucket = self.storage_client.bucket(BUCKET_NAME)
+                blob = bucket.blob(blob_name)
+                content_type = "image/jpeg" if filename.endswith(".jpg") else "image/png"
+                blob.upload_from_string(image_bytes, content_type=content_type)
+                blob.make_public()
+                logger.info("Uploaded to GCS: %s", blob.public_url)
+                return blob.public_url
+            except Exception as e:
+                logger.warning("GCS upload failed (%s), falling back to local storage", e)
 
-        bucket = self.storage_client.bucket(BUCKET_NAME)
-        blob = bucket.blob(blob_name)
-        blob.upload_from_string(image_bytes, content_type="image/png")
+        # ── Local static file fallback (dev) ─────────────────────────────
+        LOCAL_STATIC_DIR.mkdir(parents=True, exist_ok=True)
+        local_path = LOCAL_STATIC_DIR / filename
+        local_path.write_bytes(image_bytes)
+        url = f"{LOCAL_BASE_URL}/static/images/{filename}"
+        logger.info("Saved image locally: %s", url)
+        return url
 
-        # Make publicly readable for permanent URL (no expiry)
-        blob.make_public()
-        return blob.public_url
+    async def generate_nano_banana_recap(
+        self,
+        narrative: str,
+        user_id: str,
+        api_key: str | None = None,
+    ) -> str:
+        """Generate a Nano Banana (Gemini image generation) day-recap illustration.
+
+        Uses gemini-2.5-flash-image via the REST API to create a warm artistic
+        recap of the elder's day based on their memory narrative.
+
+        Returns:
+            Permanent public URL to the stored image.
+
+        Raises:
+            ImageGenerationError: If generation fails.
+        """
+        import base64
+        import httpx
+
+        key = api_key or os.getenv("GOOGLE_API_KEY", "")
+        if not key:
+            raise ImageGenerationError("No GOOGLE_API_KEY set for Nano Banana")
+
+        prompt = (
+            "Create a warm, cozy watercolor-style illustration that captures the essence "
+            "of an elderly person's day as described in this memory. "
+            "Style: soft pastel colors, nostalgic and heartwarming, like a book illustration. "
+            "No text or letters in the image. Focus on the most meaningful visual moment.\n\n"
+            f"Memory: {narrative[:600]}"
+        )
+
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.post(
+                    "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent",
+                    headers={"x-goog-api-key": key},
+                    json={
+                        "contents": [{"parts": [{"text": prompt}]}],
+                        "generationConfig": {"responseModalities": ["IMAGE"]},
+                    },
+                    timeout=60,
+                )
+
+            if resp.status_code != 200:
+                raise ImageGenerationError(f"Nano Banana API returned {resp.status_code}: {resp.text[:200]}")
+
+            data = resp.json()
+            parts = data.get("candidates", [{}])[0].get("content", {}).get("parts", [])
+            image_b64: str | None = None
+            for part in parts:
+                if "inlineData" in part:
+                    image_b64 = part["inlineData"]["data"]
+                    break
+
+            if not image_b64:
+                raise ImageGenerationError("Nano Banana returned no image data")
+
+            image_bytes = base64.b64decode(image_b64)
+            url = self.upload_to_storage(image_bytes, user_id)
+            logger.info("Nano Banana recap generated for user=%s url=%s", user_id, url)
+            return url
+
+        except ImageGenerationError:
+            raise
+        except Exception as e:
+            logger.error("Nano Banana generation failed: %s", e)
+            raise ImageGenerationError(f"Nano Banana generation failed: {e}") from e
 
     async def generate_and_store(
         self,

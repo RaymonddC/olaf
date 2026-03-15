@@ -31,6 +31,7 @@ export function TalkContent() {
     const sessionStartRef = useRef(0);
     const silenceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const latestFrameRef = useRef<string | null>(null);
 
     useEffect(() => { transcriptsRef.current = transcripts; }, [transcripts]);
     useEffect(() => { scrollRef.current?.scrollTo({ top: 9999, behavior: 'smooth' }); }, [transcripts]);
@@ -56,7 +57,17 @@ export function TalkContent() {
                 callbacks: {
                     onStatusChange: s => { setStatus(s); if (s === 'listening') resetSilence(); },
                     onAudioChunk: b64 => audio.queuePlayback(b64),
-                    onTranscript: entry => { setTranscripts(p => [...p, entry]); resetSilence(); },
+                    onTranscript: entry => {
+                        setTranscripts(p => {
+                            const last = p[p.length - 1];
+                            // ADK can send partial then final for the same turn — replace if same role and text extends previous
+                            if (last && last.role === entry.role && entry.text.startsWith(last.text)) {
+                                return [...p.slice(0, -1), entry];
+                            }
+                            return [...p, entry];
+                        });
+                        resetSilence();
+                    },
                     onToolCall: name => console.log('[OLAF] tool:', name),
                     onInterrupted: () => audio.clearPlaybackQueue(),
                     onError: err => { console.error(err); setError(err.message); },
@@ -87,14 +98,21 @@ export function TalkContent() {
                 const h = { 'Content-Type': 'application/json', ...(tok ? { Authorization: `Bearer ${tok}` } : {}) };
                 await fetch(`${API}/api/companion/log-conversation`, { method: 'POST', headers: h, body: JSON.stringify({ userId: user.uid, sessionDuration: dur, transcript: t, flags: [] }) });
                 const txt = t.map(e => `${e.role === 'user' ? 'User' : 'OLAF'}: ${e.text}`).join('\n');
-                fetch(`${API}/api/storyteller/create-memory`, { method: 'POST', headers: h, body: JSON.stringify({ userId: user.uid, transcript: txt }) }).catch(() => {});
+                const userPhoto = latestFrameRef.current;
+                fetch(`${API}/api/storyteller/create-memory`, {
+                    method: 'POST', headers: h,
+                    body: JSON.stringify({ userId: user.uid, transcript: txt, ...(userPhoto ? { userPhotoBase64: userPhoto } : {}) }),
+                }).catch(() => {});
             } catch {}
         }
         setActive(false); setStatus('idle'); setTranscripts([]);
     }, [user, getToken]);
 
     const toggle = useCallback(() => { active ? stopSession() : startSession(); }, [active, startSession, stopSession]);
-    const onFrame = useCallback((jpg: string) => { clientRef.current?.sendVideoFrame(jpg); }, []);
+    const onFrame = useCallback((jpg: string) => {
+        latestFrameRef.current = jpg;
+        clientRef.current?.sendVideoFrame(jpg);
+    }, []);
 
     const sc = STATUS_MAP[status];
     const isConn = status === 'connecting';

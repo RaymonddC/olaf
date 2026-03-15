@@ -194,6 +194,7 @@ class CreateMemoryRequest(CamelModel):
     user_id: str
     transcript: str
     title: str | None = None
+    user_photo_base64: str | None = None  # JPEG snapshot of the user from camera
 
 
 class TaskAcceptedResponse(CamelModel):

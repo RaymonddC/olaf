@@ -154,22 +154,55 @@ export default function MemoryDetailPage() {
                     <ImageGallery urls={memory.illustrationUrls} title={memory.title} />
                   </div>
                 )}
-                <div className={memory.illustrationUrls.length === 0 ? 'lg:col-span-2 lg:max-w-3xl mx-auto' : ''}>
-                  <h1 className="text-[26px] lg:text-[32px] font-heading font-extrabold text-text-heading leading-tight mb-2" style={{ letterSpacing: '-0.02em' }}>
-                    {memory.title}
-                  </h1>
-                  <time dateTime={memory.createdAt} className="block text-[14px] lg:text-[15px] text-text-muted mb-6">
-                    {formatDate(memory.createdAt)}
-                  </time>
-                  <div className="space-y-4">
+                <div className={memory.illustrationUrls.length === 0 ? 'lg:col-span-2 lg:max-w-2xl mx-auto' : ''}>
+                  {/* Chapter heading */}
+                  <div className="mb-5">
+                    <p className="text-[11px] lg:text-[12px] font-heading font-semibold tracking-[0.12em] text-text-muted uppercase mb-2">
+                      A memory
+                    </p>
+                    <h1 className="text-[26px] lg:text-[32px] font-heading font-extrabold text-text-heading leading-tight" style={{ letterSpacing: '-0.02em' }}>
+                      {memory.title}
+                    </h1>
+                    <p className="text-[13px] lg:text-[14px] text-text-muted mt-1.5 italic">
+                      As told to OLAF · {formatDate(memory.createdAt)}
+                    </p>
+                  </div>
+
+                  {/* Divider rule */}
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="flex-1 h-px" style={{ background: 'linear-gradient(to right, rgba(26,109,224,0.25), transparent)' }} />
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#1a6de0" opacity="0.35"><path d="M12 0L14.59 8.41L23 12L14.59 15.59L12 24L9.41 15.59L1 12L9.41 8.41Z" /></svg>
+                    <div className="flex-1 h-px" style={{ background: 'linear-gradient(to left, rgba(26,109,224,0.25), transparent)' }} />
+                  </div>
+
+                  {/* Autobiography narrative */}
+                  <div className="rounded-2xl px-5 py-5 lg:px-8 lg:py-7" style={{ background: 'rgba(255,251,245,0.7)', border: '1px solid rgba(215,195,165,0.3)' }}>
                     {memory.narrativeText.split('\n\n').map((paragraph, i) => (
-                      <p key={i} className="text-[17px] lg:text-[18px] text-text-primary leading-relaxed">
-                        {paragraph}
+                      <p key={i}
+                         className="text-[16px] lg:text-[17px] text-text-primary leading-[1.85] mb-4 last:mb-0"
+                         style={{
+                           fontFamily: 'Georgia, "Times New Roman", serif',
+                           color: '#2d3748',
+                           ...(i === 0 ? {
+                             // Drop cap on first paragraph
+                             '--drop-cap': `"${paragraph.charAt(0)}"`,
+                           } : {}),
+                         }}>
+                        {i === 0 ? (
+                          <>
+                            <span className="float-left text-[4.2em] leading-[0.75] mr-2 mt-1 font-heading font-extrabold"
+                                  style={{ color: '#1a6de0', lineHeight: '0.8' }}>
+                              {paragraph.charAt(0)}
+                            </span>
+                            {paragraph.slice(1)}
+                          </>
+                        ) : paragraph}
                       </p>
                     ))}
                   </div>
+
                   {memory.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 pt-6 mt-6 border-t border-border-default">
+                    <div className="flex flex-wrap gap-2 pt-5 mt-5 border-t border-border-default">
                       {memory.tags.map(tag => (
                         <Badge key={tag} variant={{ kind: 'status', status: 'active' }} size="sm">{tag}</Badge>
                       ))}
