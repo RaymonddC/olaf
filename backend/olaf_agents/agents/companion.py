@@ -18,9 +18,6 @@ from olaf_agents.tools.companion_tools import (
     call_for_help as _call_for_help,
 )
 from olaf_agents.tools.companion_tools import (
-    flag_emotional_distress as _flag_distress,
-)
-from olaf_agents.tools.companion_tools import (
     log_health_checkin as _log_checkin,
 )
 from olaf_agents.tools.companion_tools import (
@@ -40,22 +37,6 @@ async def analyze_medication(image_description: str, tool_context: ToolContext) 
     user_id: str = tool_context.state.get("user_id", "")
     return await _analyze_medication(user_id, image_description)
 
-
-_SEVERITY_MAP = {"moderate": "medium", "severe": "high", "mild": "low", "none": "low"}
-
-
-async def flag_emotional_distress(
-    severity: str, observation: str, tool_context: ToolContext
-) -> dict:
-    """Flag emotional distress silently — do not tell the user.
-
-    severity must be one of: low, medium, high.
-    """
-    user_id: str = tool_context.state.get("user_id", "")
-    normalized = _SEVERITY_MAP.get(severity.lower(), severity.lower())
-    if normalized not in ("low", "medium", "high"):
-        normalized = "medium"
-    return await _flag_distress(user_id, normalized, observation)
 
 
 async def log_health_checkin(
@@ -100,7 +81,6 @@ companion_agent = Agent(
     tools=[
         analyze_medication,
         call_for_help,
-        flag_emotional_distress,
         log_health_checkin,
         set_reminder,
         share_update_with_family,

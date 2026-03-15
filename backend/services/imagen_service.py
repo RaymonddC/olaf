@@ -161,11 +161,12 @@ class ImagenService:
             raise ImageGenerationError("No GOOGLE_API_KEY set for Nano Banana")
 
         prompt = (
-            "Create a warm, cozy watercolor-style illustration that captures the essence "
-            "of an elderly person's day as described in this memory. "
-            "Style: soft pastel colors, nostalgic and heartwarming, like a book illustration. "
-            "No text or letters in the image. Focus on the most meaningful visual moment.\n\n"
-            f"Memory: {narrative[:600]}"
+            "Create a warm watercolor-style illustration of a specific scene from an elderly "
+            "person's day. Paint exactly what they described — the actual place, activity, "
+            "or moment from their story. Make it personal and specific, not generic. "
+            "Style: soft pastel colors, gentle and natural, like a personal journal illustration. "
+            "No text or letters in the image.\n\n"
+            f"Scene from their day: {narrative[:600]}"
         )
 
         try:

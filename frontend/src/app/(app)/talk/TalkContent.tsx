@@ -41,6 +41,13 @@ function TypewriterText({
             onDisplayed?.('');
             return;
         }
+        // If text changed underneath (clean finished replaced noisy partial),
+        // snap forward — user already heard it via audio
+        if (displayed.length > 0 && !text.startsWith(displayed)) {
+            setDisplayed(text);
+            onDisplayed?.(text);
+            return;
+        }
         if (displayed.length >= text.length) {
             if (displayed !== text) { setDisplayed(text); onDisplayed?.(text); }
             return;
@@ -76,10 +83,11 @@ export function TalkContent() {
     const silenceRef      = useRef<ReturnType<typeof setTimeout> | null>(null);
     const latestFrameRef  = useRef<string | null>(null);
 
-    const olafTsRef       = useRef('');    // active turn ts
-    const olafLastTsRef   = useRef('');    // last entry ts — survives turn_complete
-    const olafIgnoreRef   = useRef(false);
-    const olafDisplayedRef = useRef('');  // what TypewriterText has typed so far
+    const olafTsRef        = useRef('');    // active turn ts
+    const olafLastTsRef    = useRef('');    // last entry ts — survives turn_complete
+    const olafIgnoreRef    = useRef(false);
+    const olafDisplayedRef = useRef('');   // what TypewriterText has typed so far
+    const olafCommittedRef = useRef('');   // accumulated clean text from finished events
 
     useEffect(() => { transcriptsRef.current = transcripts; }, [transcripts]);
     useEffect(() => () => {
@@ -116,38 +124,41 @@ export function TalkContent() {
                         if (entry.role === 'model') {
                             if (olafIgnoreRef.current) return; // stale events after interrupt
                             if (entry.partial) {
-                                // Only use the very first partial of a new turn to start
-                                // the typewriter immediately without waiting for finished
+                                // First partial → create entry so typewriter starts immediately
                                 if (!olafTsRef.current) {
                                     olafTsRef.current = entry.timestamp;
                                     olafLastTsRef.current = entry.timestamp;
                                     olafDisplayedRef.current = '';
+                                    olafCommittedRef.current = '';
                                     setTranscripts(p => [...p, {
                                         role: 'model', text: entry.text,
                                         partial: true, timestamp: entry.timestamp,
                                     }]);
                                 }
+                                // Ignore subsequent partials (noisy text)
                                 return;
                             }
-                            // finished — extend or create the entry with clean text
-                            const ts = olafTsRef.current || entry.timestamp;
-                            if (!olafTsRef.current) {
+                            // Finished event — clean, authoritative text
+                            const ts = olafTsRef.current || olafLastTsRef.current || entry.timestamp;
+                            if (!olafTsRef.current && !olafLastTsRef.current) {
                                 olafTsRef.current = ts;
                                 olafLastTsRef.current = ts;
+                                olafDisplayedRef.current = '';
+                                olafCommittedRef.current = '';
                             }
+                            // Accumulate clean finished sub-utterances
+                            const newCommitted = olafCommittedRef.current
+                                ? olafCommittedRef.current.trimEnd() + ' ' + entry.text
+                                : entry.text;
+                            olafCommittedRef.current = newCommitted;
                             setTranscripts(p => {
                                 const i = p.findIndex(e => e.role === 'model' && e.timestamp === ts);
                                 if (i >= 0) {
                                     const next = [...p];
-                                    // If clean text starts with what we have, replace (first sub-utterance finish)
-                                    // Otherwise append (new sub-utterance)
-                                    const newText = entry.text.startsWith(p[i].text.trim())
-                                        ? entry.text
-                                        : p[i].text.trimEnd() + ' ' + entry.text;
-                                    next[i] = { ...p[i], text: newText, partial: false };
+                                    next[i] = { ...p[i], text: newCommitted, partial: false };
                                     return next;
                                 }
-                                return [...p, { role: 'model', text: entry.text, partial: false, timestamp: ts }];
+                                return [...p, { role: 'model', text: newCommitted, partial: false, timestamp: ts }];
                             });
                         } else {
                             setTranscripts(p => [...p, entry]);
@@ -170,10 +181,11 @@ export function TalkContent() {
             const trimOnInterrupt = () => {
                 const ts     = olafLastTsRef.current;
                 const spoken = olafDisplayedRef.current.trim();
-                olafTsRef.current     = '';
-                olafLastTsRef.current = '';
-                olafIgnoreRef.current = true;
-                olafDisplayedRef.current = '';
+                olafTsRef.current      = '';
+                olafLastTsRef.current  = '';
+                olafIgnoreRef.current  = true;
+                olafDisplayedRef.current  = '';
+                olafCommittedRef.current  = '';
                 setTranscripts(p => {
                     if (!ts) return p;
                     if (!spoken) return p.filter(e => !(e.role === 'model' && e.timestamp === ts));
@@ -209,6 +221,7 @@ export function TalkContent() {
         olafLastTsRef.current = '';
         olafIgnoreRef.current = false;
         olafDisplayedRef.current = '';
+        olafCommittedRef.current = '';
         const dur = Math.round((Date.now() - sessionStartRef.current) / 1000);
         const t = transcriptsRef.current;
         if (user && t.length > 0) {
@@ -239,10 +252,7 @@ export function TalkContent() {
     const sc     = STATUS_MAP[status];
     const isConn = status === 'connecting';
 
-    // Track OLAF and user lines independently so a user utterance never
-    // interrupts the typewriter mid-sentence
     const lastOlaf = [...transcripts].reverse().find(e => e.role === 'model');
-    const lastUser = [...transcripts].reverse().find(e => e.role === 'user');
 
     // Orb size: slightly larger on desktop
     const orbSize  = active ? 180 : 155;
@@ -333,13 +343,6 @@ export function TalkContent() {
                                 </div>
                             )}
 
-                            {/* User's last utterance — small label, never disrupts OLAF's typewriter */}
-                            {lastUser && (
-                                <p className="mt-4 text-[14px] lg:text-[15px] text-text-muted italic"
-                                   style={{ opacity: 0.75 }}>
-                                    You: {lastUser.text}
-                                </p>
-                            )}
                         </div>
                     )}
 

@@ -63,11 +63,21 @@ async def _create_memory_direct(
 
     if settings.google_api_key and transcript.strip():
         prompt = (
-            "You are a compassionate storyteller for an elderly care companion called OLAF.\n"
-            "Transform this conversation transcript into a warm memory chapter.\n\n"
+            "You are writing a personal journal entry for an elderly person based on their "
+            "conversation with their AI companion OLAF.\n\n"
             "TRANSCRIPT:\n"
             f"{transcript[:4000]}\n\n"
-            "Write a 3-5 paragraph narrative that honours the user's voice. "
+            "Write this as a simple, natural autobiography entry — like the person is writing "
+            "about their own day in their own words. Keep it in first person.\n"
+            "- Write 2-4 short paragraphs, simple and heartfelt\n"
+            "- Focus on what actually happened: who they talked to, what they did, "
+            "how they felt, what mattered to them\n"
+            "- Keep it grounded and real — no flowery storytelling or dramatic language\n"
+            "- It should read like a diary entry, not a story being told to someone\n"
+            "- Include the small meaningful details: a meal they enjoyed, a memory that "
+            "came up, a worry they shared, a moment that made them smile\n"
+            "- The title should be simple and personal, like 'A Quiet Tuesday Morning' "
+            "or 'Thinking About the Garden'\n\n"
             "Respond ONLY with JSON in this format:\n"
             '{{"title": "...", "narrative": "...", "tags": ["tag1", "tag2"]}}'
         )
@@ -131,12 +141,14 @@ async def _create_memory_direct(
             scene_prompt_text = ""
             if settings.google_api_key:
                 scene_req_prompt = (
-                    "Based on this narrative from an elderly person's memory, write a single "
-                    "vivid scene description (1-2 sentences) suitable as an image generation "
-                    "prompt. Focus on the most emotionally resonant visual moment. "
+                    "Based on this personal journal entry from an elderly person, describe "
+                    "a specific scene from their actual day (1-2 sentences) suitable as an "
+                    "image generation prompt. Pick a real moment they described — a place "
+                    "they visited, something they did, a person they saw, a meal they had. "
+                    "Make it specific to THEIR day, not generic. "
                     "Do NOT include any text, words, or letters in the scene. "
                     "Respond with ONLY the scene description, nothing else.\n\n"
-                    f"NARRATIVE:\n{narrative_text[:2000]}"
+                    f"JOURNAL ENTRY:\n{narrative_text[:2000]}"
                 )
                 try:
                     async with httpx.AsyncClient() as client:
