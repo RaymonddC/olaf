@@ -122,9 +122,10 @@ class ImagenService:
                 blob = bucket.blob(blob_name)
                 content_type = "image/jpeg" if filename.endswith(".jpg") else "image/png"
                 blob.upload_from_string(image_bytes, content_type=content_type)
-                blob.make_public()
-                logger.info("Uploaded to GCS: %s", blob.public_url)
-                return blob.public_url
+                # Bucket uses uniform IAM (allUsers=objectViewer), no per-object ACL needed
+                public_url = f"https://storage.googleapis.com/{BUCKET_NAME}/{blob_name}"
+                logger.info("Uploaded to GCS: %s", public_url)
+                return public_url
             except Exception as e:
                 logger.warning("GCS upload failed (%s), falling back to local storage", e)
 

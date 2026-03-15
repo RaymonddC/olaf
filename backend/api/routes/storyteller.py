@@ -118,21 +118,7 @@ async def _create_memory_direct(
         narrative_text = transcript
         logger.info("Memory task %s: using raw transcript as narrative fallback", task_id)
 
-    # ── Upload user photo (camera snapshot) if provided ────────────────────
     illustration_urls: list[str] = []
-    if user_photo_base64:
-        try:
-            import base64
-            from services.imagen_service import get_imagen_service
-            photo_bytes = base64.b64decode(user_photo_base64)
-            imagen = get_imagen_service()
-            photo_url = imagen.upload_to_storage(
-                photo_bytes, user_id, filename=f"user-{uuid.uuid4().hex[:12]}.jpg"
-            )
-            illustration_urls.append(photo_url)
-            logger.info("Memory task %s: user photo uploaded: %s", task_id, photo_url)
-        except Exception as e:
-            logger.warning("Memory task %s: user photo upload failed: %s", task_id, e)
 
     # ── Generate scene illustration via gemini-2.5-flash-image ──────────────
     if narrative_text and narrative_text != transcript:
@@ -208,6 +194,21 @@ async def _create_memory_direct(
             logger.info("Memory task %s: Nano Banana recap generated: %s", task_id, recap_url)
         except Exception as e:
             logger.warning("Memory task %s: Nano Banana recap failed: %s", task_id, e)
+
+    # ── Upload user photo last — generated images come first ─────────────────
+    if user_photo_base64:
+        try:
+            import base64
+            from services.imagen_service import get_imagen_service
+            photo_bytes = base64.b64decode(user_photo_base64)
+            imagen = get_imagen_service()
+            photo_url = imagen.upload_to_storage(
+                photo_bytes, user_id, filename=f"user-{uuid.uuid4().hex[:12]}.jpg"
+            )
+            illustration_urls.append(photo_url)
+            logger.info("Memory task %s: user photo uploaded: %s", task_id, photo_url)
+        except Exception as e:
+            logger.warning("Memory task %s: user photo upload failed: %s", task_id, e)
 
     memory_id = uuid.uuid4().hex[:20]
     snippet = narrative_text[:200].rstrip()
