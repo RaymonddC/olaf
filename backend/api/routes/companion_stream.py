@@ -286,14 +286,16 @@ async def companion_stream(
                             "text": t.text,
                         })
 
-                # OLAF speech transcription — what was actually spoken aloud
+                # OLAF speech transcription — stream partials for live subtitle,
+                # then send finished=True as the clean final replacement
                 if getattr(event, "output_transcription", None):
                     t = event.output_transcription
-                    if getattr(t, "text", None) and getattr(t, "finished", False):
+                    if getattr(t, "text", None):
                         await websocket.send_json({
                             "type": "transcript",
                             "role": "model",
                             "text": t.text,
+                            "partial": not getattr(t, "finished", False),
                         })
 
                 # Tool calls — let the browser show activity indicator
