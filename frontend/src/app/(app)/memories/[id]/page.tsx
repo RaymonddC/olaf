@@ -155,59 +155,73 @@ export default function MemoryDetailPage() {
                   </div>
                 )}
                 <div className={memory.illustrationUrls.length === 0 ? 'lg:col-span-2 lg:max-w-2xl mx-auto' : ''}>
-                  {/* Chapter heading */}
-                  <div className="mb-5">
-                    <p className="text-[11px] lg:text-[12px] font-heading font-semibold tracking-[0.12em] text-text-muted uppercase mb-2">
-                      A memory
-                    </p>
-                    <h1 className="text-[26px] lg:text-[32px] font-heading font-extrabold text-text-heading leading-tight" style={{ letterSpacing: '-0.02em' }}>
-                      {memory.title}
-                    </h1>
-                    <p className="text-[13px] lg:text-[14px] text-text-muted mt-1.5 italic">
-                      As told to OLAF · {formatDate(memory.createdAt)}
-                    </p>
-                  </div>
 
-                  {/* Divider rule */}
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="flex-1 h-px" style={{ background: 'linear-gradient(to right, rgba(26,109,224,0.25), transparent)' }} />
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="#1a6de0" opacity="0.35"><path d="M12 0L14.59 8.41L23 12L14.59 15.59L12 24L9.41 15.59L1 12L9.41 8.41Z" /></svg>
-                    <div className="flex-1 h-px" style={{ background: 'linear-gradient(to left, rgba(26,109,224,0.25), transparent)' }} />
-                  </div>
+                  {/* Book-style chapter card */}
+                  <div className="rounded-3xl overflow-hidden" style={{
+                    background: 'rgba(255,252,245,0.92)',
+                    border: '1px solid rgba(210,190,155,0.35)',
+                    boxShadow: '0 4px 32px rgba(120,90,40,0.08)',
+                  }}>
 
-                  {/* Autobiography narrative */}
-                  <div className="rounded-2xl px-5 py-5 lg:px-8 lg:py-7" style={{ background: 'rgba(255,251,245,0.7)', border: '1px solid rgba(215,195,165,0.3)' }}>
-                    {memory.narrativeText.split('\n\n').map((paragraph, i) => (
-                      <p key={i}
-                         className="text-[16px] lg:text-[17px] text-text-primary leading-[1.85] mb-4 last:mb-0"
-                         style={{
-                           fontFamily: 'Georgia, "Times New Roman", serif',
-                           color: '#2d3748',
-                           ...(i === 0 ? {
-                             // Drop cap on first paragraph
-                             '--drop-cap': `"${paragraph.charAt(0)}"`,
-                           } : {}),
-                         }}>
-                        {i === 0 ? (
-                          <>
-                            <span className="float-left text-[4.2em] leading-[0.75] mr-2 mt-1 font-heading font-extrabold"
-                                  style={{ color: '#1a6de0', lineHeight: '0.8' }}>
-                              {paragraph.charAt(0)}
-                            </span>
-                            {paragraph.slice(1)}
-                          </>
-                        ) : paragraph}
+                    {/* Chapter header band */}
+                    <div className="px-6 pt-7 pb-5 lg:px-10 lg:pt-9" style={{ borderBottom: '1px solid rgba(210,190,155,0.25)' }}>
+                      <p className="text-[10px] lg:text-[11px] font-heading font-bold tracking-[0.22em] mb-3" style={{ color: '#9c7c4a' }}>
+                        ✦ &nbsp; MY STORY &nbsp; ✦
                       </p>
-                    ))}
-                  </div>
+                      <h1 className="text-[24px] lg:text-[30px] leading-tight mb-2"
+                          style={{ fontFamily: 'Georgia, "Times New Roman", serif', color: '#1c1410', fontWeight: 700, letterSpacing: '-0.01em' }}>
+                        {memory.title}
+                      </h1>
+                      <p className="text-[12px] lg:text-[13px] italic" style={{ color: '#9c7c4a' }}>
+                        As remembered and told to OLAF &nbsp;·&nbsp; {formatDate(memory.createdAt)}
+                      </p>
+                    </div>
 
-                  {memory.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-2 pt-5 mt-5 border-t border-border-default">
-                      {memory.tags.map(tag => (
-                        <Badge key={tag} variant={{ kind: 'status', status: 'active' }} size="sm">{tag}</Badge>
+                    {/* Narrative body */}
+                    <div className="px-6 py-7 lg:px-10 lg:py-9">
+                      {memory.narrativeText.split('\n\n').filter(p => p.trim()).map((paragraph, i) => (
+                        <p key={i}
+                           className={`leading-[2] ${i < memory.narrativeText.split('\n\n').filter(p => p.trim()).length - 1 ? 'mb-5' : 'mb-0'}`}
+                           style={{
+                             fontFamily: 'Georgia, "Times New Roman", serif',
+                             fontSize: i === 0 ? '17px' : '16px',
+                             color: '#2c1f0f',
+                             textIndent: i > 0 ? '1.6em' : undefined,
+                           }}>
+                          {i === 0 ? (
+                            <>
+                              <span
+                                className="float-left font-heading font-black leading-none mr-2"
+                                style={{ fontSize: '5em', lineHeight: '0.72', color: '#9c7c4a', marginTop: '4px' }}>
+                                {paragraph.charAt(0)}
+                              </span>
+                              <span style={{ fontVariant: 'small-caps', letterSpacing: '0.06em', fontSize: '0.9em', color: '#5c3d1e' }}>
+                                {paragraph.slice(1, 30)}
+                              </span>
+                              {paragraph.slice(30)}
+                            </>
+                          ) : paragraph}
+                        </p>
                       ))}
                     </div>
-                  )}
+
+                    {/* Closing colophon */}
+                    <div className="px-6 pb-7 lg:px-10 lg:pb-9 text-center" style={{ borderTop: '1px solid rgba(210,190,155,0.25)' }}>
+                      <div className="pt-5 flex items-center justify-center gap-3">
+                        <div className="flex-1 h-px" style={{ background: 'linear-gradient(to right, transparent, rgba(156,124,74,0.3))' }} />
+                        <p className="text-[11px] lg:text-[12px] italic" style={{ color: '#9c7c4a' }}>~ end of chapter ~</p>
+                        <div className="flex-1 h-px" style={{ background: 'linear-gradient(to left, transparent, rgba(156,124,74,0.3))' }} />
+                      </div>
+                      {memory.tags.length > 0 && (
+                        <div className="flex flex-wrap justify-center gap-2 mt-4">
+                          {memory.tags.map(tag => (
+                            <Badge key={tag} variant={{ kind: 'status', status: 'active' }} size="sm">{tag}</Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                  </div>
                 </div>
               </div>
             </article>
