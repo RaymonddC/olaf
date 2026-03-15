@@ -83,6 +83,8 @@ export function TalkContent() {
     const silenceRef      = useRef<ReturnType<typeof setTimeout> | null>(null);
     const latestFrameRef  = useRef<string | null>(null);
 
+    const stopRef              = useRef<() => void>(() => {});
+    const endAfterFarewellRef  = useRef(false);
     const olafTsRef        = useRef('');    // active turn ts
     const olafLastTsRef    = useRef('');    // last entry ts — survives turn_complete
     const olafIgnoreRef    = useRef(false);
@@ -162,6 +164,14 @@ export function TalkContent() {
                             });
                         } else {
                             setTranscripts(p => [...p, entry]);
+                            // Detect user farewell — auto-end after OLAF responds
+                            const lower = entry.text.toLowerCase();
+                            const farewells = ['bye', 'goodbye', 'good bye', 'i need to go',
+                                'talk to you later', 'see you later', 'i am done', "i'm done",
+                                'that is all', "that's all", 'good night', 'goodnight'];
+                            if (farewells.some(f => lower.includes(f))) {
+                                endAfterFarewellRef.current = true;
+                            }
                         }
                         resetSilence();
                     },
@@ -171,6 +181,11 @@ export function TalkContent() {
                         audio.unblockPlayback();
                         olafTsRef.current = '';
                         olafIgnoreRef.current = false;
+                        // If user said goodbye and OLAF has finished farewell, end session
+                        if (endAfterFarewellRef.current) {
+                            endAfterFarewellRef.current = false;
+                            setTimeout(() => stopRef.current(), 2000);
+                        }
                     },
                     onError:        err => { console.error(err); setError(err.message); },
                 },
@@ -243,6 +258,7 @@ export function TalkContent() {
         setActive(false); setStatus('idle'); setTranscripts([]);
     }, [user, getToken]);
 
+    stopRef.current = stopSession;
     const toggle  = useCallback(() => { active ? stopSession() : startSession(); }, [active, startSession, stopSession]);
     const onFrame = useCallback((jpg: string) => {
         latestFrameRef.current = jpg;
