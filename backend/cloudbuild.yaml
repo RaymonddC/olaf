@@ -10,7 +10,7 @@ steps:
       - deploy
       - olaf-backend
       - --image=gcr.io/$PROJECT_ID/olaf-backend
-      - --region=us-central1
+      - --region=asia-east1
       - --platform=managed
       - --allow-unauthenticated
       - --port=8080
