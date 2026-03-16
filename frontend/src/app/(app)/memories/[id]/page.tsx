@@ -128,7 +128,7 @@ export default function MemoryDetailPage() {
               <p className="text-[17px] text-text-secondary mb-6">We couldn&apos;t load this memory.</p>
               <Link href="/memories"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-[16px] font-heading font-semibold text-white transition-colors active:scale-95 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-300"
-                style={{ background: 'linear-gradient(135deg, #1a6de0, #2563eb)' }}>
+                style={{ background: 'linear-gradient(135deg, #00897b, #00796b)' }}>
                 <ArrowLeft className="w-5 h-5" />
                 Back to Memories
               </Link>

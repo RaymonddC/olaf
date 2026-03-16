@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { User, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { OlafLogo } from '@/components/ui/OlafLogo';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -41,14 +42,9 @@ export default function LoginPage() {
         <div className="w-full max-w-[360px] md:max-w-[380px]">
             {/* Branding */}
             <div className="text-center mb-3 animate-fade-up">
-                <div className="relative inline-block mb-2">
-                    <div className="w-[56px] h-[56px] rounded-[18px] flex items-center justify-center"
-                         style={{ background: 'linear-gradient(135deg, #1a6de0, #1558b8)', boxShadow: '0 10px 28px rgba(26,109,224,0.22)' }}>
-                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round">
-                            <circle cx="12" cy="10" r="3.5" /><path d="M6.5 19.5c0-3 2.5-5 5.5-5s5.5 2 5.5 5" />
-                        </svg>
-                    </div>
-                    <div className="absolute bottom-0.5 right-0.5 w-[15px] h-[15px] rounded-full bg-emerald-500 border-2 border-white" />
+                <div className="w-[56px] h-[56px] rounded-[18px] flex items-center justify-center mx-auto mb-2"
+                     style={{ background: 'linear-gradient(135deg, #b2dfdb, #80cbc4)', boxShadow: '0 10px 28px rgba(128,203,196,0.25)' }}>
+                    <OlafLogo size={32} className="text-teal-700" />
                 </div>
                 <h1 className="text-[22px] md:text-[26px] font-heading font-extrabold text-text-heading" style={{ letterSpacing: '-0.03em' }}>
                     Welcome to OLAF
@@ -69,7 +65,7 @@ export default function LoginPage() {
                         <label htmlFor="login-username" className="block text-[12px] md:text-[13px] font-heading font-semibold text-text-secondary mb-1" style={{ letterSpacing: '0.01em' }}>
                             Username
                         </label>
-                        <div className="relative flex items-center rounded-xl bg-bg-surface-alt/70 border-2 border-transparent focus-within:border-primary-400 focus-within:shadow-[0_0_0_3px_#E0F2FE] transition-all duration-200"
+                        <div className="relative flex items-center rounded-xl bg-bg-surface-alt/70 border-2 border-transparent focus-within:border-primary-400 focus-within:shadow-[0_0_0_3px_#B2DFDB] transition-all duration-200"
                              style={{ boxShadow: 'inset 0 1px 3px rgba(15,23,42,0.04)' }}>
                             <User className="absolute left-3 w-4 h-4 text-text-muted" aria-hidden="true" />
                             <input id="login-username" type="text" value={username} onChange={(e) => setUsername(e.target.value)}
@@ -83,7 +79,7 @@ export default function LoginPage() {
                         <label htmlFor="login-pw" className="block text-[12px] md:text-[13px] font-heading font-semibold text-text-secondary mb-1" style={{ letterSpacing: '0.01em' }}>
                             Password
                         </label>
-                        <div className="relative flex items-center rounded-xl bg-bg-surface-alt/70 border-2 border-transparent focus-within:border-primary-400 focus-within:shadow-[0_0_0_3px_#E0F2FE] transition-all duration-200"
+                        <div className="relative flex items-center rounded-xl bg-bg-surface-alt/70 border-2 border-transparent focus-within:border-primary-400 focus-within:shadow-[0_0_0_3px_#B2DFDB] transition-all duration-200"
                              style={{ boxShadow: 'inset 0 1px 3px rgba(15,23,42,0.04)' }}>
                             <Lock className="absolute left-3 w-4 h-4 text-text-muted" aria-hidden="true" />
                             <input id="login-pw" type={showPw ? 'text' : 'password'} value={password} onChange={(e) => setPassword(e.target.value)}
@@ -100,7 +96,7 @@ export default function LoginPage() {
                     {/* Submit */}
                     <button type="submit" disabled={loading}
                             className="w-full py-2.5 rounded-xl font-heading font-semibold text-[14px] md:text-[15px] text-white min-h-[44px] cursor-pointer disabled:opacity-60 disabled:cursor-wait active:scale-[0.97] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-300"
-                            style={{ background: 'linear-gradient(135deg, #1a6de0, #1558b8)', boxShadow: '0 6px 20px rgba(26,109,224,0.2)', letterSpacing: '0.01em' }}>
+                            style={{ background: 'linear-gradient(135deg, #00897b, #00796b)', boxShadow: '0 6px 20px rgba(0,137,123,0.2)', letterSpacing: '0.01em' }}>
                         {loading ? 'Signing in…' : 'Sign in'}
                     </button>
                 </form>

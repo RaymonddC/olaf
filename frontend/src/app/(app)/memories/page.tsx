@@ -138,9 +138,9 @@ export default function MemoriesPage() {
                         <>
                             {/* Greeting */}
                             <div className="pt-6 lg:pt-8 mb-6 rounded-2xl px-5 py-5 lg:px-6 lg:py-6"
-                                 style={{ background: 'rgba(239,246,255,0.6)', border: '1px solid rgba(219,234,254,0.4)' }}>
+                                 style={{ background: 'rgba(224,242,241,0.6)', border: '1px solid rgba(178,223,219,0.4)' }}>
                                 {streakText && (
-                                    <p className="text-[17px] lg:text-[20px] leading-snug font-heading font-bold" style={{ color: '#1e40af' }}>
+                                    <p className="text-[17px] lg:text-[20px] leading-snug font-heading font-bold" style={{ color: '#00695c' }}>
                                         {streakText}
                                     </p>
                                 )}
@@ -208,7 +208,7 @@ export default function MemoriesPage() {
                                                     color: isSel
                                                         ? '#fff'
                                                         : has
-                                                            ? '#1e40af'
+                                                            ? '#00695c'
                                                             : isToday
                                                                 ? '#1e293b'
                                                                 : isPast
@@ -227,7 +227,7 @@ export default function MemoriesPage() {
                                             {has && !isSel && (
                                                 <span className="flex gap-0.5 mt-1">
                                                     {Array.from({ length: Math.min(count, 3) }).map((_, di) => (
-                                                        <span key={di} className="w-1.5 h-1.5 rounded-full" style={{ background: '#93c5fd' }} />
+                                                        <span key={di} className="w-1.5 h-1.5 rounded-full" style={{ background: '#4db6ac' }} />
                                                     ))}
                                                 </span>
                                             )}

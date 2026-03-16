@@ -2,7 +2,8 @@
 
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
-import { UserPlus, Copy, Check, ArrowLeft } from 'lucide-react';
+import { Copy, Check } from 'lucide-react';
+import { OlafLogo } from '@/components/ui/OlafLogo';
 import { api } from '@/lib/api';
 
 const RELATIONSHIPS = [
@@ -131,7 +132,7 @@ export default function SetupElderPage() {
             {/* Submit */}
             <button type="button" onClick={() => router.replace('/dashboard')}
                     className="w-full py-2.5 rounded-xl font-heading font-semibold text-[14px] md:text-[15px] text-white min-h-[44px] cursor-pointer active:scale-[0.97] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-300"
-                    style={{ background: 'linear-gradient(135deg, #1a6de0, #1558b8)', boxShadow: '0 6px 20px rgba(26,109,224,0.2)', letterSpacing: '0.01em' }}>
+                    style={{ background: 'linear-gradient(135deg, #00897b, #00796b)', boxShadow: '0 6px 20px rgba(0,137,123,0.2)', letterSpacing: '0.01em' }}>
               Go to my dashboard
             </button>
           </div>
@@ -148,7 +149,7 @@ export default function SetupElderPage() {
 
   // ── Setup form ─────────────────────────────────────────────────────────────
   const inputCls = "w-full pl-3 pr-3 py-2 text-[14px] md:text-[15px] font-body text-text-primary bg-transparent border-none outline-none rounded-xl min-h-[40px] placeholder:text-text-muted/50";
-  const fieldCls = "rounded-xl bg-bg-surface-alt/70 border-2 border-transparent focus-within:border-primary-400 focus-within:shadow-[0_0_0_3px_#E0F2FE] transition-all duration-200";
+  const fieldCls = "rounded-xl bg-bg-surface-alt/70 border-2 border-transparent focus-within:border-primary-400 focus-within:shadow-[0_0_0_3px_#B2DFDB] transition-all duration-200";
 
   return (
     <div className="h-dvh bg-bg-page flex flex-col items-center justify-center px-4">
@@ -156,8 +157,8 @@ export default function SetupElderPage() {
         {/* Branding */}
         <div className="text-center mb-2 animate-fade-up">
           <div className="w-[48px] h-[48px] rounded-[16px] flex items-center justify-center mx-auto mb-1.5"
-               style={{ background: 'linear-gradient(135deg, #1a6de0, #1558b8)', boxShadow: '0 10px 28px rgba(26,109,224,0.22)' }}>
-            <UserPlus className="w-6 h-6 text-white" strokeWidth={1.6} />
+               style={{ background: 'linear-gradient(135deg, #b2dfdb, #80cbc4)', boxShadow: '0 10px 28px rgba(128,203,196,0.25)' }}>
+            <OlafLogo size={28} className="text-teal-700" />
           </div>
           <h1 className="text-[20px] md:text-[24px] font-heading font-extrabold text-text-heading" style={{ letterSpacing: '-0.03em' }}>
             Set up their account
@@ -243,7 +244,7 @@ export default function SetupElderPage() {
             {/* Submit */}
             <button type="submit" disabled={loading}
                     className="w-full py-2.5 rounded-xl font-heading font-semibold text-[14px] md:text-[15px] text-white min-h-[44px] cursor-pointer disabled:opacity-60 disabled:cursor-wait active:scale-[0.97] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-300"
-                    style={{ background: 'linear-gradient(135deg, #1a6de0, #1558b8)', boxShadow: '0 6px 20px rgba(26,109,224,0.2)', letterSpacing: '0.01em' }}>
+                    style={{ background: 'linear-gradient(135deg, #00897b, #00796b)', boxShadow: '0 6px 20px rgba(0,137,123,0.2)', letterSpacing: '0.01em' }}>
               {loading ? 'Creating…' : 'Create their account'}
             </button>
           </form>

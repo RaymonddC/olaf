@@ -14,9 +14,9 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const VARIANT: Record<ButtonVariant, { bg: string; color: string; shadow: string; border: string }> = {
-    primary: { bg: 'linear-gradient(135deg, #1a6de0, #1558b8)', color: '#fff', shadow: '0 6px 24px rgba(26,109,224,0.18), 0 2px 6px rgba(15,23,42,0.06)', border: 'none' },
-    secondary: { bg: 'rgba(255,255,255,0.9)', color: '#1a6de0', shadow: '0 2px 12px rgba(15,23,42,0.05)', border: '1.5px solid #e2e8f0' },
-    ghost: { bg: 'transparent', color: '#1a6de0', shadow: 'none', border: 'none' },
+    primary: { bg: 'linear-gradient(135deg, #00897b, #00796b)', color: '#fff', shadow: '0 6px 24px rgba(0,137,123,0.18), 0 2px 6px rgba(15,23,42,0.06)', border: 'none' },
+    secondary: { bg: 'rgba(255,255,255,0.9)', color: '#00897b', shadow: '0 2px 12px rgba(15,23,42,0.05)', border: '1.5px solid #e2e8f0' },
+    ghost: { bg: 'transparent', color: '#00897b', shadow: 'none', border: 'none' },
     danger: { bg: 'linear-gradient(135deg, #e11d48, #be123c)', color: '#fff', shadow: '0 6px 24px rgba(225,29,72,0.18)', border: 'none' },
 };
 

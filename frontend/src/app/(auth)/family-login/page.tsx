@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Users } from 'lucide-react';
 import { useAuth, type UserRole } from '@/contexts/AuthContext';
+import { OlafLogo } from '@/components/ui/OlafLogo';
 import { api } from '@/lib/api';
 
 /**
@@ -59,8 +59,8 @@ export default function FamilyLoginPage() {
             {/* Branding */}
             <div className="text-center mb-3 animate-fade-up">
                 <div className="w-[56px] h-[56px] rounded-[18px] flex items-center justify-center mx-auto mb-2"
-                     style={{ background: 'linear-gradient(135deg, #1a6de0, #1558b8)', boxShadow: '0 10px 28px rgba(26,109,224,0.22)' }}>
-                    <Users className="w-7 h-7 text-white" strokeWidth={1.6} />
+                     style={{ background: 'linear-gradient(135deg, #b2dfdb, #80cbc4)', boxShadow: '0 10px 28px rgba(128,203,196,0.25)' }}>
+                    <OlafLogo size={32} className="text-teal-700" />
                 </div>
                 <h1 className="text-[22px] md:text-[26px] font-heading font-extrabold text-text-heading" style={{ letterSpacing: '-0.03em' }}>
                     Family sign in

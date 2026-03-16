@@ -152,18 +152,18 @@ export default function MyDayPage() {
                     {/* Empty state */}
                     {!isLoading && !isError && reminders.length === 0 && (
                         <div className="text-center py-10 rounded-xl"
-                             style={{ background: 'rgba(239,246,255,0.5)' }}>
-                            <Bell className="w-8 h-8 mx-auto mb-3" style={{ color: '#93c5fd' }} />
-                            <p className="text-[16px] lg:text-[17px] font-heading font-semibold mb-1" style={{ color: '#1e40af' }}>
+                             style={{ background: 'rgba(255,255,255,0.5)', border: '1px solid rgba(241,245,249,0.7)' }}>
+                            <Bell className="w-8 h-8 mx-auto mb-3" style={{ color: '#94a3b8' }} />
+                            <p className="text-[16px] lg:text-[17px] font-heading font-semibold mb-1 text-text-heading">
                                 No reminders yet
                             </p>
-                            <p className="text-[14px] lg:text-[15px] mb-5 max-w-xs mx-auto" style={{ color: '#64748b' }}>
+                            <p className="text-[14px] lg:text-[15px] mb-5 max-w-xs mx-auto text-text-muted">
                                 Tell OLAF what to remember.
                             </p>
                             <Link
                                 href="/talk"
                                 className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-[16px] font-heading font-semibold text-white active:scale-95 transition-transform min-h-[48px]"
-                                style={{ background: '#3b82f6' }}
+                                style={{ background: 'linear-gradient(135deg, #80cbc4, #4db6ac)', boxShadow: '0 4px 16px rgba(77,182,172,0.25)' }}
                             >
                                 <Mic className="w-5 h-5" />
                                 Talk to OLAF
@@ -204,9 +204,9 @@ export default function MyDayPage() {
                     {/* Voice hint */}
                     {!isLoading && !isError && reminders.length > 0 && (
                         <div className="flex items-center justify-center gap-2 py-4">
-                            <Mic className="w-4 h-4" style={{ color: '#93c5fd' }} />
+                            <Mic className="w-4 h-4" style={{ color: '#4db6ac' }} />
                             <p className="text-[13px] lg:text-[14px]" style={{ color: '#64748b' }}>
-                                Tell OLAF <strong style={{ color: '#1e40af' }}>&ldquo;I took my medicine&rdquo;</strong> to mark done
+                                Tell OLAF <strong style={{ color: '#00695c' }}>&ldquo;I took my medicine&rdquo;</strong> to mark done
                             </p>
                         </div>
                     )}

@@ -2,7 +2,8 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { LogOut, Heart, ChevronLeft, ChevronRight, Bell, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
+import { LogOut, ChevronLeft, ChevronRight, Bell, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { OlafLogo } from '@/components/ui/OlafLogo';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/Toast';
@@ -217,8 +218,8 @@ export default function FamilyDashboardPage() {
             <div className="w-full max-w-[360px] md:max-w-[380px]">
                 <div className="text-center mb-3 animate-fade-up">
                     <div className="w-[56px] h-[56px] rounded-[18px] flex items-center justify-center mx-auto mb-2"
-                         style={{ background: 'linear-gradient(135deg, #dbeafe, #ccfbf1)', boxShadow: '0 10px 28px rgba(26,109,224,0.12)' }}>
-                        <Heart className="w-7 h-7 text-primary-600" strokeWidth={1.6} />
+                         style={{ background: 'linear-gradient(135deg, #b2dfdb, #80cbc4)', boxShadow: '0 10px 28px rgba(128,203,196,0.25)' }}>
+                        <OlafLogo size={32} className="text-teal-700" />
                     </div>
                     <h1 className="text-[22px] md:text-[26px] font-heading font-extrabold text-text-heading" style={{ letterSpacing: '-0.03em' }}>
                         Connect to your loved one
@@ -228,7 +229,7 @@ export default function FamilyDashboardPage() {
                 <div className="glass rounded-[20px] p-4 md:p-5 animate-fade-up-d1">
                     <button type="button" onClick={() => router.push('/setup-elder')}
                             className="w-full py-2.5 rounded-xl font-heading font-semibold text-[14px] md:text-[15px] text-white min-h-[44px] cursor-pointer active:scale-[0.97] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-300"
-                            style={{ background: 'linear-gradient(135deg, #1a6de0, #1558b8)', boxShadow: '0 6px 20px rgba(26,109,224,0.2)', letterSpacing: '0.01em' }}>
+                            style={{ background: 'linear-gradient(135deg, #00897b, #00796b)', boxShadow: '0 6px 20px rgba(0,137,123,0.2)', letterSpacing: '0.01em' }}>
                         Set up their account
                     </button>
                 </div>

@@ -44,18 +44,18 @@ export const olafTheme = {
   // Accent: Reassuring green — health & confirmation
   // Warm: Amber companion warmth — care & personality
   colors: {
-    // Primary — Calm Blue (based on sky palette, #0369A1 anchor)
+    // Primary — Mint Teal (based on OLAF logo palette, #00897B anchor)
     primary: {
-      50: '#F0F9FF',
-      100: '#E0F2FE',
-      200: '#BAE6FD',
-      300: '#7DD3FC',
-      400: '#38BDF8',
-      500: '#0EA5E9',
-      600: '#0284C7',
-      700: '#0369A1', // Primary buttons, active nav
-      800: '#075985', // Headings
-      900: '#0C4A6E', // Body text
+      50: '#E0F2F1',
+      100: '#B2DFDB',
+      200: '#80CBC4',
+      300: '#4DB6AC',
+      400: '#26A69A',
+      500: '#009688',
+      600: '#00897B',
+      700: '#00796B', // Primary buttons, active nav
+      800: '#00695C', // Headings
+      900: '#004D40', // Body text
     },
 
     // Accent — Reassuring Green (health, success, CTA)
@@ -114,17 +114,17 @@ export const olafTheme = {
 
     // Backgrounds & Surfaces
     bg: {
-      page: '#F0F9FF',       // primary-50 — calm blue tint
+      page: '#F0F7F6',       // primary-50 — soft teal tint
       surface: '#FFFFFF',
-      'surface-alt': '#F8FAFC',
-      muted: '#E2E8F0',
-      overlay: 'rgba(12, 74, 110, 0.5)', // primary-900 @ 50%
+      'surface-alt': '#F4F9F8',
+      muted: '#E0EEEC',
+      overlay: 'rgba(0, 77, 64, 0.5)', // primary-900 @ 50%
     },
 
     // Text
     text: {
-      primary: '#0C4A6E',     // primary-900
-      heading: '#075985',      // primary-800
+      primary: '#004D40',     // primary-900
+      heading: '#00695C',      // primary-800
       secondary: '#334155',    // slate-700
       muted: '#64748B',        // slate-500
       'on-primary': '#FFFFFF',
@@ -135,7 +135,7 @@ export const olafTheme = {
     border: {
       DEFAULT: '#CBD5E1',      // slate-300
       strong: '#94A3B8',       // slate-400
-      focus: '#0369A1',        // primary-700
+      focus: '#00796B',        // primary-700
     },
   },
 
@@ -170,12 +170,12 @@ export const olafTheme = {
   },
 
   // ─── Box Shadows ───────────────────────────────────────────────────
-  // Tinted with primary-900 (#0C4A6E) for warmth — never pure black
+  // Tinted with primary-900 (#004D40) for warmth — never pure black
   boxShadow: {
-    sm: '0 1px 3px rgba(12, 74, 110, 0.08)',
-    md: '0 4px 12px rgba(12, 74, 110, 0.1)',
-    lg: '0 8px 24px rgba(12, 74, 110, 0.12)',
-    glow: '0 0 0 4px rgba(3, 105, 161, 0.2)', // Focus ring: primary-700 @ 20%
+    sm: '0 1px 3px rgba(0, 77, 64, 0.08)',
+    md: '0 4px 12px rgba(0, 77, 64, 0.1)',
+    lg: '0 8px 24px rgba(0, 77, 64, 0.12)',
+    glow: '0 0 0 4px rgba(0, 121, 107, 0.2)', // Focus ring: primary-700 @ 20%
   },
 
   // ─── Animations ────────────────────────────────────────────────────
