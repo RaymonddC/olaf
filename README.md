@@ -442,6 +442,49 @@ Make sure your Firebase project is set in `.firebaserc` and environment variable
 
 ---
 
+## Testing the App
+
+The live app is available at **https://olaf-dev-7a5d4.web.app**
+
+### Test accounts
+
+| Role | Username / Email | Password |
+|---|---|---|
+| Elderly user | `olaf.demo` | `Demo1234!` |
+| Family member | `demo.family@gmail.com` | `Demo1234!` |
+
+> Sign in as the elderly user on one tab and the family member on another to see the full care loop.
+
+### Feature walkthrough
+
+**1. Voice Companion (Talk page)**
+1. Log in as the elderly user → tap **Talk to OLAF**
+2. Wait for OLAF to greet you first (within 2–3 seconds)
+3. Say _"I'm feeling a bit tired today"_ — OLAF will ask a follow-up question
+4. Say _"Remind me to take my medicine tonight"_ — OLAF sets a reminder
+5. Say _"I already took my medicine"_ — OLAF marks the reminder as done
+6. Say _"Bye"_ — OLAF gives a farewell without asking another question
+7. **Try interrupting**: start speaking while OLAF is mid-sentence — it stops immediately
+
+**2. Health Check-in**
+1. During a Talk session, tell OLAF how you feel and mention any pain
+2. OLAF will call `log_health_checkin` automatically after gathering mood/pain info
+3. Switch to the family dashboard — the mood and pain level appears under today's entry
+
+**3. Memory Journal (Memories page)**
+1. Log in as elderly user → tap **Memories**
+2. Tap **New Memory** → speak or type a short memory
+3. The pipeline generates a narrative + Imagen 3 watercolor illustration
+4. The memory appears as an illustrated chapter card
+
+**4. Family Dashboard**
+1. Log in as the family member → you see the elder's health summary
+2. Check the mood calendar — dots appear on days with health logs
+3. Pending reminders from the Talk session appear under **Reminders**
+4. Any alerts created during the session appear under **Alerts**
+
+---
+
 ## Development Commands
 
 ### Frontend
