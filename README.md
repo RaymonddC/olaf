@@ -12,10 +12,9 @@ OLAF is a voice-first AI companion for elderly users and the families who care f
 
 | Feature | For whom | Description |
 |---|---|---|
-| **Voice Companion** | Elderly user | Real-time voice + vision companion via Gemini Live API. Daily health check-ins, medication scanning via webcam, reminders, emotional support. |
-| **Memory Journal** | Elderly user | Speak a memory to OLAF. An ADK SequentialAgent pipeline transforms it into an illustrated, watercolor-style life story chapter. |
-| **Digital Navigator** | Elderly user | AI-controlled headless browser navigates government portals, medical booking sites, and forms on behalf of the user — with live screenshot streaming. |
-| **Family Dashboard** | Family members | Real-time alerts, health trends, medication adherence, memory chapter notifications, and push notifications via Firebase Cloud Messaging. |
+| **Voice Companion** | Elderly user | Real-time voice + vision companion via Gemini Live API (ADK bidi-streaming). Health check-ins, medication scanning via webcam, reminders, emotional support. |
+| **Memory Journal** | Elderly user | Speak a memory to OLAF. An ADK pipeline transforms it into an illustrated, watercolor-style life story chapter via Imagen 3. |
+| **Family Dashboard** | Family members | Health trends, mood calendar, pending reminders, and push notifications via Firebase Cloud Messaging. |
 
 ---
 
@@ -23,63 +22,55 @@ OLAF is a voice-first AI companion for elderly users and the families who care f
 
 ```
   ┌──────────────────────────────────────────────────────────┐
-  │                    Browser (Next.js PWA)                  │
+  │              Browser (Next.js PWA — Firebase Hosting)     │
   │                                                          │
   │  ┌──────────────┐  WebSocket (wss://)  ┌──────────────┐  │
-  │  │  Talk Page   │─────────────────────►│ Gemini Live  │  │
-  │  │  (CompanionUI│  16kHz PCM audio     │ API (direct) │  │
-  │  │  + Camera)   │◄─────────────────────│              │  │
-  │  └──────┬───────┘  Tool calls via REST └──────────────┘  │
-  │         │                                                 │
-  │  ┌──────▼───────┐  ┌──────────────┐  ┌──────────────┐   │
-  │  │ Memories Page│  │  Help Page   │  │  Dashboard   │   │
-  │  │ (StoryCards) │  │ (Screenshot  │  │  (Family)    │   │
-  │  └──────┬───────┘  │  Viewer)     │  └──────┬───────┘   │
-  │         │          └──────┬───────┘         │            │
-  └─────────┼─────────────────┼─────────────────┼────────────┘
-            │     REST + WSS  │                 │
-            ▼                 ▼                 ▼
+  │  │  Talk Page   │─────────────────────►│  ADK Runner  │  │
+  │  │  (Companion  │  16kHz PCM + JPEG    │  (Cloud Run) │  │
+  │  │  + Camera)   │◄─────────────────────│  ↕ Gemini    │  │
+  │  └──────┬───────┘  audio + transcripts │  Live API    │  │
+  │         │                              └──────────────┘  │
+  │  ┌──────▼───────┐                   ┌──────────────┐     │
+  │  │ Memories Page│                   │  Dashboard   │     │
+  │  │ (StoryCards) │                   │  (Family)    │     │
+  │  └──────┬───────┘                   └──────┬───────┘     │
+  └─────────┼──────────────────────────────────┼─────────────┘
+            │     REST API                     │
+            ▼                                  ▼
   ┌──────────────────────────────────────────────────────────┐
-  │              FastAPI Backend (Cloud Run)                  │
+  │              FastAPI Backend (Google Cloud Run)           │
   │                                                          │
-  │  POST /api/gemini/token  ── Ephemeral token provisioning │
-  │  POST /api/companion/*   ── Tool execution bridge        │
-  │  POST /api/storyteller/* ── Trigger story pipeline       │
-  │  WS   /api/navigator/*   ── Screenshot stream            │
-  │  GET  /api/alerts/*      ── Family dashboard data        │
+  │  WS   /api/companion/stream  ── ADK bidi-streaming       │
+  │  POST /api/companion/*       ── Tool execution           │
+  │  POST /api/storyteller/*     ── Memory story pipeline    │
+  │  GET  /api/health/*          ── Health logs & reports    │
+  │  GET  /api/alerts/*          ── Family dashboard data    │
   │                                                          │
   │  ┌─────────────────────────────────────────────────┐    │
   │  │              Google ADK Agents                   │    │
   │  │                                                  │    │
-  │  │  olaf_coordinator (root_agent)                  │    │
-  │  │    ├── sub_agents:                               │    │
-  │  │    │     ├── storyteller_agent (gemini-2.5-flash)│    │
-  │  │    │     │     └── SequentialAgent pipeline:     │    │
-  │  │    │     │           narrative_writer             │    │
-  │  │    │     │           illustrator (Imagen 3)       │    │
-  │  │    │     │           assembler                    │    │
-  │  │    │     └── navigator_agent (gemini-2.5-flash)  │    │
-  │  │    │           └── Playwright headless browser   │    │
-  │  │    └── tools:                                    │    │
-  │  │          └── AgentTool(alert_agent)              │    │
-  │  │                └── FCM + Email notifications     │    │
+  │  │  companion_agent (Gemini 2.5 Flash Native Audio) │    │
+  │  │    Tools: set_reminder, complete_reminder,       │    │
+  │  │           log_health_checkin, analyze_medication │    │
+  │  │                                                  │    │
+  │  │  storyteller_agent (gemini-2.5-flash)            │    │
+  │  │    SequentialAgent: narrative → Imagen 3 → save  │    │
   │  └─────────────────────────────────────────────────┘    │
   │                                                          │
   │  ┌────────────────┐  ┌───────────────┐                  │
   │  │   Firestore    │  │ Cloud Storage │                  │
   │  │  user profiles │  │  illustrations│                  │
-  │  │  health logs   │  │  audio scripts│                  │
-  │  │  conversations │  │  PDFs         │                  │
-  │  │  memories      │  └───────────────┘                  │
-  │  │  reports       │                                      │
-  │  │  alerts        │  ┌───────────────┐                  │
-  │  └────────────────┘  │  Firebase FCM │                  │
-  │                       │  push notifs  │                  │
+  │  │  health logs   │  │  PDFs         │                  │
+  │  │  conversations │  └───────────────┘                  │
+  │  │  memories      │                                      │
+  │  │  reminders     │  ┌───────────────┐                  │
+  │  │  alerts        │  │  Firebase FCM │                  │
+  │  └────────────────┘  │  push notifs  │                  │
   │                       └───────────────┘                  │
   └──────────────────────────────────────────────────────────┘
 ```
 
-**Key architectural decision:** The voice companion connects browser-direct to Gemini Live API via WebSocket for minimal audio latency. All other agents run server-side through ADK on Cloud Run. The AlertAgent uses `AgentTool` (explicit invocation) rather than `sub_agents` (LLM-driven delegation) — the correct pattern for system-triggered health signals.
+**Key architectural decision:** The voice companion uses ADK `runner.run_live()` with `StreamingMode.BIDI` — the backend proxies all audio between the browser and Gemini Live API. This allows server-side tool execution with user context from Firestore, while keeping audio latency low. The frontend sends 16kHz PCM audio and JPEG camera frames over WebSocket; the backend returns audio chunks and transcripts.
 
 ---
 
@@ -102,7 +93,7 @@ OLAF is a voice-first AI companion for elderly users and the families who care f
 | File storage | Cloud Storage | — |
 | Push notifications | Firebase Cloud Messaging | — |
 | Hosting (backend) | Google Cloud Run | — |
-| Hosting (frontend) | Vercel or Cloud Run | — |
+| Hosting (frontend) | Firebase Hosting | — |
 | CI/CD | GitHub Actions | — |
 
 ---
@@ -434,29 +425,20 @@ Notes:
 
 On Cloud Run, Firebase Admin SDK uses **Application Default Credentials** automatically. You do not need to set `GOOGLE_APPLICATION_CREDENTIALS` — grant the Cloud Run service account the `Firebase Admin SDK Service Agent` role.
 
-### Deploy frontend to Vercel
+### Deploy frontend to Firebase Hosting
+
+The frontend deploys automatically via GitHub Actions when you push to `main` (CI must pass first).
+
+To deploy manually:
 
 ```bash
 cd frontend
-vercel --prod
+npm ci
+npx firebase-tools experiments:enable webframeworks
+npx firebase-tools deploy --only hosting
 ```
 
-Set environment variables in the Vercel dashboard matching `frontend/.env.local`.
-
-### Deploy frontend to Cloud Run (alternative)
-
-```bash
-cd frontend
-docker build -t gcr.io/YOUR_PROJECT/olaf-frontend:latest .
-
-gcloud run deploy olaf-frontend \
-  --image gcr.io/YOUR_PROJECT/olaf-frontend:latest \
-  --platform managed \
-  --region us-central1 \
-  --memory 512Mi \
-  --min-instances 0 \
-  --max-instances 3
-```
+Make sure your Firebase project is set in `.firebaserc` and environment variables are available during build.
 
 ---
 
@@ -489,13 +471,10 @@ mypy .                              # Type check (strict)
 
 | Component | Model | Usage |
 |---|---|---|
-| Voice Companion (browser) | `gemini-2.5-flash-native-audio-preview-12-2025` | Bidirectional audio WebSocket, multimodal video frames for medication scan, 4 function tools |
-| Coordinator (ADK) | `gemini-2.5-flash` | Routes requests to storyteller / navigator / alert agents |
+| Voice Companion (ADK bidi) | `gemini-2.5-flash-native-audio-preview-09-2025` | Bidi-streaming audio + camera frames, 4 tools: set_reminder, complete_reminder, log_health_checkin, analyze_medication |
 | Storyteller (ADK) | `gemini-2.5-flash` | Memory narrative writing, daily health summaries, weekly reports |
-| Navigator (ADK) | `gemini-2.5-flash` | Interprets screenshots, decides page interactions |
-| Alert (ADK) | `gemini-2.5-flash` | Evaluates health signals, decides notification routing |
-| Illustration generation | `imagen-3.0-generate-002` | Warm watercolor memory illustrations |
-| Daily narrative illustrations | `imagen-3.0-fast-generate-001` | Fast, lower-cost illustrations for health reports |
+| Illustration generation | `imagen-3.0-generate-002` | Warm watercolor memory illustrations via Vertex AI |
+| Conversation summary | `gemini-2.5-flash` | Post-session transcript analysis and mood scoring |
 
 ---
 
