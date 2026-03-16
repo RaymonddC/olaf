@@ -25,7 +25,12 @@
       "Bash(sudo apt:*)",
       "Bash(npm run:*)",
       "Bash(npm install:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(cat /mnt/d/raymond/Documents/DESKTOP/Projects/olaf/frontend/src/app/\\\\\\(app\\\\\\)/memories/\\\\[id\\\\]/page.tsx)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git remote:*)"
     ]
   }
 }
