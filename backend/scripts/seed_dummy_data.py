@@ -15,7 +15,7 @@ import argparse
 import os
 import sys
 import uuid
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -63,7 +63,7 @@ def main():
     family_uid = args.family_uid
     init_firebase()
     db = firestore.client()
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     # ── 1. Create elderly Firebase Auth user ──────────────────────────────────
     elder_username = "grandma.margaret"
@@ -139,7 +139,10 @@ def main():
     print("Set family link")
 
     # ── 4. Health logs (past 14 days) ─────────────────────────────────────────
-    moods = ["happy", "good", "okay", "tired", "good", "happy", "okay", "anxious", "good", "happy", "tired", "okay", "good", "happy"]
+    moods = [
+        "happy", "good", "okay", "tired", "good", "happy", "okay",
+        "anxious", "good", "happy", "tired", "okay", "good", "happy",
+    ]
     pain_levels = [2, 1, 3, 4, 2, 1, 3, 5, 2, 1, 4, 3, 2, 1]
 
     for i in range(14):
@@ -292,7 +295,7 @@ def main():
     print("\n" + "=" * 50)
     print("Dummy data seeded successfully!")
     print("=" * 50)
-    print(f"\nElder login credentials:")
+    print("\nElder login credentials:")
     print(f"  Username: {elder_username}")
     print(f"  Password: {elder_password}")
     print(f"  Elder UID: {elder_uid}")

@@ -8,7 +8,6 @@ Prints the ID token to stdout so you can pipe it:
 """
 
 import argparse
-import json
 import os
 import sys
 

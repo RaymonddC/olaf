@@ -155,6 +155,7 @@ class ImagenService:
             ImageGenerationError: If generation fails.
         """
         import base64
+
         import httpx
 
         key = api_key or os.getenv("GOOGLE_API_KEY", "")

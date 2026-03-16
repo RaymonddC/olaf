@@ -318,7 +318,7 @@ export function TalkContent() {
         setActive(false); setStatus('idle'); setTranscripts([]);
     }, [user, getToken]);
 
-    stopRef.current = stopSession;
+    void (stopRef.current = stopSession);
     const toggle  = useCallback(() => { active ? stopSession() : startSession(); }, [active, startSession, stopSession]);
     const onFrame = useCallback((jpg: string) => {
         latestFrameRef.current = jpg;

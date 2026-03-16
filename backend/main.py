@@ -103,6 +103,7 @@ def create_app():
 
     # ── Static files for locally-stored illustrations (dev fallback) ────
     import pathlib
+
     from fastapi.staticfiles import StaticFiles
     static_dir = pathlib.Path(AGENT_DIR) / "static" / "images"
     static_dir.mkdir(parents=True, exist_ok=True)

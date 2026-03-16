@@ -8,10 +8,7 @@ If --token is not provided, auth-required endpoints will be skipped.
 """
 
 import argparse
-import json
 import sys
-import time
-from datetime import datetime, timezone
 
 import httpx
 
@@ -414,7 +411,10 @@ def main():
     # Summary
     total = passed + failed + skipped
     print(f"\n{BOLD}{'─' * 50}{RESET}")
-    print(f"{BOLD}Results:{RESET}  {GREEN}{passed} passed{RESET}  {RED}{failed} failed{RESET}  {YELLOW}{skipped} skipped{RESET}  ({total} total)")
+    print(
+        f"{BOLD}Results:{RESET}  {GREEN}{passed} passed{RESET}  "
+        f"{RED}{failed} failed{RESET}  {YELLOW}{skipped} skipped{RESET}  ({total} total)"
+    )
 
     if failed > 0:
         print(f"\n{RED}Some tests failed!{RESET}")

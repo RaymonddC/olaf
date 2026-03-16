@@ -30,7 +30,7 @@ function buildMemoryMap(memories: MemoryListItem[]) {
 
 function calcStreak(memoryMap: Map<string, MemoryListItem[]>): number {
     const today = new Date();
-    let d = new Date(today);
+    const d = new Date(today);
     if (!memoryMap.has(toDateKey(d))) {
         d.setDate(d.getDate() - 1);
         if (!memoryMap.has(toDateKey(d))) return 0;

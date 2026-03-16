@@ -331,7 +331,7 @@ async def set_reminder(
     fs = get_firestore_service()
 
     # Normalize common LLM variations to valid enum values
-    _TYPE_ALIASES = {
+    type_aliases = {
         "medicine": "medication",
         "med": "medication",
         "meds": "medication",
@@ -343,7 +343,7 @@ async def set_reminder(
         "other": "custom",
         "reminder": "custom",
     }
-    reminder_type = _TYPE_ALIASES.get(reminder_type.lower(), reminder_type.lower())
+    reminder_type = type_aliases.get(reminder_type.lower(), reminder_type.lower())
     if reminder_type not in ("medication", "appointment", "hydration", "custom"):
         reminder_type = "custom"
 
