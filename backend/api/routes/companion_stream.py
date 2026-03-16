@@ -268,8 +268,8 @@ async def companion_stream(
         # We detect duplicates via both partial and finished transcripts and
         # suppress audio + text for the repeat.
 
-        last_finished_text = ""   # last completed model transcript
-        suppressing = False       # True when duplicate detected
+        recent_texts: list[str] = []  # sliding window of recent model transcripts
+        suppressing = False           # True when duplicate detected
 
         try:
             async for event in _runner.run_live(
@@ -284,7 +284,9 @@ async def companion_stream(
                     text = (getattr(t, "text", "") or "").strip()
 
                     if getattr(t, "finished", False) and text:
-                        if _is_duplicate(text, last_finished_text):
+                        # Check against all recent transcripts
+                        is_dup = any(_is_duplicate(text, prev) for prev in recent_texts)
+                        if is_dup:
                             if not suppressing:
                                 suppressing = True
                                 await websocket.send_json({"type": "clear_audio"})
@@ -292,10 +294,11 @@ async def companion_stream(
                                     "Duplicate finished, suppressing for user=%s: %s",
                                     user_id, text[:60],
                                 )
-                            # Skip this transcript
                         else:
                             suppressing = False
-                            last_finished_text = text
+                            recent_texts.append(text)
+                            if len(recent_texts) > 10:
+                                recent_texts.pop(0)
                             await websocket.send_json({
                                 "type": "transcript",
                                 "role": "model",
@@ -305,13 +308,11 @@ async def companion_stream(
                     elif text and not suppressing:
                         # Partial transcript: check if it looks like a repeat
                         norm_partial = _normalize(text)
-                        norm_last = _normalize(last_finished_text)
-                        if (
-                            norm_last
-                            and len(norm_partial) >= 30
-                            and norm_last.startswith(norm_partial)
-                        ):
-                            # Early duplicate detection from partial
+                        is_dup_partial = any(
+                            _normalize(prev).startswith(norm_partial)
+                            for prev in recent_texts
+                        ) if len(norm_partial) >= 30 else False
+                        if is_dup_partial:
                             suppressing = True
                             await websocket.send_json({"type": "clear_audio"})
                             logger.info(
@@ -342,23 +343,20 @@ async def companion_stream(
                     t = event.input_transcription
                     if getattr(t, "text", None) and getattr(t, "finished", False):
                         suppressing = False
-                        last_finished_text = ""
                         await websocket.send_json({
                             "type": "transcript",
                             "role": "user",
                             "text": t.text,
                         })
 
-                # Turn complete — reset suppression so next turn works
+                # Turn complete — reset suppression, keep recent_texts for dedup
                 if getattr(event, "turn_complete", False):
                     suppressing = False
-                    last_finished_text = ""
                     await websocket.send_json({"type": "turn_complete"})
 
                 # Interruption (user barged in)
                 if getattr(event, "interrupted", False):
                     suppressing = False
-                    last_finished_text = ""
                     await websocket.send_json({"type": "interrupted"})
 
         except WebSocketDisconnect:
