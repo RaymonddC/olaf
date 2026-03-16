@@ -16,6 +16,7 @@ class UserProfile(BaseModel):
     uid: str
     role: Literal["elderly", "family"]
     name: str
+    username: str | None = None  # Elderly login username (unique)
     age: int | None = None
     timezone: str = "UTC"
     language: str = "en"

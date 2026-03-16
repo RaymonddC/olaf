@@ -56,7 +56,7 @@ class FamilyLinkRequest(CamelModel):
 
 class CreateElderAccountRequest(CamelModel):
     name: str
-    email: str
+    username: str
     relationship: Literal["son", "daughter", "spouse", "caregiver", "other"]
     age: int | None = None
     timezone: str = "UTC"
@@ -65,7 +65,7 @@ class CreateElderAccountRequest(CamelModel):
 
 class CreateElderAccountResponse(CamelModel):
     elder_user_id: str
-    email: str
+    username: str
     temp_password: str
     link_id: str
 

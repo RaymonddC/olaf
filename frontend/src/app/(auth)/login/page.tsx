@@ -3,13 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { User, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function LoginPage() {
     const router = useRouter();
     const { signIn, user, loading: authLoading, role } = useAuth();
-    const [email, setEmail] = useState('');
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [showPw, setShowPw] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -26,10 +26,12 @@ export default function LoginPage() {
         setLoading(true);
         setError(null);
         try {
-            await signIn(email, password);
+            // Convert username to internal email format
+            const internalEmail = `${username.trim().toLowerCase()}@olaf.app`;
+            await signIn(internalEmail, password);
             router.replace('/talk');
-        } catch (err) {
-            setError(err instanceof Error ? (err.message.includes('invalid') ? 'Incorrect email or password.' : err.message) : 'Something went wrong.');
+        } catch {
+            setError('Incorrect username or password.');
         } finally {
             setLoading(false);
         }
@@ -62,16 +64,16 @@ export default function LoginPage() {
                 )}
 
                 <form onSubmit={handleSubmit}>
-                    {/* Email */}
+                    {/* Username */}
                     <div className="mb-2.5">
-                        <label htmlFor="login-email" className="block text-[12px] md:text-[13px] font-heading font-semibold text-text-secondary mb-1" style={{ letterSpacing: '0.01em' }}>
-                            Email address
+                        <label htmlFor="login-username" className="block text-[12px] md:text-[13px] font-heading font-semibold text-text-secondary mb-1" style={{ letterSpacing: '0.01em' }}>
+                            Username
                         </label>
                         <div className="relative flex items-center rounded-xl bg-bg-surface-alt/70 border-2 border-transparent focus-within:border-primary-400 focus-within:shadow-[0_0_0_3px_#E0F2FE] transition-all duration-200"
                              style={{ boxShadow: 'inset 0 1px 3px rgba(15,23,42,0.04)' }}>
-                            <Mail className="absolute left-3 w-4 h-4 text-text-muted" aria-hidden="true" />
-                            <input id="login-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)}
-                                   placeholder="your@email.com" required autoComplete="email"
+                            <User className="absolute left-3 w-4 h-4 text-text-muted" aria-hidden="true" />
+                            <input id="login-username" type="text" value={username} onChange={(e) => setUsername(e.target.value)}
+                                   placeholder="Enter your username" required autoComplete="username"
                                    className="w-full pl-9 pr-4 py-2.5 text-[14px] md:text-[15px] font-body text-text-primary bg-transparent border-none outline-none rounded-xl min-h-[44px] placeholder:text-text-muted/50" />
                         </div>
                     </div>

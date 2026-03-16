@@ -19,7 +19,7 @@ const RELATIONSHIPS = [
 type Relationship = (typeof RELATIONSHIPS)[number]['value'];
 
 interface CreatedAccount {
-  email: string;
+  username: string;
   tempPassword: string;
   elderUserId: string;
 }
@@ -28,28 +28,31 @@ export default function SetupElderPage() {
   const router = useRouter();
 
   const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [age, setAge] = useState('');
   const [relationship, setRelationship] = useState<Relationship>('daughter');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [created, setCreated] = useState<CreatedAccount | null>(null);
-  const [copiedEmail, setCopiedEmail] = useState(false);
+  const [copiedUsername, setCopiedUsername] = useState(false);
   const [copiedPassword, setCopiedPassword] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
     if (!name.trim()) { setError('Please enter their name.'); return; }
-    if (!email.includes('@')) { setError('Please enter a valid email address.'); return; }
+
+    const u = username.trim().toLowerCase();
+    if (u.length < 3) { setError('Username must be at least 3 characters.'); return; }
+    if (!/^[a-z0-9._]+$/.test(u)) { setError('Username can only contain letters, numbers, dots, and underscores.'); return; }
 
     setLoading(true);
     try {
-      const res = await api.post<{ status: string; data: { elderUserId: string; email: string; tempPassword: string } }>(
+      const res = await api.post<{ status: string; data: { elderUserId: string; username: string; tempPassword: string } }>(
         '/api/auth/create-elder-account',
         {
           name: name.trim(),
-          email: email.trim(),
+          username: u,
           relationship,
           age: age ? Number(age) : undefined,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -58,7 +61,7 @@ export default function SetupElderPage() {
       );
       setCreated({
         elderUserId: res.data.elderUserId,
-        email: res.data.email,
+        username: res.data.username,
         tempPassword: res.data.tempPassword,
       });
     } catch (err) {
@@ -68,11 +71,11 @@ export default function SetupElderPage() {
     }
   };
 
-  const copy = (text: string, which: 'email' | 'password') => {
+  const copy = (text: string, which: 'username' | 'password') => {
     navigator.clipboard.writeText(text).then(() => {
-      if (which === 'email') {
-        setCopiedEmail(true);
-        setTimeout(() => setCopiedEmail(false), 2000);
+      if (which === 'username') {
+        setCopiedUsername(true);
+        setTimeout(() => setCopiedUsername(false), 2000);
       } else {
         setCopiedPassword(true);
         setTimeout(() => setCopiedPassword(false), 2000);
@@ -99,20 +102,20 @@ export default function SetupElderPage() {
           </div>
 
           <div className="space-y-4 mb-8">
-            {/* Email */}
+            {/* Username */}
             <div className="bg-bg-surface rounded-xl border border-border p-4">
-              <p className="text-caption text-text-muted mb-1">Email</p>
+              <p className="text-caption text-text-muted mb-1">Username</p>
               <div className="flex items-center justify-between gap-3">
                 <span className="text-body font-mono text-text-primary truncate">
-                  {created.email}
+                  {created.username}
                 </span>
                 <button
                   type="button"
-                  onClick={() => copy(created.email, 'email')}
+                  onClick={() => copy(created.username, 'username')}
                   className="flex-shrink-0 p-1 rounded focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-300"
-                  aria-label="Copy email"
+                  aria-label="Copy username"
                 >
-                  {copiedEmail
+                  {copiedUsername
                     ? <Check className="w-4 h-4 text-success-600" />
                     : <Copy className="w-4 h-4 text-text-muted" />}
                 </button>
@@ -154,8 +157,7 @@ export default function SetupElderPage() {
             </p>
             <ol className="text-body-sm text-text-secondary space-y-1 list-decimal list-inside">
               <li>Open OLAF on their phone or tablet</li>
-              <li>Go to <span className="font-mono text-text-primary">olaf.app/login</span></li>
-              <li>Enter the email and password above</li>
+              <li>Enter the username and password above</li>
             </ol>
           </div>
 
@@ -224,13 +226,13 @@ export default function SetupElderPage() {
           />
 
           <Input
-            label="Their email address"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="e.g. margaret@example.com"
-            autoComplete="email"
-            helperText="Used to sign in to OLAF — you can create a new one if needed"
+            label="Choose a username"
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9._]/g, ''))}
+            placeholder="e.g. margaret.t"
+            autoComplete="off"
+            helperText="Letters, numbers, dots, and underscores only. Must be unique."
             required
           />
 
