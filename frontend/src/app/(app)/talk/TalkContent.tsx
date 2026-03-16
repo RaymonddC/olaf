@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { AdkLiveClient, type CompanionStatus, type TranscriptEntry } from '@/lib/adk-live';
 import { AudioManager } from '@/lib/audio-manager';
 import { CameraToggle } from '@/components/companion/CameraToggle';
+import { OlafLogo } from '@/components/ui/OlafLogo';
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8080';
 
@@ -14,7 +15,7 @@ const STATUS_MAP: Record<CompanionStatus, { label: string; color: string }> = {
     connecting: { label: 'Getting ready…',        color: '#d97706' },
     listening:  { label: 'Listening…',            color: '#0d9488' },
     thinking:   { label: 'OLAF is thinking…',     color: '#d97706' },
-    speaking:   { label: 'OLAF is speaking…',     color: '#1a6de0' },
+    speaking:   { label: 'OLAF is speaking…',     color: '#00897b' },
     error:      { label: 'Something went wrong',  color: '#e11d48' },
 };
 
@@ -343,26 +344,24 @@ export function TalkContent() {
                     <div className="relative flex-shrink-0"
                          style={{ width: orbSize, height: orbSize, transition: 'width 0.5s ease, height 0.5s ease' }}>
                         <div className="absolute inset-0 rounded-full animate-spin-slow opacity-50"
-                             style={{ background: 'conic-gradient(from 0deg, #e8f1fd, #ccfbf1, #fef3c740, #e8f1fd)' }} />
+                             style={{ background: 'conic-gradient(from 0deg, #e0f2f1, #ccfbf1, #fef3c740, #e0f2f1)' }} />
                         <div className="absolute inset-2 rounded-full"
                              style={{
-                                 background: 'radial-gradient(circle at 38% 32%, rgba(255,255,255,0.95), rgba(240,247,255,0.9) 60%, rgba(204,251,241,0.7))',
+                                 background: 'radial-gradient(circle at 38% 32%, rgba(255,255,255,0.95), rgba(240,249,248,0.9) 60%, rgba(204,251,241,0.7))',
                                  boxShadow: active
-                                     ? `0 0 0 8px ${sc.color}18, 0 16px 48px rgba(26,109,224,0.15)`
-                                     : '0 12px 48px rgba(26,109,224,0.10)',
+                                     ? `0 0 0 8px ${sc.color}18, 0 16px 48px rgba(0,137,123,0.15)`
+                                     : '0 12px 48px rgba(0,137,123,0.10)',
                                  transition: 'box-shadow 0.5s ease',
                              }} />
                         <div className="absolute inset-0 flex items-center justify-center">
                             <div className="rounded-2xl flex items-center justify-center flex-shrink-0"
                                  style={{
                                      width: iconSize, height: iconSize,
-                                     background: 'linear-gradient(135deg, #1a6de0, #1558b8)',
-                                     boxShadow: '0 4px 12px rgba(26,109,224,0.2)',
+                                     background: 'linear-gradient(135deg, #b2dfdb, #80cbc4)',
+                                     boxShadow: '0 4px 12px rgba(128,203,196,0.25)',
                                      transition: 'width 0.5s ease, height 0.5s ease',
                                  }}>
-                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.8" strokeLinecap="round">
-                                    <circle cx="12" cy="10" r="3.5" /><path d="M6.5 19.5c0-3 2.5-5 5.5-5s5.5 2 5.5 5" />
-                                </svg>
+                                <OlafLogo size={22} className="text-teal-700" />
                             </div>
                         </div>
                         {!active && (
@@ -401,7 +400,7 @@ export function TalkContent() {
                             {lastOlaf && (
                                 <div className="overflow-hidden">
                                     <p className="text-[11px] font-heading font-bold tracking-[0.14em] uppercase mb-2"
-                                       style={{ color: '#1a6de0' }}>
+                                       style={{ color: '#00897b' }}>
                                         OLAF
                                     </p>
                                     <p className="text-[15px] lg:text-[16px] leading-[1.6] font-medium max-h-[7.5em] overflow-y-auto"
@@ -451,9 +450,9 @@ export function TalkContent() {
                             className="relative z-[2] rounded-full flex items-center justify-center cursor-pointer disabled:opacity-50 disabled:cursor-wait active:scale-95 transition-transform duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-300"
                             style={{
                                 width: '72px', height: '72px',
-                                background: active ? 'linear-gradient(135deg, #e11d48, #be123c)' : 'linear-gradient(135deg, #1a6de0, #1558b8)',
+                                background: active ? 'linear-gradient(135deg, #e11d48, #be123c)' : 'linear-gradient(135deg, #00897b, #00796b)',
                                 border:    '4px solid rgba(255,255,255,0.95)',
-                                boxShadow: active ? '0 6px 28px rgba(225,29,72,0.28)' : '0 6px 28px rgba(26,109,224,0.20)',
+                                boxShadow: active ? '0 6px 28px rgba(225,29,72,0.28)' : '0 6px 28px rgba(0,137,123,0.20)',
                             }}>
                         {isConn
                             ? <Loader2 className="w-7 h-7 text-white animate-spin" />
