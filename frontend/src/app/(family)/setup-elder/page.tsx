@@ -3,9 +3,6 @@
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserPlus, Copy, Check, ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { Alert } from '@/components/ui/Alert';
 import { api } from '@/lib/api';
 
 const RELATIONSHIPS = [
@@ -86,90 +83,63 @@ export default function SetupElderPage() {
   // ── Success screen ────────────────────────────────────────────────────────
   if (created) {
     return (
-      <div className="min-h-dvh bg-bg-page flex items-center justify-center px-4">
-        <div className="w-full max-w-[400px]">
-          <div className="text-center mb-8">
-            <div className="w-14 h-14 rounded-full bg-success-100 flex items-center justify-center mx-auto mb-4">
-              <Check className="w-7 h-7 text-success-600" aria-hidden="true" />
+      <div className="h-dvh bg-bg-page flex flex-col items-center justify-center px-4">
+        <div className="w-full max-w-[360px] md:max-w-[440px]">
+          <div className="text-center mb-3">
+            <div className="w-[56px] h-[56px] rounded-[18px] flex items-center justify-center mx-auto mb-2"
+                 style={{ background: 'linear-gradient(135deg, #10b981, #059669)', boxShadow: '0 10px 28px rgba(16,185,129,0.22)' }}>
+              <Check className="w-7 h-7 text-white" strokeWidth={1.6} />
             </div>
-            <h1 className="text-h2 font-heading font-bold text-text-heading">
+            <h1 className="text-[22px] md:text-[26px] font-heading font-extrabold text-text-heading" style={{ letterSpacing: '-0.03em' }}>
               Account created!
             </h1>
-            <p className="text-body text-text-secondary mt-2">
-              Use these credentials to sign in on{' '}
-              <strong className="text-text-primary">{name.trim()}</strong>&apos;s device.
+            <p className="text-[13px] text-text-muted mt-1">
+              Use these credentials to sign in on <strong className="text-text-primary">{name.trim()}</strong>&apos;s device.
             </p>
           </div>
 
-          <div className="space-y-4 mb-8">
+          <div className="glass rounded-[20px] p-4 md:p-5 space-y-3">
             {/* Username */}
-            <div className="bg-bg-surface rounded-xl border border-border p-4">
-              <p className="text-caption text-text-muted mb-1">Username</p>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-body font-mono text-text-primary truncate">
-                  {created.username}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => copy(created.username, 'username')}
-                  className="flex-shrink-0 p-1 rounded focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-300"
-                  aria-label="Copy username"
-                >
-                  {copiedUsername
-                    ? <Check className="w-4 h-4 text-success-600" />
-                    : <Copy className="w-4 h-4 text-text-muted" />}
+            <div className="rounded-xl bg-bg-surface-alt/70 px-3 py-2.5" style={{ boxShadow: 'inset 0 1px 3px rgba(15,23,42,0.04)' }}>
+              <p className="text-[11px] font-semibold text-text-muted uppercase mb-0.5" style={{ letterSpacing: '0.04em' }}>Username</p>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[15px] font-mono text-text-primary truncate">{created.username}</span>
+                <button type="button" onClick={() => copy(created.username, 'username')}
+                        className="flex-shrink-0 p-1.5 rounded-lg hover:bg-white/80 transition-colors cursor-pointer" aria-label="Copy username">
+                  {copiedUsername ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-text-muted" />}
                 </button>
               </div>
             </div>
 
             {/* Temp password */}
-            <div className="bg-bg-surface rounded-xl border border-border p-4">
-              <p className="text-caption text-text-muted mb-1">Temporary password</p>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-body font-mono text-text-primary tracking-widest">
-                  {created.tempPassword}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => copy(created.tempPassword, 'password')}
-                  className="flex-shrink-0 p-1 rounded focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-300"
-                  aria-label="Copy password"
-                >
-                  {copiedPassword
-                    ? <Check className="w-4 h-4 text-success-600" />
-                    : <Copy className="w-4 h-4 text-text-muted" />}
+            <div className="rounded-xl bg-bg-surface-alt/70 px-3 py-2.5" style={{ boxShadow: 'inset 0 1px 3px rgba(15,23,42,0.04)' }}>
+              <p className="text-[11px] font-semibold text-text-muted uppercase mb-0.5" style={{ letterSpacing: '0.04em' }}>Temporary password</p>
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[15px] font-mono text-text-primary tracking-widest">{created.tempPassword}</span>
+                <button type="button" onClick={() => copy(created.tempPassword, 'password')}
+                        className="flex-shrink-0 p-1.5 rounded-lg hover:bg-white/80 transition-colors cursor-pointer" aria-label="Copy password">
+                  {copiedPassword ? <Check className="w-4 h-4 text-emerald-600" /> : <Copy className="w-4 h-4 text-text-muted" />}
                 </button>
               </div>
             </div>
-          </div>
 
-          <Alert
-            variant="warning"
-            title="Save these credentials"
-            description="OLAF will not show the password again. Write it down or save it somewhere safe before continuing."
-            className="mb-6"
-          />
+            {/* Warning */}
+            <div className="rounded-xl bg-amber-50 border border-amber-100 px-3 py-2">
+              <p className="text-[12px] text-amber-800 font-medium">Save these credentials — OLAF won&apos;t show the password again.</p>
+            </div>
 
-          {/* Step-by-step instructions */}
-          <div className="bg-bg-surface rounded-xl border border-border p-4 mb-6 space-y-2">
-            <p className="text-body-sm font-semibold text-text-heading">
-              To set up their device:
-            </p>
-            <ol className="text-body-sm text-text-secondary space-y-1 list-decimal list-inside">
-              <li>Open OLAF on their phone or tablet</li>
-              <li>Enter the username and password above</li>
-            </ol>
-          </div>
-
-          <div className="space-y-3">
-            <Button
-              variant="primary"
-              size="xl"
-              className="w-full"
-              onClick={() => router.replace('/dashboard')}
-            >
+            {/* Submit */}
+            <button type="button" onClick={() => router.replace('/dashboard')}
+                    className="w-full py-2.5 rounded-xl font-heading font-semibold text-[14px] md:text-[15px] text-white min-h-[44px] cursor-pointer active:scale-[0.97] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-300"
+                    style={{ background: 'linear-gradient(135deg, #1a6de0, #1558b8)', boxShadow: '0 6px 20px rgba(26,109,224,0.2)', letterSpacing: '0.01em' }}>
               Go to my dashboard
-            </Button>
+            </button>
+          </div>
+
+          <div className="text-center mt-3">
+            <p className="text-[12px] text-text-muted">
+              Open OLAF on their device and enter credentials above
+            </p>
           </div>
         </div>
       </div>
@@ -177,117 +147,115 @@ export default function SetupElderPage() {
   }
 
   // ── Setup form ─────────────────────────────────────────────────────────────
-  return (
-    <div className="min-h-dvh bg-bg-page flex items-center justify-center px-4">
-      <div className="w-full max-w-[400px]">
-        {/* Back */}
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="flex items-center gap-2 text-body-sm text-text-secondary mb-6 hover:text-text-primary transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back
-        </button>
+  const inputCls = "w-full pl-3 pr-3 py-2 text-[14px] md:text-[15px] font-body text-text-primary bg-transparent border-none outline-none rounded-xl min-h-[40px] placeholder:text-text-muted/50";
+  const fieldCls = "rounded-xl bg-bg-surface-alt/70 border-2 border-transparent focus-within:border-primary-400 focus-within:shadow-[0_0_0_3px_#E0F2FE] transition-all duration-200";
 
-        {/* Header */}
-        <div className="text-center mb-8">
-          <div className="w-14 h-14 rounded-full bg-primary-100 flex items-center justify-center mx-auto mb-4">
-            <UserPlus className="w-7 h-7 text-primary-700" aria-hidden="true" />
+  return (
+    <div className="h-dvh bg-bg-page flex flex-col items-center justify-center px-4">
+      <div className="w-full max-w-[360px] md:max-w-[380px]">
+        {/* Branding */}
+        <div className="text-center mb-2 animate-fade-up">
+          <div className="w-[48px] h-[48px] rounded-[16px] flex items-center justify-center mx-auto mb-1.5"
+               style={{ background: 'linear-gradient(135deg, #1a6de0, #1558b8)', boxShadow: '0 10px 28px rgba(26,109,224,0.22)' }}>
+            <UserPlus className="w-6 h-6 text-white" strokeWidth={1.6} />
           </div>
-          <h1 className="text-h2 font-heading font-bold text-text-heading">
+          <h1 className="text-[20px] md:text-[24px] font-heading font-extrabold text-text-heading" style={{ letterSpacing: '-0.03em' }}>
             Set up their account
           </h1>
-          <p className="text-body text-text-secondary mt-2">
-            Create an OLAF account for your loved one. You will get a password to sign in on their device.
+          <p className="text-[12px] text-text-muted mt-0.5">
+            Create an OLAF account for your loved one
           </p>
         </div>
 
-        {error && (
-          <Alert
-            variant="error"
-            title="Could not create account"
-            description={error}
-            dismissible
-            onDismiss={() => setError(null)}
-            className="mb-6"
-          />
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            label="Their full name"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Margaret Thompson"
-            autoComplete="name"
-            required
-          />
-
-          <Input
-            label="Choose a username"
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9._]/g, ''))}
-            placeholder="e.g. margaret.t"
-            autoComplete="off"
-            helperText="Letters, numbers, dots, and underscores only. Must be unique."
-            required
-          />
-
-          <Input
-            label="Their age (optional)"
-            type="number"
-            value={age}
-            onChange={(e) => setAge(e.target.value)}
-            placeholder="e.g. 72"
-            min="18"
-            max="120"
-            helperText="Helps OLAF personalise conversations"
-          />
-
-          {/* Relationship */}
-          <fieldset>
-            <legend className="text-body font-medium text-text-primary mb-3">
-              Your relationship
-            </legend>
-            <div className="grid grid-cols-2 gap-2">
-              {RELATIONSHIPS.map((r) => (
-                <label
-                  key={r.value}
-                  className={[
-                    'flex items-center justify-center p-3 rounded-xl border-2 cursor-pointer',
-                    'transition-colors duration-150 text-body-sm font-medium text-center',
-                    relationship === r.value
-                      ? 'border-primary-700 bg-primary-50 text-primary-700'
-                      : 'border-border text-text-secondary hover:border-border-strong',
-                  ].join(' ')}
-                >
-                  <input
-                    type="radio"
-                    name="relationship"
-                    value={r.value}
-                    checked={relationship === r.value}
-                    onChange={() => setRelationship(r.value)}
-                    className="sr-only"
-                  />
-                  {r.label}
-                </label>
-              ))}
+        {/* Card */}
+        <div className="glass rounded-[20px] p-4 animate-fade-up-d1">
+          {error && (
+            <div role="alert" className="mb-2 px-3 py-1.5 rounded-xl bg-red-50 border border-red-100 text-red-700 text-[12px]">
+              {error}
             </div>
-          </fieldset>
+          )}
 
-          <Button
-            type="submit"
-            variant="primary"
-            size="xl"
-            loading={loading}
-            className="w-full mt-2"
-          >
-            Create their account
-          </Button>
-        </form>
+          <form onSubmit={handleSubmit}>
+            {/* Name & Username row */}
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              <div>
+                <label className="block text-[11px] md:text-[12px] font-heading font-semibold text-text-secondary mb-0.5" style={{ letterSpacing: '0.01em' }}>
+                  Their full name
+                </label>
+                <div className={fieldCls} style={{ boxShadow: 'inset 0 1px 3px rgba(15,23,42,0.04)' }}>
+                  <input type="text" value={name} onChange={(e) => setName(e.target.value)}
+                         placeholder="e.g. Margaret" required autoComplete="name" className={inputCls} />
+                </div>
+              </div>
+              <div>
+                <label className="block text-[11px] md:text-[12px] font-heading font-semibold text-text-secondary mb-0.5" style={{ letterSpacing: '0.01em' }}>
+                  Username
+                </label>
+                <div className={fieldCls} style={{ boxShadow: 'inset 0 1px 3px rgba(15,23,42,0.04)' }}>
+                  <input type="text" value={username} onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9._]/g, ''))}
+                         placeholder="e.g. margaret.t" required autoComplete="off" className={inputCls} />
+                </div>
+              </div>
+            </div>
+
+            {/* Age */}
+            <div className="mb-2">
+              <label className="block text-[11px] md:text-[12px] font-heading font-semibold text-text-secondary mb-0.5" style={{ letterSpacing: '0.01em' }}>
+                Their age (optional)
+              </label>
+              <div className={fieldCls} style={{ boxShadow: 'inset 0 1px 3px rgba(15,23,42,0.04)' }}>
+                <input type="number" value={age} onChange={(e) => setAge(e.target.value)}
+                       placeholder="e.g. 72" min="18" max="120" className={inputCls} />
+              </div>
+            </div>
+
+            {/* Relationship */}
+            <div className="mb-3">
+              <label className="block text-[11px] md:text-[12px] font-heading font-semibold text-text-secondary mb-1" style={{ letterSpacing: '0.01em' }}>
+                Your relationship
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {RELATIONSHIPS.map((r) => (
+                  <label
+                    key={r.value}
+                    className={[
+                      'px-3 py-1.5 rounded-full cursor-pointer',
+                      'transition-colors duration-150 text-[12px] font-medium',
+                      relationship === r.value
+                        ? 'bg-primary-600 text-white'
+                        : 'bg-bg-surface-alt/70 text-text-secondary hover:bg-white/80',
+                    ].join(' ')}
+                  >
+                    <input
+                      type="radio"
+                      name="relationship"
+                      value={r.value}
+                      checked={relationship === r.value}
+                      onChange={() => setRelationship(r.value)}
+                      className="sr-only"
+                    />
+                    {r.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Submit */}
+            <button type="submit" disabled={loading}
+                    className="w-full py-2.5 rounded-xl font-heading font-semibold text-[14px] md:text-[15px] text-white min-h-[44px] cursor-pointer disabled:opacity-60 disabled:cursor-wait active:scale-[0.97] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-300"
+                    style={{ background: 'linear-gradient(135deg, #1a6de0, #1558b8)', boxShadow: '0 6px 20px rgba(26,109,224,0.2)', letterSpacing: '0.01em' }}>
+              {loading ? 'Creating…' : 'Create their account'}
+            </button>
+          </form>
+        </div>
+
+        {/* Links */}
+        <div className="text-center mt-2 animate-fade-up-d2">
+          <button type="button" onClick={() => router.back()}
+                  className="text-[12px] text-text-muted hover:text-text-secondary cursor-pointer">
+            ← Back to dashboard
+          </button>
+        </div>
       </div>
     </div>
   );

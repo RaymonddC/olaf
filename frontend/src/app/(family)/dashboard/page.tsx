@@ -3,12 +3,10 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { LogOut, Heart, ChevronLeft, ChevronRight, Bell, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
-import { Header } from '@/components/layout/Header';
 import { LoadingSkeleton } from '@/components/ui/LoadingSkeleton';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/components/ui/Toast';
 import { useMe, useHealthLogs, useAlerts, useAcknowledgeAlert, useReminders, useConversations } from '@/hooks/useApi';
-import { Button } from '@/components/ui/Button';
 import { setupPushNotifications, onForegroundMessage } from '@/lib/fcm';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -206,28 +204,39 @@ export default function FamilyDashboardPage() {
 
     // ── Loading state ─────────────────────────────────────────────────────────
     if (meLoad) return (
-        <div className="flex flex-col h-dvh">
-            <Header title="Loading..." />
-            <div className="flex-1 overflow-y-auto px-5 py-5 lg:px-10 lg:py-8">
-                <div className="max-w-[500px] mx-auto space-y-5"><LoadingSkeleton shape="card" /><LoadingSkeleton shape="card" /></div>
+        <div className="h-dvh bg-bg-page flex items-center justify-center px-4">
+            <div className="w-full max-w-[360px] md:max-w-[700px] space-y-5">
+                <LoadingSkeleton shape="card" /><LoadingSkeleton shape="card" />
             </div>
         </div>
     );
 
     // ── No elder linked ───────────────────────────────────────────────────────
     if (!meLoad && profile && !eId) return (
-        <div className="flex flex-col h-dvh">
-            <Header title="Family Dashboard" action={
-                <button onClick={async () => { await signOut(); router.replace('/login'); }} className="flex items-center gap-2 px-4 py-2 rounded-xl text-body-sm font-semibold text-text-muted hover:bg-white/50 min-h-[48px] cursor-pointer"><LogOut className="w-5 h-5" /> Sign out</button>
-            } />
-            <div className="flex-1 overflow-y-auto flex items-center justify-center px-6">
-                <div className="text-center max-w-sm animate-fade-up">
-                    <div className="w-20 h-20 rounded-[22px] mx-auto mb-5 flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #dbeafe, #ccfbf1)' }}>
-                        <Heart className="w-9 h-9 text-primary-600" />
+        <div className="h-dvh bg-bg-page flex flex-col items-center justify-center px-4">
+            <div className="w-full max-w-[360px] md:max-w-[380px]">
+                <div className="text-center mb-3 animate-fade-up">
+                    <div className="w-[56px] h-[56px] rounded-[18px] flex items-center justify-center mx-auto mb-2"
+                         style={{ background: 'linear-gradient(135deg, #dbeafe, #ccfbf1)', boxShadow: '0 10px 28px rgba(26,109,224,0.12)' }}>
+                        <Heart className="w-7 h-7 text-primary-600" strokeWidth={1.6} />
                     </div>
-                    <h2 className="text-h2 font-heading font-extrabold text-text-heading mb-2">Connect to your loved one</h2>
-                    <p className="text-body text-text-muted mb-6">Set up their account so you can stay connected.</p>
-                    <Button variant="primary" size="xl" onClick={() => router.push('/setup-elder')}>Set up their account</Button>
+                    <h1 className="text-[22px] md:text-[26px] font-heading font-extrabold text-text-heading" style={{ letterSpacing: '-0.03em' }}>
+                        Connect to your loved one
+                    </h1>
+                    <p className="text-[13px] text-text-muted mt-1">Set up their account so you can stay connected.</p>
+                </div>
+                <div className="glass rounded-[20px] p-4 md:p-5 animate-fade-up-d1">
+                    <button type="button" onClick={() => router.push('/setup-elder')}
+                            className="w-full py-2.5 rounded-xl font-heading font-semibold text-[14px] md:text-[15px] text-white min-h-[44px] cursor-pointer active:scale-[0.97] transition-transform duration-150 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-300"
+                            style={{ background: 'linear-gradient(135deg, #1a6de0, #1558b8)', boxShadow: '0 6px 20px rgba(26,109,224,0.2)', letterSpacing: '0.01em' }}>
+                        Set up their account
+                    </button>
+                </div>
+                <div className="text-center mt-3 animate-fade-up-d2">
+                    <button type="button" onClick={async () => { await signOut(); router.replace('/login'); }}
+                            className="text-[12px] text-text-muted hover:text-text-secondary cursor-pointer">
+                        Sign out
+                    </button>
                 </div>
             </div>
         </div>
@@ -241,164 +250,165 @@ export default function FamilyDashboardPage() {
     const medsCount = todayLog?.medicationsTaken?.length ?? 0;
     const talkedToday = !!lastConv && new Date(lastConv).toDateString() === new Date().toDateString();
     const hasCheckedInToday = talkedToday;
+    const daysSinceLastConv = lastConv ? Math.floor((Date.now() - new Date(lastConv).getTime()) / (1000 * 60 * 60 * 24)) : null;
+    const inactiveWarning = daysSinceLastConv !== null && daysSinceLastConv >= 3;
 
     // ── Dashboard ─────────────────────────────────────────────────────────────
     return (
-        <div className="flex flex-col h-dvh">
-            <Header title={`${eName}`} subtitle={greeting()} action={
-                <button onClick={async () => { await signOut(); router.replace('/login'); }} className="flex items-center gap-2 px-4 py-2 rounded-xl text-body-sm font-semibold text-text-muted hover:bg-white/50 min-h-[48px] cursor-pointer"><LogOut className="w-5 h-5" /> Sign out</button>
-            } />
+        <div className="h-dvh bg-bg-page flex flex-col">
+            {/* Top bar */}
+            <div className="flex items-center justify-between px-4 pt-4 pb-2 md:px-8 md:pt-6">
+                <div>
+                    <h1 className="text-[20px] md:text-[24px] font-heading font-extrabold text-text-heading" style={{ letterSpacing: '-0.03em' }}>
+                        {eName}
+                    </h1>
+                    <p className="text-[12px] md:text-[13px] text-text-muted">{greeting()}</p>
+                </div>
+                <button type="button" onClick={async () => { await signOut(); router.replace('/login'); }}
+                        className="p-2 rounded-xl text-text-muted hover:bg-white/50 cursor-pointer" aria-label="Sign out">
+                    <LogOut className="w-5 h-5" />
+                </button>
+            </div>
 
-            <div className="flex-1 overflow-y-auto px-4 pt-4 pb-8 lg:px-10 lg:pt-6 lg:pb-10">
-                <div className="max-w-[500px] mx-auto space-y-4">
+            {/* Content */}
+            <div className="flex-1 overflow-y-auto px-4 pb-6 md:px-8 md:pb-8">
+                <div className="max-w-[720px] mx-auto">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
 
-                    {/* ── Today's status banner ─────────────────────────────── */}
-                    <div className={`rounded-[18px] p-4 border ${hasCheckedInToday ? 'border-emerald-200 bg-emerald-50/60' : 'border-amber-200 bg-amber-50/60'}`}
-                         style={{ animation: 'fadeUp 0.3s ease forwards' }}>
-                        <div className="flex items-center gap-2 mb-3">
-                            {hasCheckedInToday
-                                ? <CheckCircle2 className="w-5 h-5 text-emerald-600" />
-                                : <AlertTriangle className="w-5 h-5 text-amber-600" />
-                            }
-                            <span className="text-[14px] font-heading font-bold text-text-heading">
-                                {hasCheckedInToday ? 'Talked to OLAF today' : 'Hasn\'t talked to OLAF yet today'}
-                            </span>
+                        {/* ── Left column ──────────────────────────────────────── */}
+                        <div className="space-y-3">
+                            {/* Inactivity warning */}
+                            {inactiveWarning && (
+                                <div className="rounded-[18px] p-3.5 border border-red-200 bg-red-50/70">
+                                    <div className="flex items-start gap-2.5">
+                                        <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                                            <AlertTriangle className="w-4 h-4 text-red-600" />
+                                        </div>
+                                        <div>
+                                            <p className="text-[13px] font-heading font-bold text-red-800">
+                                                {eName} hasn&apos;t used OLAF in {daysSinceLastConv} days
+                                            </p>
+                                            <p className="text-[12px] text-red-600 mt-0.5">
+                                                Consider checking in on them to make sure everything is okay.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Today's status */}
+                            <div className={`rounded-[18px] p-3.5 border ${hasCheckedInToday ? 'border-emerald-200 bg-emerald-50/60' : 'border-amber-200 bg-amber-50/60'}`}>
+                                <div className="flex items-center gap-2 mb-2.5">
+                                    {hasCheckedInToday
+                                        ? <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                        : <AlertTriangle className="w-4 h-4 text-amber-600" />
+                                    }
+                                    <span className="text-[13px] font-heading font-bold text-text-heading">
+                                        {hasCheckedInToday ? 'Talked to OLAF today' : 'Hasn\'t talked to OLAF yet today'}
+                                    </span>
+                                </div>
+
+                                {/* Last talked */}
+                                <div className="flex items-center gap-2 bg-white/60 rounded-[12px] px-3 py-2 mb-2">
+                                    <span className="text-[18px]">💬</span>
+                                    <div>
+                                        <div className="text-[10px] font-semibold text-text-muted uppercase" style={{ letterSpacing: '0.04em' }}>Last talked</div>
+                                        <div className="text-[13px] font-heading font-bold text-text-heading">{lastConv ? timeAgo(lastConv) : 'Never'}</div>
+                                    </div>
+                                </div>
+
+                                {/* Health data */}
+                                {todayLog && (
+                                    <div className="grid grid-cols-2 gap-1.5">
+                                        <div className="flex items-center gap-1.5 bg-white/70 rounded-[12px] px-2.5 py-2">
+                                            <span className="text-[18px]">{moodEmoji}</span>
+                                            <div>
+                                                <div className="text-[9px] font-semibold text-text-muted uppercase" style={{ letterSpacing: '0.04em' }}>Mood</div>
+                                                <div className="text-[13px] font-heading font-bold text-text-heading capitalize">{todayLog.mood ?? '—'}</div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 bg-white/70 rounded-[12px] px-2.5 py-2">
+                                            <div className="w-7 h-7 rounded-full flex items-center justify-center" style={{ background: `${painColor}18` }}>
+                                                <span className="text-[12px] font-heading font-extrabold" style={{ color: painColor }}>{painLevel ?? '—'}</span>
+                                            </div>
+                                            <div>
+                                                <div className="text-[9px] font-semibold text-text-muted uppercase" style={{ letterSpacing: '0.04em' }}>Pain</div>
+                                                <div className="text-[13px] font-heading font-bold text-text-heading">{painLevel !== null ? `${painLevel}/10` : '—'}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Alerts */}
+                            {!alertLoad && activeAlerts.length > 0 && (
+                                <div className="glass rounded-[18px] p-3.5">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <div className="w-6 h-6 rounded-[8px] flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #fffbeb, #fef2f2)' }}>
+                                            <Bell className="w-3 h-3 text-amber-600" />
+                                        </div>
+                                        <span className="text-[13px] font-heading font-bold text-text-heading">Alerts</span>
+                                        <span className="ml-auto inline-flex items-center justify-center w-5 h-5 rounded-full bg-error-600 text-white text-[10px] font-bold">
+                                            {activeAlerts.length}
+                                        </span>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        {activeAlerts.slice(0, 3).map(a => (
+                                            <div key={a.id} className="flex items-start gap-2 bg-white/60 rounded-xl px-2.5 py-2">
+                                                <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${a.severity === 'high' ? 'bg-red-500' : a.severity === 'medium' ? 'bg-amber-500' : 'bg-blue-400'}`} />
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-[12px] font-medium text-text-heading line-clamp-1">{a.title || a.message}</p>
+                                                    <p className="text-[10px] text-text-muted">{timeAgo(a.createdAt)}</p>
+                                                </div>
+                                                <button type="button" onClick={() => handleAck(a.id)} disabled={ackId === a.id}
+                                                        className="text-[11px] font-semibold text-primary-600 hover:text-primary-700 px-1.5 py-0.5 rounded-lg hover:bg-primary-50 transition-colors cursor-pointer disabled:opacity-50 flex-shrink-0">
+                                                    {ackId === a.id ? '...' : 'Ack'}
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Pending reminders */}
+                            {!remLoad && pendingReminders.length > 0 && (
+                                <div className="glass rounded-[18px] p-3.5">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <span className="text-[16px]">📋</span>
+                                        <span className="text-[13px] font-heading font-bold text-text-heading">Reminders</span>
+                                        <span className="ml-auto text-[11px] font-semibold text-text-muted bg-white/60 px-1.5 py-0.5 rounded-full">
+                                            {pendingReminders.length}
+                                        </span>
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        {pendingReminders.slice(0, 4).map(r => (
+                                            <div key={r.id} className="flex items-center gap-2 bg-white/60 rounded-xl px-2.5 py-2">
+                                                <div className={`w-2 h-2 rounded-full flex-shrink-0 ${r.type === 'medication' ? 'bg-emerald-400' : r.type === 'appointment' ? 'bg-blue-400' : 'bg-amber-400'}`} />
+                                                <span className="text-[12px] text-text-heading flex-1 line-clamp-1">{r.message}</span>
+                                                {r.scheduledTime && (
+                                                    <span className="text-[10px] text-text-muted flex-shrink-0">
+                                                        {new Date(r.scheduledTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
-                        {/* Last talked — always show */}
-                        <div className="flex items-center gap-2.5 bg-white/60 rounded-[14px] px-3 py-2.5 mb-2">
-                            <span className="text-[20px]">💬</span>
-                            <div>
-                                <div className="text-[11px] font-semibold text-text-muted uppercase" style={{ letterSpacing: '0.04em' }}>Last talked</div>
-                                <div className="text-[14px] font-heading font-bold text-text-heading">{lastConv ? timeAgo(lastConv) : 'Never'}</div>
-                            </div>
+                        {/* ── Right column: Calendar ───────────────────────────── */}
+                        <div>
+                            <Calendar
+                                year={calYear}
+                                month={calMonth}
+                                checkinDates={checkinDates}
+                                onPrev={prevMonth}
+                                onNext={nextMonth}
+                            />
                         </div>
 
-                        {/* Health data — only when there's actual log data */}
-                        {todayLog && (
-                            <div className="grid grid-cols-3 gap-2">
-                                <div className="flex items-center gap-2 bg-white/70 rounded-[14px] px-3 py-2.5">
-                                    <span className="text-[20px]">{moodEmoji}</span>
-                                    <div>
-                                        <div className="text-[10px] font-semibold text-text-muted uppercase" style={{ letterSpacing: '0.04em' }}>Mood</div>
-                                        <div className="text-[14px] font-heading font-bold text-text-heading capitalize">{todayLog.mood ?? '—'}</div>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2 bg-white/70 rounded-[14px] px-3 py-2.5">
-                                    <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: `${painColor}18` }}>
-                                        <span className="text-[13px] font-heading font-extrabold" style={{ color: painColor }}>{painLevel ?? '—'}</span>
-                                    </div>
-                                    <div>
-                                        <div className="text-[10px] font-semibold text-text-muted uppercase" style={{ letterSpacing: '0.04em' }}>Pain</div>
-                                        <div className="text-[14px] font-heading font-bold text-text-heading">{painLevel !== null ? `${painLevel}/10` : '—'}</div>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2 bg-white/70 rounded-[14px] px-3 py-2.5">
-                                    <span className="text-[20px]">💊</span>
-                                    <div>
-                                        <div className="text-[10px] font-semibold text-text-muted uppercase" style={{ letterSpacing: '0.04em' }}>Meds</div>
-                                        <div className="text-[14px] font-heading font-bold text-text-heading">{medsCount}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
                     </div>
-
-                    {/* ── Medication details ───────────────────────────────── */}
-                    {todayLog?.medicationsTaken && todayLog.medicationsTaken.length > 0 && (
-                        <div className="glass rounded-[18px] p-4" style={{ animation: 'fadeUp 0.35s ease forwards' }}>
-                            <div className="flex items-center gap-2 mb-3">
-                                <span className="text-[18px]">💊</span>
-                                <span className="text-[15px] font-heading font-bold text-text-heading">Medications today</span>
-                            </div>
-                            <div className="space-y-2">
-                                {todayLog.medicationsTaken.map((med, i) => (
-                                    <div key={i} className="flex items-center justify-between bg-white/60 rounded-xl px-3 py-2">
-                                        <div className="flex items-center gap-2">
-                                            {med.confirmed
-                                                ? <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                                                : <Clock className="w-4 h-4 text-text-muted" />
-                                            }
-                                            <span className="text-[14px] font-medium text-text-heading">{med.name}</span>
-                                        </div>
-                                        <span className="text-[12px] text-text-muted">{med.time}</span>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* ── Alerts ────────────────────────────────────────────── */}
-                    {!alertLoad && activeAlerts.length > 0 && (
-                        <div className="glass rounded-[18px] p-4" style={{ animation: 'fadeUp 0.4s ease forwards' }}>
-                            <div className="flex items-center gap-2 mb-3">
-                                <div className="w-7 h-7 rounded-[9px] flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #fffbeb, #fef2f2)' }}>
-                                    <Bell className="w-3.5 h-3.5 text-amber-600" />
-                                </div>
-                                <span className="text-[15px] font-heading font-bold text-text-heading">
-                                    Alerts
-                                </span>
-                                <span className="ml-auto inline-flex items-center justify-center w-5 h-5 rounded-full bg-error-600 text-white text-[11px] font-bold">
-                                    {activeAlerts.length}
-                                </span>
-                            </div>
-                            <div className="space-y-2">
-                                {activeAlerts.slice(0, 5).map(a => (
-                                    <div key={a.id} className="flex items-start gap-3 bg-white/60 rounded-xl px-3 py-2.5">
-                                        <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${a.severity === 'high' ? 'bg-red-500' : a.severity === 'medium' ? 'bg-amber-500' : 'bg-blue-400'}`} />
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-[13px] font-medium text-text-heading line-clamp-2">{a.title || a.message}</p>
-                                            <p className="text-[11px] text-text-muted mt-0.5">{timeAgo(a.createdAt)}</p>
-                                        </div>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleAck(a.id)}
-                                            disabled={ackId === a.id}
-                                            className="text-[12px] font-semibold text-primary-600 hover:text-primary-700 px-2 py-1 rounded-lg hover:bg-primary-50 transition-colors cursor-pointer disabled:opacity-50 flex-shrink-0"
-                                        >
-                                            {ackId === a.id ? '...' : 'Ack'}
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* ── Pending reminders / todos ────────────────────────── */}
-                    {!remLoad && pendingReminders.length > 0 && (
-                        <div className="glass rounded-[18px] p-4" style={{ animation: 'fadeUp 0.45s ease forwards' }}>
-                            <div className="flex items-center gap-2 mb-3">
-                                <span className="text-[18px]">📋</span>
-                                <span className="text-[15px] font-heading font-bold text-text-heading">Pending reminders</span>
-                                <span className="ml-auto text-[12px] font-semibold text-text-muted bg-white/60 px-2 py-0.5 rounded-full">
-                                    {pendingReminders.length}
-                                </span>
-                            </div>
-                            <div className="space-y-2">
-                                {pendingReminders.slice(0, 6).map(r => (
-                                    <div key={r.id} className="flex items-center gap-3 bg-white/60 rounded-xl px-3 py-2.5">
-                                        <div className={`w-2 h-2 rounded-full flex-shrink-0 ${r.type === 'medication' ? 'bg-emerald-400' : r.type === 'appointment' ? 'bg-blue-400' : 'bg-amber-400'}`} />
-                                        <span className="text-[13px] text-text-heading flex-1 line-clamp-1">{r.message}</span>
-                                        {r.scheduledTime && (
-                                            <span className="text-[11px] text-text-muted flex-shrink-0">
-                                                {new Date(r.scheduledTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                            </span>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* ── Calendar ──────────────────────────────────────────── */}
-                    <Calendar
-                        year={calYear}
-                        month={calMonth}
-                        checkinDates={checkinDates}
-                        onPrev={prevMonth}
-                        onNext={nextMonth}
-                    />
-
                 </div>
             </div>
         </div>
