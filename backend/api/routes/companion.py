@@ -57,7 +57,8 @@ async def flag_emotional_distress_endpoint(
         severity=req.args.severity,
         observation=req.args.observation,
     )
-    return ApiResponse(status=result["status"], data=result.get("data"))
+    status = "success" if result["status"] == "noted" else result["status"]
+    return ApiResponse(status=status, data=result.get("data"))
 
 
 @router.post("/log-health-checkin")
