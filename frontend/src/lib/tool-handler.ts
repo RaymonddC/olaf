@@ -14,6 +14,7 @@ const TOOL_ENDPOINTS: Record<string, string> = {
   flag_emotional_distress: '/api/companion/flag-emotional-distress',
   log_health_checkin: '/api/companion/log-health-checkin',
   set_reminder: '/api/companion/set-reminder',
+  complete_reminder: '/api/companion/complete-reminder',
 };
 
 export interface ToolHandlerConfig {

@@ -224,8 +224,10 @@ class FirestoreService:
         query = self._subcollection(uid, "reminders")
         if status:
             query = query.where("status", "==", status)
-        docs = query.order_by("scheduled_time").stream()
-        return [ReminderDoc(**doc.to_dict()) for doc in docs]
+        docs = query.stream()
+        reminders = [ReminderDoc(**doc.to_dict()) for doc in docs]
+        reminders.sort(key=lambda r: r.created_at, reverse=True)
+        return reminders
 
     async def update_reminder(
         self, uid: str, reminder_id: str, data: dict[str, Any]

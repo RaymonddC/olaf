@@ -322,56 +322,80 @@ async def log_health_checkin(
 
 
 async def set_reminder(
-    user_id: str, reminder_type: str, message: str, time_str: str
+    user_id: str, reminder_type: str, message: str
 ) -> dict:
-    """Set a reminder for the user.
+    """Set a simple reminder for the user (no time needed).
 
-    Creates a reminder document in Firestore. Accepts ISO 8601 datetime
-    or HH:MM (assumes today's date in that case).
+    Creates a reminder document in Firestore.
     """
     fs = get_firestore_service()
 
+    # Normalize common LLM variations to valid enum values
+    _TYPE_ALIASES = {
+        "medicine": "medication",
+        "med": "medication",
+        "meds": "medication",
+        "drink": "hydration",
+        "water": "hydration",
+        "appt": "appointment",
+        "meeting": "appointment",
+        "general": "custom",
+        "other": "custom",
+        "reminder": "custom",
+    }
+    reminder_type = _TYPE_ALIASES.get(reminder_type.lower(), reminder_type.lower())
+    if reminder_type not in ("medication", "appointment", "hydration", "custom"):
+        reminder_type = "custom"
+
     reminder_id = _new_id()
-
-    # Parse the time string — accept ISO8601 or HH:MM
-    try:
-        if "T" in time_str:
-            scheduled_time = datetime.fromisoformat(
-                time_str.replace("Z", "+00:00")
-            )
-        else:
-            # Assume today + the given time in UTC
-            today = _today()
-            scheduled_time = datetime.fromisoformat(f"{today}T{time_str}:00+00:00")
-    except ValueError:
-        logger.warning("Could not parse reminder time '%s', using now + 1 hour", time_str)
-        scheduled_time = datetime.now(UTC) + __import__("datetime").timedelta(hours=1)
-
-    # Ensure timezone-aware
-    if scheduled_time.tzinfo is None:
-        scheduled_time = scheduled_time.replace(tzinfo=UTC)
 
     reminder = ReminderDoc(
         reminder_id=reminder_id,
         type=reminder_type,
         message=message,
-        scheduled_time=scheduled_time,
     )
     await fs.save_reminder(user_id, reminder)
 
     logger.info(
-        "Reminder set for user %s: type=%s at %s",
+        "Reminder set for user %s: type=%s message=%s",
         user_id,
         reminder_type,
-        scheduled_time,
+        message,
     )
 
     return {
         "status": "success",
         "data": {
             "reminder_id": reminder_id,
-            "scheduled_time": scheduled_time.isoformat(),
         },
+    }
+
+
+# ── complete_reminder ──────────────────────────────────────────────────────
+
+
+async def complete_reminder(user_id: str, reminder_id: str) -> dict:
+    """Mark a reminder as acknowledged / completed."""
+    fs = get_firestore_service()
+
+    try:
+        await fs.update_reminder(
+            user_id, reminder_id, {"status": "acknowledged"}
+        )
+    except Exception:
+        logger.warning(
+            "Could not complete reminder %s for user %s",
+            reminder_id,
+            user_id,
+        )
+        return {"status": "error", "errorMessage": "Reminder not found"}
+
+    logger.info(
+        "Reminder %s completed for user %s", reminder_id, user_id
+    )
+    return {
+        "status": "success",
+        "data": {"reminder_id": reminder_id, "new_status": "acknowledged"},
     }
 
 
@@ -532,3 +556,4 @@ async def log_conversation(
             "mood_score": mood_score,
         },
     }
+

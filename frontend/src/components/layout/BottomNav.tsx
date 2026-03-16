@@ -2,12 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Mic, BookOpen, HelpCircle } from 'lucide-react';
+import { Mic, BookOpen, Sun } from 'lucide-react';
 
 const NAV_ITEMS = [
     { href: '/talk', icon: Mic, label: 'Talk' },
     { href: '/memories', icon: BookOpen, label: 'Memories' },
-    { href: '/help', icon: HelpCircle, label: 'Help' },
+    { href: '/my-day', icon: Sun, label: 'My Day' },
 ] as const;
 
 export function BottomNav() {

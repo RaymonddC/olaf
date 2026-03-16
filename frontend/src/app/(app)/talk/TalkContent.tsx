@@ -67,6 +67,25 @@ function TypewriterText({
     return <>{displayed}</>;
 }
 
+// ── Deduplication helper ─────────────────────────────────────────────────────
+// Gemini sends two transcript events per tool call (before and after). The
+// second is nearly identical to the first — detect and skip it.
+function isDuplicateTranscript(committed: string, newText: string): boolean {
+    if (!committed || !newText) return false;
+    const norm = (s: string) =>
+        s.toLowerCase().replace(/[^\w\s]/g, '').replace(/\s+/g, ' ').trim();
+    const a = norm(committed);
+    const b = norm(newText);
+    if (!b || b.length < 10) return false;
+    // Full new text is already a substring of committed
+    if (a.includes(b)) return true;
+    // 60 % suffix of new text already in committed — partial overlap
+    const cutoff = Math.floor(b.length * 0.6);
+    const suffix = b.slice(b.length - cutoff);
+    if (suffix.length >= 10 && a.includes(suffix)) return true;
+    return false;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function TalkContent() {
@@ -84,7 +103,8 @@ export function TalkContent() {
     const latestFrameRef  = useRef<string | null>(null);
 
     const stopRef              = useRef<() => void>(() => {});
-    const endAfterFarewellRef  = useRef(false);
+    const userSaidByeRef       = useRef(false);
+    const olafSaidByeRef       = useRef(false);
     const olafTsRef        = useRef('');    // active turn ts
     const olafLastTsRef    = useRef('');    // last entry ts — survives turn_complete
     const olafIgnoreRef    = useRef(false);
@@ -120,14 +140,14 @@ export function TalkContent() {
             const client = new AdkLiveClient({
                 apiBaseUrl: API, getAuthToken: getToken, userId: user.uid,
                 callbacks: {
-                    onStatusChange: s => { setStatus(s); if (s === 'listening') resetSilence(); },
+                    onStatusChange: s => { setStatus(s); if (s === 'listening' || s === 'speaking') resetSilence(); },
                     onAudioChunk:   b64 => audio.queuePlayback(b64),
                     onTranscript:   entry => {
                         if (entry.role === 'model') {
                             if (olafIgnoreRef.current) return; // stale events after interrupt
                             if (entry.partial) {
-                                // First partial → create entry so typewriter starts immediately
                                 if (!olafTsRef.current) {
+                                    // First partial → create entry so typewriter starts immediately
                                     olafTsRef.current = entry.timestamp;
                                     olafLastTsRef.current = entry.timestamp;
                                     olafDisplayedRef.current = '';
@@ -136,8 +156,19 @@ export function TalkContent() {
                                         role: 'model', text: entry.text,
                                         partial: true, timestamp: entry.timestamp,
                                     }]);
+                                } else {
+                                    // Subsequent partials — append incremental text
+                                    const ts = olafTsRef.current;
+                                    setTranscripts(p => {
+                                        const i = p.findIndex(e => e.role === 'model' && e.timestamp === ts);
+                                        if (i >= 0) {
+                                            const next = [...p];
+                                            next[i] = { ...next[i], text: next[i].text + entry.text };
+                                            return next;
+                                        }
+                                        return p;
+                                    });
                                 }
-                                // Ignore subsequent partials (noisy text)
                                 return;
                             }
                             // Finished event — clean, authoritative text
@@ -147,6 +178,21 @@ export function TalkContent() {
                                 olafLastTsRef.current = ts;
                                 olafDisplayedRef.current = '';
                                 olafCommittedRef.current = '';
+                            }
+                            // Check for OLAF farewell BEFORE dedup (dedup might skip the text)
+                            {
+                                const lower = entry.text.toLowerCase();
+                                const olafFarewells = ['take care', 'lovely talking', 'nice talking',
+                                    'talk again', 'talk soon', 'goodbye', 'good night',
+                                    'sweet dreams', 'until next time', 'chat again'];
+                                if (olafFarewells.some(f => lower.includes(f))) {
+                                    olafSaidByeRef.current = true;
+                                }
+                            }
+                            // Deduplicate — Gemini repeats itself after tool calls
+                            if (isDuplicateTranscript(olafCommittedRef.current, entry.text)) {
+                                console.log('[OLAF] skipping duplicate transcript:', entry.text.slice(0, 60));
+                                return;
                             }
                             // Accumulate clean finished sub-utterances
                             const newCommitted = olafCommittedRef.current
@@ -164,16 +210,23 @@ export function TalkContent() {
                             });
                         } else {
                             setTranscripts(p => [...p, entry]);
-                            // Detect user farewell — auto-end after OLAF responds
+                            // Detect user farewell — need BOTH user + OLAF farewell to auto-end
                             const lower = entry.text.toLowerCase();
-                            const farewells = ['bye', 'goodbye', 'good bye', 'i need to go',
-                                'talk to you later', 'see you later', 'i am done', "i'm done",
-                                'that is all', "that's all", 'good night', 'goodnight'];
-                            if (farewells.some(f => lower.includes(f))) {
-                                endAfterFarewellRef.current = true;
+                            const farewells = ['goodbye', 'good bye', 'goodnight', 'good night',
+                                'talk to you later', 'see you later', 'i need to go now',
+                                'i have to go now', 'i gotta go'];
+                            // "bye" as a word boundary (not inside "goodbye" or other words)
+                            const byeWord = /\bbye\b/.test(lower);
+                            if (byeWord || farewells.some(f => lower.includes(f))) {
+                                userSaidByeRef.current = true;
                             }
                         }
+                        // (OLAF farewell detection is done above, before dedup)
                         resetSilence();
+                    },
+                    onReady:        () => {
+                        console.log('[OLAF] connection ready — unmuting mic');
+                        audio.setMuted(false);
                     },
                     onToolCall:     name => console.log('[OLAF] tool:', name),
                     onInterrupted:  () => { trimOnInterrupt(); audio.unblockPlayback(); },
@@ -181,9 +234,11 @@ export function TalkContent() {
                         audio.unblockPlayback();
                         olafTsRef.current = '';
                         olafIgnoreRef.current = false;
-                        // If user said goodbye and OLAF has finished farewell, end session
-                        if (endAfterFarewellRef.current) {
-                            endAfterFarewellRef.current = false;
+
+                        // End session only when BOTH user said bye AND OLAF said farewell
+                        if (userSaidByeRef.current && olafSaidByeRef.current) {
+                            userSaidByeRef.current = false;
+                            olafSaidByeRef.current = false;
                             setTimeout(() => stopRef.current(), 2000);
                         }
                     },
@@ -212,11 +267,14 @@ export function TalkContent() {
                 });
             };
 
+            // Start mic capture but mute initially — give OLAF a moment to
+            // deliver the greeting before background noise can interrupt.
             await audio.start(
                 b64 => client.sendAudio(b64),
                 undefined,
                 () => { trimOnInterrupt(); setStatus('listening'); }, // client-side VAD
             );
+            // Mic starts unmuted — audio must flow to put Gemini in audio mode
             await client.connect();
             sessionStartRef.current = Date.now();
             setActive(true);
@@ -237,6 +295,8 @@ export function TalkContent() {
         olafIgnoreRef.current = false;
         olafDisplayedRef.current = '';
         olafCommittedRef.current = '';
+        userSaidByeRef.current = false;
+        olafSaidByeRef.current = false;
         const dur = Math.round((Date.now() - sessionStartRef.current) / 1000);
         const t = transcriptsRef.current;
         if (user && t.length > 0) {
@@ -353,6 +413,11 @@ export function TalkContent() {
                                         />
                                     </p>
                                 </div>
+                            )}
+                            {status === 'listening' && !lastOlaf && (
+                                <p className="text-[13px] lg:text-[14px] text-text-muted text-center mt-3 animate-pulse">
+                                    Go ahead, say something to OLAF!
+                                </p>
                             )}
                         </div>
                     )}

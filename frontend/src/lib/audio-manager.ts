@@ -174,6 +174,15 @@ export class AudioManager {
   }
 
   /**
+   * Block playback — call when a tool call is detected to suppress
+   * duplicate audio that Gemini sends after tool execution.
+   */
+  blockPlayback(): void {
+    this._playbackBlocked = true;
+    this.clearPlaybackQueue();
+  }
+
+  /**
    * Unblock playback — call when the server confirms interruption or turn is
    * complete so OLAF's next response can be heard.
    */

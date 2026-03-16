@@ -150,11 +150,8 @@ class HealthCheckinResponse(CamelModel):
 
 
 class SetReminderArgs(BaseModel):
-    reminder_type: Literal["medication", "appointment", "hydration", "custom"] = Field(
-        alias="reminderType"
-    )
+    reminder_type: str = Field(alias="reminderType")
     message: str
-    time: str
     model_config = ConfigDict(populate_by_name=True)
 
 
@@ -165,7 +162,16 @@ class SetReminderRequest(CamelModel):
 
 class SetReminderResponse(CamelModel):
     reminder_id: str
-    scheduled_time: str
+
+
+class CompleteReminderArgs(BaseModel):
+    reminder_id: str = Field(alias="reminderId")
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class CompleteReminderRequest(CamelModel):
+    user_id: str
+    args: CompleteReminderArgs
 
 
 class TranscriptEntry(BaseModel):
@@ -308,7 +314,7 @@ class Reminder(CamelModel):
     id: str
     type: Literal["medication", "appointment", "hydration", "custom"]
     message: str
-    scheduled_time: datetime
+    scheduled_time: datetime | None = None
     status: Literal["pending", "sent", "acknowledged"] = "pending"
     recurring: bool = False
 

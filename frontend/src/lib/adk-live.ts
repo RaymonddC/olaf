@@ -42,6 +42,7 @@ export interface AdkLiveCallbacks {
   onToolCall: (name: string, args: Record<string, unknown>) => void;
   onInterrupted: () => void;
   onTurnComplete?: () => void;
+  onReady?: () => void;
   onError: (error: Error) => void;
 }
 
@@ -97,7 +98,7 @@ export class AdkLiveClient {
       ws.onopen = () => {
         this._connected = true;
         this.reconnectAttempts = 0;
-        this.config.callbacks.onStatusChange('listening');
+        // Stay at 'connecting' — backend sends 'ready' when OLAF is about to speak
         resolve();
       };
 
@@ -184,6 +185,11 @@ export class AdkLiveClient {
       case 'interrupted':
         this.config.callbacks.onInterrupted();
         this.config.callbacks.onStatusChange('listening');
+        break;
+
+      case 'ready':
+        this.config.callbacks.onStatusChange('listening');
+        this.config.callbacks.onReady?.();
         break;
 
       case 'error':
