@@ -230,6 +230,9 @@ export function TalkContent() {
                         audio.setMuted(false);
                     },
                     onToolCall:     name => console.log('[OLAF] tool:', name),
+                    onToolStart:    () => { audio.blockPlayback(); },
+                    onToolEnd:      () => { audio.unblockPlayback(); },
+                    onClearAudio:   () => { audio.clearPlaybackQueue(); },
                     onInterrupted:  () => { trimOnInterrupt(); audio.unblockPlayback(); },
                     onTurnComplete: () => {
                         audio.unblockPlayback();

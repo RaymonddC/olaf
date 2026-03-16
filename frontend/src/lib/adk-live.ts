@@ -15,6 +15,8 @@
  *   {"type": "audio",         "data": "<base64 PCM>"}
  *   {"type": "transcript",    "role": "user"|"model", "text": "..."}
  *   {"type": "tool_call",     "name": "...", "args": {...}}
+ *   {"type": "tool_start"}
+ *   {"type": "tool_end"}
  *   {"type": "turn_complete"}
  *   {"type": "interrupted"}
  *   {"type": "error",         "message": "..."}
@@ -41,6 +43,9 @@ export interface AdkLiveCallbacks {
   onTranscript: (entry: TranscriptEntry) => void;
   onToolCall: (name: string, args: Record<string, unknown>) => void;
   onInterrupted: () => void;
+  onToolStart?: () => void;
+  onToolEnd?: () => void;
+  onClearAudio?: () => void;
   onTurnComplete?: () => void;
   onReady?: () => void;
   onError: (error: Error) => void;
@@ -175,6 +180,18 @@ export class AdkLiveClient {
           msg.name as string,
           (msg.args ?? {}) as Record<string, unknown>,
         );
+        break;
+
+      case 'tool_start':
+        this.config.callbacks.onToolStart?.();
+        break;
+
+      case 'tool_end':
+        this.config.callbacks.onToolEnd?.();
+        break;
+
+      case 'clear_audio':
+        this.config.callbacks.onClearAudio?.();
         break;
 
       case 'turn_complete':

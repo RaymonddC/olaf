@@ -35,6 +35,7 @@ import base64
 import json
 import logging
 import os
+import re
 from datetime import UTC, datetime
 
 from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
@@ -63,6 +64,23 @@ else:
 
 logger = logging.getLogger(__name__)
 logger.info("Companion stream using backend: %s", _backend)
+
+
+def _normalize(text: str) -> str:
+    """Strip punctuation, collapse whitespace, lowercase for comparison."""
+    return re.sub(r"\s+", " ", re.sub(r"[^\w\s]", "", text)).lower().strip()
+
+
+def _is_duplicate(text1: str, text2: str) -> bool:
+    """Check if two transcripts are near-duplicates using prefix matching."""
+    if not text1 or not text2:
+        return False
+    n1, n2 = _normalize(text1), _normalize(text2)
+    # Compare first 40 chars — catches duplicates even when endings differ
+    prefix = min(40, len(n1), len(n2))
+    if prefix < 10:
+        return False
+    return n1[:prefix] == n2[:prefix]
 
 router = APIRouter()
 
@@ -246,7 +264,12 @@ async def companion_stream(
 
         # NOTE: In bidi/live mode, ADK handles tool calls internally.
         # function_call and function_response events are NOT yielded to our code.
-        # Double-speech prevention is handled via system instruction instead.
+        # The model sometimes repeats itself (before/after tool calls).
+        # We detect duplicates via both partial and finished transcripts and
+        # suppress audio + text for the repeat.
+
+        last_finished_text = ""   # last completed model transcript
+        suppressing = False       # True when duplicate detected
 
         try:
             async for event in _runner.run_live(
@@ -255,33 +278,58 @@ async def companion_stream(
                 live_request_queue=live_request_queue,
                 run_config=_run_config,
             ):
-                # Log event shape for debugging
-                part_types = []
-                if event.content and event.content.parts:
-                    for p in event.content.parts:
-                        if getattr(p, "inline_data", None):
-                            part_types.append("audio")
-                        elif getattr(p, "function_call", None):
-                            part_types.append("function_call")
-                        elif getattr(p, "function_response", None):
-                            part_types.append("function_response")
-                        elif getattr(p, "text", None):
-                            part_types.append(f"text:{p.text[:50]}")
-                        else:
-                            part_types.append("other")
-                logger.debug(
-                    "Event: parts=%s input_t=%s output_t=%s turn=%s",
-                    part_types,
-                    bool(getattr(event, "input_transcription", None)),
-                    bool(getattr(event, "output_transcription", None)),
-                    getattr(event, "turn_complete", False),
-                )
+                # ── Check output transcription FIRST (before forwarding audio)
+                if getattr(event, "output_transcription", None):
+                    t = event.output_transcription
+                    text = (getattr(t, "text", "") or "").strip()
 
-                # ── Process content parts ────────────────────────────────────
+                    if getattr(t, "finished", False) and text:
+                        if _is_duplicate(text, last_finished_text):
+                            if not suppressing:
+                                suppressing = True
+                                await websocket.send_json({"type": "clear_audio"})
+                                logger.info(
+                                    "Duplicate finished, suppressing for user=%s: %s",
+                                    user_id, text[:60],
+                                )
+                            # Skip this transcript
+                        else:
+                            suppressing = False
+                            last_finished_text = text
+                            await websocket.send_json({
+                                "type": "transcript",
+                                "role": "model",
+                                "text": text,
+                                "partial": False,
+                            })
+                    elif text and not suppressing:
+                        # Partial transcript: check if it looks like a repeat
+                        norm_partial = _normalize(text)
+                        norm_last = _normalize(last_finished_text)
+                        if (
+                            norm_last
+                            and len(norm_partial) >= 15
+                            and norm_last.startswith(norm_partial)
+                        ):
+                            # Early duplicate detection from partial
+                            suppressing = True
+                            await websocket.send_json({"type": "clear_audio"})
+                            logger.info(
+                                "Duplicate partial detected for user=%s: %s",
+                                user_id, text[:40],
+                            )
+                        else:
+                            await websocket.send_json({
+                                "type": "transcript",
+                                "role": "model",
+                                "text": text,
+                                "partial": True,
+                            })
+
+                # ── Forward audio chunks (skip if suppressing) ────────────────
                 if event.content and event.content.parts:
                     for part in event.content.parts:
-                        # Forward audio chunks
-                        if getattr(part, "inline_data", None):
+                        if getattr(part, "inline_data", None) and not suppressing:
                             await websocket.send_json({
                                 "type": "audio",
                                 "data": base64.b64encode(
@@ -289,33 +337,28 @@ async def companion_stream(
                                 ).decode(),
                             })
 
-                # User speech transcription — always forward
+                # ── User speech transcription: always forward, reset ──────────
                 if getattr(event, "input_transcription", None):
                     t = event.input_transcription
                     if getattr(t, "text", None) and getattr(t, "finished", False):
+                        suppressing = False
+                        last_finished_text = ""
                         await websocket.send_json({
                             "type": "transcript",
                             "role": "user",
                             "text": t.text,
                         })
 
-                # OLAF speech transcription
-                if getattr(event, "output_transcription", None):
-                    t = event.output_transcription
-                    if getattr(t, "text", None):
-                        await websocket.send_json({
-                            "type": "transcript",
-                            "role": "model",
-                            "text": t.text,
-                            "partial": not getattr(t, "finished", False),
-                        })
-
-                # Turn complete
+                # Turn complete — reset suppression so next turn works
                 if getattr(event, "turn_complete", False):
+                    suppressing = False
+                    last_finished_text = ""
                     await websocket.send_json({"type": "turn_complete"})
 
                 # Interruption (user barged in)
                 if getattr(event, "interrupted", False):
+                    suppressing = False
+                    last_finished_text = ""
                     await websocket.send_json({"type": "interrupted"})
 
         except WebSocketDisconnect:
