@@ -308,7 +308,7 @@ async def companion_stream(
                         norm_last = _normalize(last_finished_text)
                         if (
                             norm_last
-                            and len(norm_partial) >= 15
+                            and len(norm_partial) >= 30
                             and norm_last.startswith(norm_partial)
                         ):
                             # Early duplicate detection from partial

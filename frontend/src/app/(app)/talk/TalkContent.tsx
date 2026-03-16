@@ -43,10 +43,18 @@ function TypewriterText({
             return;
         }
         // If text changed underneath (clean finished replaced noisy partial),
-        // snap forward — user already heard it via audio
+        // find the longest common prefix and continue typing from there
+        // instead of snapping to full text
         if (displayed.length > 0 && !text.startsWith(displayed)) {
-            setDisplayed(text);
-            onDisplayed?.(text);
+            let i = 0;
+            while (i < displayed.length && i < text.length && displayed[i] === text[i]) i++;
+            if (i > 0) {
+                setDisplayed(text.slice(0, i));
+                onDisplayed?.(text.slice(0, i));
+            } else {
+                setDisplayed('');
+                onDisplayed?.('');
+            }
             return;
         }
         if (displayed.length >= text.length) {
@@ -146,32 +154,9 @@ export function TalkContent() {
                     onTranscript:   entry => {
                         if (entry.role === 'model') {
                             if (olafIgnoreRef.current) return; // stale events after interrupt
-                            if (entry.partial) {
-                                if (!olafTsRef.current) {
-                                    // First partial → create entry so typewriter starts immediately
-                                    olafTsRef.current = entry.timestamp;
-                                    olafLastTsRef.current = entry.timestamp;
-                                    olafDisplayedRef.current = '';
-                                    olafCommittedRef.current = '';
-                                    setTranscripts(p => [...p, {
-                                        role: 'model', text: entry.text,
-                                        partial: true, timestamp: entry.timestamp,
-                                    }]);
-                                } else {
-                                    // Subsequent partials — append incremental text
-                                    const ts = olafTsRef.current;
-                                    setTranscripts(p => {
-                                        const i = p.findIndex(e => e.role === 'model' && e.timestamp === ts);
-                                        if (i >= 0) {
-                                            const next = [...p];
-                                            next[i] = { ...next[i], text: next[i].text + entry.text };
-                                            return next;
-                                        }
-                                        return p;
-                                    });
-                                }
-                                return;
-                            }
+                            // Skip partial transcripts — they have garbled spacing
+                            // Only use finished transcripts for clean typewriter display
+                            if (entry.partial) return;
                             // Finished event — clean, authoritative text
                             const ts = olafTsRef.current || olafLastTsRef.current || entry.timestamp;
                             if (!olafTsRef.current && !olafLastTsRef.current) {
@@ -237,6 +222,9 @@ export function TalkContent() {
                     onTurnComplete: () => {
                         audio.unblockPlayback();
                         olafTsRef.current = '';
+                        olafLastTsRef.current = '';
+                        olafCommittedRef.current = '';
+                        olafDisplayedRef.current = '';
                         olafIgnoreRef.current = false;
 
                         // End session only when BOTH user said bye AND OLAF said farewell
