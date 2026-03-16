@@ -11,7 +11,7 @@ interface Props {
 const SEV: Record<string, { icon: typeof AlertTriangle; color: string; bg: string }> = {
     high: { icon: AlertTriangle, color: '#e11d48', bg: '#fef2f2' },
     medium: { icon: AlertCircle, color: '#d97706', bg: '#fffbeb' },
-    low: { icon: Info, color: '#1a6de0', bg: '#eff6ff' },
+    low: { icon: Info, color: '#00897b', bg: '#e0f2f1' },
 };
 
 function timeAgo(iso: string) {
@@ -36,7 +36,7 @@ export function AlertCard({ id, type, severity, title, message, createdAt, ackno
                     {!acknowledged && (
                         <button onClick={() => onAcknowledge(id)} disabled={acknowledging}
                                 className="inline-flex items-center gap-1.5 px-4 py-[7px] rounded-[10px] text-[14px] font-heading font-semibold text-white cursor-pointer disabled:opacity-60 min-h-[36px]"
-                                style={{ background: 'linear-gradient(135deg, #1a6de0, #1558b8)', boxShadow: '0 2px 8px rgba(26,109,224,0.15)' }}>
+                                style={{ background: 'linear-gradient(135deg, #00897b, #00796b)', boxShadow: '0 2px 8px rgba(0,137,123,0.15)' }}>
                             {acknowledging ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
                             Acknowledge
                         </button>

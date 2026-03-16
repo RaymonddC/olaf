@@ -79,10 +79,10 @@ _runner = Runner(
 # ── RunConfig — shared across all sessions ────────────────────────────────────
 
 _run_config = RunConfig(
-    response_modalities=[types.Modality.AUDIO],
+    response_modalities=["AUDIO"],
     streaming_mode=StreamingMode.BIDI,
-    input_audio_transcription=types.AudioTranscriptionConfig(),   # transcribe user speech
-    output_audio_transcription=types.AudioTranscriptionConfig(),  # transcribe OLAF's actual speech
+    input_audio_transcription=types.AudioTranscriptionConfig(),
+    output_audio_transcription=types.AudioTranscriptionConfig(),
 )
 
 
@@ -167,28 +167,21 @@ async def companion_stream(
         else:
             time_of_day = "night"
 
-        time_label = f"{day_name} {time_of_day}, {now_local.strftime('%-I:%M %p')}"
+        time_label = f"{day_name} {time_of_day}, {now_local.strftime('%I:%M %p').lstrip('0')}"
 
         try:
             pending_reminders = await fs.get_reminders(user_id, status="pending")
-            # Filter to reminders scheduled for today (in user's local time)
-            today_str = now_local.strftime("%Y-%m-%d")
-            todays_reminders = [
-                r for r in pending_reminders
-                if r.scheduled_time.astimezone(now_local.tzinfo).strftime("%Y-%m-%d") == today_str
-            ]
-            if todays_reminders:
+            if pending_reminders:
                 reminder_parts = [
-                    f"{r.message} at "
-                    f"{r.scheduled_time.astimezone(now_local.tzinfo).strftime('%-I:%M %p')}"
-                    for r in todays_reminders
+                    f"{r.message} (id: {r.reminder_id})"
+                    for r in pending_reminders
                 ]
-                reminders_line = "Pending reminders today: " + ", ".join(reminder_parts)
+                reminders_line = "Pending reminders: " + ", ".join(reminder_parts)
             else:
-                reminders_line = "No pending reminders today."
+                reminders_line = "No pending reminders."
         except Exception as exc:
-            logger.warning("Could not fetch reminders for user %s: %s", user_id, exc)
-            reminders_line = "No pending reminders today."
+            logger.error("Could not fetch reminders for user %s: %s", user_id, exc, exc_info=True)
+            reminders_line = "No pending reminders."
 
         daily_briefing = f"Current time: {time_label}\n{reminders_line}"
         logger.info("Daily briefing built for user=%s: %s", user_id, daily_briefing)
@@ -204,14 +197,6 @@ async def companion_stream(
     )
 
     live_request_queue = LiveRequestQueue()
-
-    # ── Send initial trigger so OLAF speaks first ─────────────────────────────
-    live_request_queue.send_content(
-        types.Content(
-            role="user",
-            parts=[types.Part(text="__START_SESSION__")],
-        )
-    )
 
     # ── Upstream task: browser → LiveRequestQueue ────────────────────────────
     async def upstream() -> None:
@@ -258,6 +243,11 @@ async def companion_stream(
     # ── Downstream task: runner events → browser ─────────────────────────────
     async def downstream() -> None:
         logger.info("Downstream starting for user=%s model=%s", user_id, companion_agent.model)
+
+        # NOTE: In bidi/live mode, ADK handles tool calls internally.
+        # function_call and function_response events are NOT yielded to our code.
+        # Double-speech prevention is handled via system instruction instead.
+
         try:
             async for event in _runner.run_live(
                 user_id=user_id,
@@ -265,9 +255,32 @@ async def companion_stream(
                 live_request_queue=live_request_queue,
                 run_config=_run_config,
             ):
-                # Audio chunks (skip model text parts — those are internal thinking, not speech)
+                # Log event shape for debugging
+                part_types = []
+                if event.content and event.content.parts:
+                    for p in event.content.parts:
+                        if getattr(p, "inline_data", None):
+                            part_types.append("audio")
+                        elif getattr(p, "function_call", None):
+                            part_types.append("function_call")
+                        elif getattr(p, "function_response", None):
+                            part_types.append("function_response")
+                        elif getattr(p, "text", None):
+                            part_types.append(f"text:{p.text[:50]}")
+                        else:
+                            part_types.append("other")
+                logger.debug(
+                    "Event: parts=%s input_t=%s output_t=%s turn=%s",
+                    part_types,
+                    bool(getattr(event, "input_transcription", None)),
+                    bool(getattr(event, "output_transcription", None)),
+                    getattr(event, "turn_complete", False),
+                )
+
+                # ── Process content parts ────────────────────────────────────
                 if event.content and event.content.parts:
                     for part in event.content.parts:
+                        # Forward audio chunks
                         if getattr(part, "inline_data", None):
                             await websocket.send_json({
                                 "type": "audio",
@@ -276,7 +289,7 @@ async def companion_stream(
                                 ).decode(),
                             })
 
-                # User speech transcription — only send complete utterances (finished=True)
+                # User speech transcription — always forward
                 if getattr(event, "input_transcription", None):
                     t = event.input_transcription
                     if getattr(t, "text", None) and getattr(t, "finished", False):
@@ -286,23 +299,15 @@ async def companion_stream(
                             "text": t.text,
                         })
 
-                # OLAF speech transcription — what was actually spoken aloud
+                # OLAF speech transcription
                 if getattr(event, "output_transcription", None):
                     t = event.output_transcription
-                    if getattr(t, "text", None) and getattr(t, "finished", False):
+                    if getattr(t, "text", None):
                         await websocket.send_json({
                             "type": "transcript",
                             "role": "model",
                             "text": t.text,
-                        })
-
-                # Tool calls — let the browser show activity indicator
-                if getattr(event, "tool_calls", None):
-                    for tc in event.tool_calls:
-                        await websocket.send_json({
-                            "type": "tool_call",
-                            "name": tc.function.name,
-                            "args": dict(tc.function.args or {}),
+                            "partial": not getattr(t, "finished", False),
                         })
 
                 # Turn complete
@@ -316,15 +321,39 @@ async def companion_stream(
         except WebSocketDisconnect:
             pass
         except Exception as exc:
-            logger.error("Downstream error for user %s: %s", user_id, exc)
-            try:
-                await websocket.send_json({"type": "error", "message": str(exc)})
-            except Exception:
-                pass
+            # ADK raises APIError(1000) on normal WebSocket close — ignore it
+            if "1000" in str(exc):
+                logger.info("Live session ended normally for user %s", user_id)
+            else:
+                logger.error("Downstream error for user %s: %s", user_id, exc)
+                try:
+                    await websocket.send_json({"type": "error", "message": str(exc)})
+                except Exception:
+                    pass
 
-    # ── Run both tasks concurrently ───────────────────────────────────────────
+    # ── Greeting trigger ─────────────────────────────────────────────────────
+    async def send_greeting() -> None:
+        # Wait for Gemini live connection (~1s) + mic audio to prime audio mode.
+        # Mic audio blobs flow immediately from the browser; they reach Gemini
+        # once the live connection is established. We need audio to be flowing
+        # BEFORE sending the text trigger so Gemini responds in audio, not text.
+        await asyncio.sleep(2)
+        logger.info("Sending __START_SESSION__ trigger for user=%s", user_id)
+        live_request_queue.send_content(
+            types.Content(
+                role="user",
+                parts=[types.Part(text="__START_SESSION__")],
+            )
+        )
+        # Signal frontend that OLAF is ready — transitions UI from "connecting"
+        try:
+            await websocket.send_json({"type": "ready"})
+        except Exception:
+            pass
+
+    # ── Run all tasks concurrently ─────────────────────────────────────────────
     try:
-        await asyncio.gather(upstream(), downstream())
+        await asyncio.gather(upstream(), downstream(), send_greeting())
     finally:
         logger.info("Companion stream disconnected: user=%s", user_id)
         try:

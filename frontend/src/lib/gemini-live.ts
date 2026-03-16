@@ -61,6 +61,7 @@ const SYSTEM_INSTRUCTION = [
   'When the user mentions taking medication or shows you a medication bottle via camera, use the analyze_medication tool.',
   'During conversations, naturally gather mood and health information and log it using log_health_checkin.',
   'When asked to set reminders, use the set_reminder tool.',
+  'When the user says they have done something from their reminders (e.g. "I took my medicine", "I already drank water", "I finished my exercise"), use the complete_reminder tool to mark it as done. Ask which reminder if unclear.',
   'Always be encouraging, patient, and positive. End conversations warmly.',
   'If the user is quiet for a while, gently check in on them.',
 ].join(' ');
@@ -126,7 +127,7 @@ const TOOL_DECLARATIONS = [
   },
   {
     name: 'set_reminder',
-    description: 'Set a reminder for the user at a specific time.',
+    description: 'Set a reminder for the user.',
     parameters: {
       type: 'object',
       properties: {
@@ -136,14 +137,25 @@ const TOOL_DECLARATIONS = [
         },
         message: {
           type: 'string',
-          description: 'The reminder message to show',
-        },
-        time: {
-          type: 'string',
-          description: 'When to remind (ISO 8601 or HH:MM format)',
+          description: 'The reminder message',
         },
       },
-      required: ['reminder_type', 'message', 'time'],
+      required: ['reminder_type', 'message'],
+    },
+  },
+  {
+    name: 'complete_reminder',
+    description:
+      'Mark a reminder as completed when the user says they have done it.',
+    parameters: {
+      type: 'object',
+      properties: {
+        keyword: {
+          type: 'string',
+          description: 'A keyword matching the reminder (e.g. medicine, water)',
+        },
+      },
+      required: ['keyword'],
     },
   },
 ];

@@ -13,6 +13,7 @@ from api.middleware.firebase_auth import get_current_user
 from models.api import (
     AnalyzeMedicationRequest,
     ApiResponse,
+    CompleteReminderRequest,
     FlagDistressRequest,
     HealthCheckinRequest,
     LogConversationRequest,
@@ -20,6 +21,7 @@ from models.api import (
 )
 from olaf_agents.tools.companion_tools import (
     analyze_medication,
+    complete_reminder,
     flag_emotional_distress,
     log_conversation,
     log_health_checkin,
@@ -55,7 +57,8 @@ async def flag_emotional_distress_endpoint(
         severity=req.args.severity,
         observation=req.args.observation,
     )
-    return ApiResponse(status=result["status"], data=result.get("data"))
+    status = "success" if result["status"] == "noted" else result["status"]
+    return ApiResponse(status=status, data=result.get("data"))
 
 
 @router.post("/log-health-checkin")
@@ -83,7 +86,19 @@ async def set_reminder_endpoint(
         user_id=req.user_id,
         reminder_type=req.args.reminder_type,
         message=req.args.message,
-        time_str=req.args.time,
+    )
+    return ApiResponse(status=result["status"], data=result.get("data"))
+
+
+@router.post("/complete-reminder")
+async def complete_reminder_endpoint(
+    req: CompleteReminderRequest,
+    user: dict = Depends(get_current_user),
+) -> ApiResponse:
+    """Mark a reminder as completed / acknowledged."""
+    result = await complete_reminder(
+        user_id=req.user_id,
+        reminder_id=req.args.reminder_id,
     )
     return ApiResponse(status=result["status"], data=result.get("data"))
 

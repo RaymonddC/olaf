@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { BookOpen } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { BookOpen, ChevronLeft, ChevronRight } from 'lucide-react';
+import Link from 'next/link';
 import { Header } from '@/components/layout/Header';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { MemoryChapterCard } from '@/components/memories/MemoryChapterCard';
@@ -9,149 +10,281 @@ import { MemoryCardSkeleton } from '@/components/memories/MemoryCardSkeleton';
 import { useMemories, type MemoryListItem } from '@/hooks/useApi';
 import { useAuth } from '@/contexts/AuthContext';
 
-type Period = 'week' | 'month' | 'year';
-const PERIODS: { value: Period; label: string }[] = [
-    { value: 'week', label: 'This Week' },
-    { value: 'month', label: 'This Month' },
-    { value: 'year', label: 'This Year' },
-];
-
-function filterByPeriod(memories: MemoryListItem[], period: Period) {
-    const now = new Date();
-    const cutoff = new Date(now);
-    if (period === 'week') cutoff.setDate(now.getDate() - 7);
-    else if (period === 'month') cutoff.setMonth(now.getMonth() - 1);
-    else cutoff.setFullYear(now.getFullYear() - 1);
-    return memories.filter(m => new Date(m.createdAt) >= cutoff);
+function toDateKey(d: Date) {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-function dayLabel(iso: string): string {
-    const d = new Date(iso);
-    const now = new Date();
-    const same = (a: Date, b: Date) =>
-        a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
-    if (same(d, now)) return 'Today';
-    const yesterday = new Date(now);
-    yesterday.setDate(now.getDate() - 1);
-    if (same(d, yesterday)) return 'Yesterday';
-    return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+function sameDay(a: Date, b: Date) {
+    return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 }
 
-function groupByDay(memories: MemoryListItem[]) {
-    const groups = new Map<string, MemoryListItem[]>();
+function buildMemoryMap(memories: MemoryListItem[]) {
+    const map = new Map<string, MemoryListItem[]>();
     for (const m of memories) {
-        const label = dayLabel(m.createdAt);
-        if (!groups.has(label)) groups.set(label, []);
-        groups.get(label)!.push(m);
+        const key = toDateKey(new Date(m.createdAt));
+        if (!map.has(key)) map.set(key, []);
+        map.get(key)!.push(m);
     }
-    return Array.from(groups.entries()).map(([label, items]) => ({ label, items }));
+    return map;
+}
+
+function calcStreak(memoryMap: Map<string, MemoryListItem[]>): number {
+    const today = new Date();
+    const d = new Date(today);
+    if (!memoryMap.has(toDateKey(d))) {
+        d.setDate(d.getDate() - 1);
+        if (!memoryMap.has(toDateKey(d))) return 0;
+    }
+    let streak = 0;
+    while (memoryMap.has(toDateKey(d))) {
+        streak++;
+        d.setDate(d.getDate() - 1);
+    }
+    return streak;
+}
+
+function getCalendarDays(year: number, month: number) {
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const cells: (number | null)[] = [];
+    for (let i = 0; i < firstDay; i++) cells.push(null);
+    for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+    return cells;
 }
 
 export default function MemoriesPage() {
     const { user } = useAuth();
-    const [period, setPeriod] = useState<Period>('month');
+    const today = new Date();
+    const [viewMonth, setViewMonth] = useState({ year: today.getFullYear(), month: today.getMonth() });
+    const [selectedDate, setSelectedDate] = useState<string>(toDateKey(today));
 
     const { data, isLoading, isError } = useMemories(user?.uid ?? '', 100, 0);
     const memories = data?.memories ?? [];
-    const filtered = filterByPeriod(memories, period);
-    const groups = groupByDay(filtered);
+    const memoryMap = useMemo(() => buildMemoryMap(memories), [memories]);
+    const streak = useMemo(() => calcStreak(memoryMap), [memoryMap]);
 
-    function handlePeriodChange(p: Period) {
-        setPeriod(p);
+    const cells = getCalendarDays(viewMonth.year, viewMonth.month);
+    const monthLabel = new Date(viewMonth.year, viewMonth.month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    const selectedMemories = memoryMap.get(selectedDate) ?? [];
+    const isCurrentMonth = viewMonth.year === today.getFullYear() && viewMonth.month === today.getMonth();
+
+    const selectedDateObj = new Date(selectedDate + 'T00:00:00');
+    const isSelectedToday = sameDay(selectedDateObj, today);
+    const selectedLabel = isSelectedToday
+        ? 'Today'
+        : (() => {
+            const y = new Date(today);
+            y.setDate(today.getDate() - 1);
+            return sameDay(selectedDateObj, y)
+                ? 'Yesterday'
+                : selectedDateObj.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+        })();
+
+    function prevMonth() {
+        setViewMonth(v => v.month === 0 ? { year: v.year - 1, month: 11 } : { year: v.year, month: v.month - 1 });
     }
+    function nextMonth() {
+        setViewMonth(v => v.month === 11 ? { year: v.year + 1, month: 0 } : { year: v.year, month: v.month + 1 });
+    }
+
+    const streakText = streak === 0
+        ? null
+        : streak === 1
+            ? "You shared a moment with OLAF today"
+            : streak < 7
+                ? `${streak} days of conversations with OLAF — keep it going`
+                : streak < 30
+                    ? `${streak} days in a row — OLAF loves hearing from you`
+                    : `${streak} days together — what a beautiful journey`;
 
     return (
         <div className="flex flex-col h-dvh">
-            <Header title="My Memories" subtitle="Stories from your life" />
+            <Header title="Memories" />
 
-            <div className="flex-1 overflow-y-auto px-5 py-5 pb-32 lg:px-12 lg:py-8 lg:pb-36">
-                <div className="max-w-4xl mx-auto w-full">
+            <div className="flex-1 overflow-y-auto px-6 lg:px-10 pb-32 lg:pb-12">
+                <div className="max-w-xl lg:max-w-2xl mx-auto w-full">
 
-                    {/* Period filter pills */}
-                    {!isLoading && !isError && memories.length > 0 && (
-                        <div className="flex gap-2 mb-5">
-                            {PERIODS.map((p) => (
-                                <button
-                                    key={p.value}
-                                    type="button"
-                                    onClick={() => handlePeriodChange(p.value)}
-                                    className="px-5 py-2.5 rounded-[14px] text-[14px] font-heading font-semibold cursor-pointer border-none transition-all"
-                                    style={{
-                                        background: period === p.value ? 'rgba(26,109,224,0.12)' : 'rgba(255,255,255,0.75)',
-                                        color: period === p.value ? '#1a6de0' : '#94a3b8',
-                                        boxShadow: period === p.value ? '0 2px 8px rgba(26,109,224,0.10)' : '0 1px 4px rgba(15,23,42,0.04)',
-                                        backdropFilter: 'blur(8px)',
-                                    }}
-                                >
-                                    {p.label}
-                                </button>
-                            ))}
-                        </div>
-                    )}
-
-
+                    {/* Loading */}
                     {isLoading && (
-                        <div className="space-y-3">
-                            {[0, 1, 2, 3].map(i => <MemoryCardSkeleton key={i} />)}
+                        <div className="pt-6 space-y-3">
+                            <div className="h-6 w-3/4 rounded animate-skeleton" style={{ background: 'rgba(148,163,184,0.1)' }} />
+                            <div className="h-5 w-1/3 rounded animate-skeleton" style={{ background: 'rgba(148,163,184,0.08)' }} />
+                            <div className="h-56 rounded-2xl animate-skeleton mt-3" style={{ background: 'rgba(148,163,184,0.06)' }} />
+                            {[0, 1].map(i => <MemoryCardSkeleton key={i} />)}
                         </div>
                     )}
 
+                    {/* Error */}
                     {isError && !isLoading && (
-                        <EmptyState icon={BookOpen} title="Something went wrong" message="We couldn't load your memories." />
+                        <div className="py-10">
+                            <EmptyState icon={BookOpen} title="Something went wrong" message="We couldn't load your memories." />
+                        </div>
                     )}
 
+                    {/* Empty */}
                     {!isLoading && !isError && memories.length === 0 && (
                         <div className="flex flex-col items-center justify-center" style={{ minHeight: '50vh' }}>
                             <EmptyState
                                 icon={BookOpen}
                                 title="No memories yet"
-                                message="Talk to OLAF and share a story — it will be beautifully preserved here."
+                                message="Talk to OLAF — your story builds here."
                                 action={{ label: 'Start talking', href: '/talk' }}
                             />
                         </div>
                     )}
 
-                    {!isLoading && !isError && memories.length > 0 && filtered.length === 0 && (
-                        <EmptyState
-                            icon={BookOpen}
-                            title={`No memories this ${period}`}
-                            message="Try selecting a wider time range above."
-                        />
-                    )}
+                    {/* Content */}
+                    {!isLoading && !isError && memories.length > 0 && (
+                        <>
+                            {/* Greeting */}
+                            <div className="pt-6 lg:pt-8 mb-6 rounded-2xl px-5 py-5 lg:px-6 lg:py-6"
+                                 style={{ background: 'rgba(224,242,241,0.6)', border: '1px solid rgba(178,223,219,0.4)' }}>
+                                {streakText && (
+                                    <p className="text-[17px] lg:text-[20px] leading-snug font-heading font-bold" style={{ color: '#00695c' }}>
+                                        {streakText}
+                                    </p>
+                                )}
+                                <p className="text-[15px] lg:text-[16px] mt-2" style={{ color: '#64748b' }}>
+                                    {memories.length} {memories.length === 1 ? 'moment' : 'moments'} remembered
+                                    {memories.length >= 10 && ' — your story is growing'}
+                                    {memories.length >= 50 && ' beautifully'}
+                                </p>
+                            </div>
 
-                    {!isLoading && !isError && groups.length > 0 && (
-                        <div className="space-y-8">
-                            {groups.map(({ label, items }) => (
-                                <section key={label}>
-                                    {/* Day header */}
-                                    <div className="flex items-center gap-3 mb-4">
-                                        <span className="text-[13px] lg:text-[14px] font-heading font-bold text-text-muted uppercase tracking-[0.06em] whitespace-nowrap">
-                                            {label}
-                                        </span>
-                                        <div className="flex-1 h-px" style={{ background: 'rgba(148,163,184,0.2)' }} />
-                                        <span className="text-[12px] text-text-muted font-heading">{items.length} {items.length === 1 ? 'memory' : 'memories'}</span>
+                            {/* Month nav */}
+                            <div className="flex items-center justify-between mb-3">
+                                <button onClick={prevMonth} aria-label="Previous month"
+                                    className="w-12 h-12 rounded-xl flex items-center justify-center hover:bg-black/5 transition-colors active:scale-95">
+                                    <ChevronLeft className="w-7 h-7 text-text-muted" />
+                                </button>
+                                <span className="text-[19px] lg:text-[22px] font-heading font-bold text-text-heading">
+                                    {monthLabel}
+                                </span>
+                                <button onClick={nextMonth} aria-label="Next month" disabled={isCurrentMonth}
+                                    className="w-12 h-12 rounded-xl flex items-center justify-center hover:bg-black/5 transition-colors active:scale-95 disabled:opacity-20">
+                                    <ChevronRight className="w-7 h-7 text-text-muted" />
+                                </button>
+                            </div>
+
+                            {/* Weekday headers */}
+                            <div className="grid grid-cols-7 mb-1">
+                                {['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map((d, i) => (
+                                    <div key={i} className="text-center text-[14px] lg:text-[15px] font-heading font-semibold text-text-muted py-2">
+                                        {d}
                                     </div>
+                                ))}
+                            </div>
 
-                                    {/* Memory cards */}
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 lg:gap-4">
-                                        {items.map((m, i) => (
-                                            <div
-                                                key={m.id}
-                                                style={{ animation: `fadeUp 0.45s ease ${i * 60}ms forwards`, opacity: 0 }}
+                            {/* Calendar days */}
+                            <div className="grid grid-cols-7 gap-y-1 mb-8">
+                                {cells.map((day, i) => {
+                                    if (day === null) return <div key={`e-${i}`} />;
+
+                                    const cellDate = new Date(viewMonth.year, viewMonth.month, day);
+                                    const key = toDateKey(cellDate);
+                                    const has = memoryMap.has(key);
+                                    const count = memoryMap.get(key)?.length ?? 0;
+                                    const isToday = sameDay(cellDate, today);
+                                    const isSel = key === selectedDate;
+                                    const isFuture = cellDate > today;
+                                    const isPast = cellDate < today && !isToday;
+
+                                    return (
+                                        <button
+                                            key={key}
+                                            type="button"
+                                            disabled={isFuture}
+                                            onClick={() => setSelectedDate(key)}
+                                            className="flex flex-col items-center justify-center py-1 disabled:opacity-15 transition-all active:scale-95"
+                                        >
+                                            <span
+                                                className="w-12 h-12 lg:w-14 lg:h-14 rounded-full flex items-center justify-center text-[17px] lg:text-[19px] font-heading transition-all duration-200"
+                                                style={{
+                                                    background: isSel
+                                                        ? '#3b82f6'
+                                                        : has
+                                                            ? 'rgba(219,234,254,0.6)'
+                                                            : 'transparent',
+                                                    color: isSel
+                                                        ? '#fff'
+                                                        : has
+                                                            ? '#00695c'
+                                                            : isToday
+                                                                ? '#1e293b'
+                                                                : isPast
+                                                                    ? '#94a3b8'
+                                                                    : '#64748b',
+                                                    fontWeight: isSel || has || isToday ? 700 : 400,
+                                                    boxShadow: isToday && !isSel
+                                                        ? 'inset 0 0 0 2.5px rgba(59,130,246,0.35)'
+                                                        : isSel
+                                                            ? '0 3px 12px rgba(59,130,246,0.3)'
+                                                            : 'none',
+                                                }}
                                             >
-                                                <MemoryChapterCard
-                                                    id={m.id}
-                                                    title={m.title}
-                                                    createdAt={m.createdAt}
-                                                    illustrationUrls={m.illustrationUrls}
-                                                    snippet={m.snippet}
-                                                />
-                                            </div>
-                                        ))}
-                                    </div>
-                                </section>
-                            ))}
-                        </div>
+                                                {day}
+                                            </span>
+                                            {has && !isSel && (
+                                                <span className="flex gap-0.5 mt-1">
+                                                    {Array.from({ length: Math.min(count, 3) }).map((_, di) => (
+                                                        <span key={di} className="w-1.5 h-1.5 rounded-full" style={{ background: '#4db6ac' }} />
+                                                    ))}
+                                                </span>
+                                            )}
+                                            {(!has || isSel) && <span className="h-2.5 mt-1" />}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Divider */}
+                            <div className="h-px mb-6" style={{ background: 'rgba(219,234,254,0.5)' }} />
+
+                            {/* Selected day header */}
+                            <div className="flex items-baseline justify-between mb-4">
+                                <p className="text-[19px] lg:text-[22px] font-heading font-bold text-text-heading">
+                                    {selectedLabel}
+                                </p>
+                                {selectedMemories.length > 0 && (
+                                    <p className="text-[15px] lg:text-[17px] font-heading" style={{ color: '#64748b' }}>
+                                        {selectedMemories.length} {selectedMemories.length === 1 ? 'memory' : 'memories'}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Memory cards */}
+                            {selectedMemories.length > 0 ? (
+                                <div className="flex flex-col gap-3">
+                                    {selectedMemories.map((m, i) => (
+                                        <div key={m.id} style={{ animation: `fadeUp 0.3s ease ${i * 50}ms forwards`, opacity: 0 }}>
+                                            <MemoryChapterCard
+                                                id={m.id}
+                                                title={m.title}
+                                                createdAt={m.createdAt}
+                                                illustrationUrls={m.illustrationUrls}
+                                                snippet={m.snippet}
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="text-center py-10 rounded-2xl"
+                                     style={{ background: 'rgba(255,247,230,0.5)' }}>
+                                    <p className="text-[18px] lg:text-[20px] mb-4 font-heading" style={{ color: '#92400e' }}>
+                                        {isSelectedToday ? "You haven't talked with OLAF yet today" : 'No memories on this day'}
+                                    </p>
+                                    {isSelectedToday && (
+                                        <Link
+                                            href="/talk"
+                                            className="inline-flex px-8 py-4 rounded-2xl text-[18px] lg:text-[19px] font-heading font-semibold text-white active:scale-95 transition-transform min-h-[56px] items-center"
+                                            style={{ background: '#3b82f6', boxShadow: '0 2px 8px rgba(59,130,246,0.25)' }}
+                                        >
+                                            Talk to OLAF
+                                        </Link>
+                                    )}
+                                </div>
+                            )}
+                        </>
                     )}
 
                 </div>

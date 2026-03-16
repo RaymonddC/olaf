@@ -101,6 +101,14 @@ def create_app():
     app.include_router(alerts.router, prefix="/api/alerts", tags=["alerts"])
     app.include_router(notifications.router, prefix="/api/notifications", tags=["notifications"])
 
+    # ── Static files for locally-stored illustrations (dev fallback) ────
+    import pathlib
+
+    from fastapi.staticfiles import StaticFiles
+    static_dir = pathlib.Path(AGENT_DIR) / "static" / "images"
+    static_dir.mkdir(parents=True, exist_ok=True)
+    app.mount("/static/images", StaticFiles(directory=str(static_dir)), name="static-images")
+
     # ── Health check ────────────────────────────────────────────────────
     @app.get("/health")
     async def health_check():

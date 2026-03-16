@@ -2,12 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Mic, BookOpen, HelpCircle } from 'lucide-react';
+import { Mic, BookOpen, Sun } from 'lucide-react';
 
 const NAV_ITEMS = [
     { href: '/talk', icon: Mic, label: 'Talk' },
     { href: '/memories', icon: BookOpen, label: 'Memories' },
-    { href: '/help', icon: HelpCircle, label: 'Help' },
+    { href: '/my-day', icon: Sun, label: 'My Day' },
 ] as const;
 
 export function BottomNav() {
@@ -35,20 +35,20 @@ export function BottomNav() {
                             aria-current={isActive ? 'page' : undefined}
                             className="flex flex-col items-center gap-1 py-2.5 px-8 rounded-[18px] min-w-[76px] min-h-[54px] lg:min-h-[60px] justify-center"
                             style={{
-                                background: isActive ? 'rgba(26,109,224,0.12)' : 'transparent',
-                                boxShadow: isActive ? '0 2px 8px rgba(26,109,224,0.10)' : 'none',
+                                background: isActive ? 'rgba(0,137,123,0.12)' : 'transparent',
+                                boxShadow: isActive ? '0 2px 8px rgba(0,137,123,0.10)' : 'none',
                                 transition: 'all 0.3s cubic-bezier(0.4,0,0.2,1)',
                             }}
                         >
                             <Icon
                                 className="w-5 h-5"
                                 strokeWidth={isActive ? 2.5 : 2}
-                                color={isActive ? '#1a6de0' : '#94a3b8'}
+                                color={isActive ? '#00897b' : '#94a3b8'}
                                 aria-hidden="true"
                             />
                             <span
                                 className="text-[12px] font-heading font-bold"
-                                style={{ color: isActive ? '#1a6de0' : '#94a3b8' }}
+                                style={{ color: isActive ? '#00897b' : '#94a3b8' }}
                             >
                                 {label}
                             </span>

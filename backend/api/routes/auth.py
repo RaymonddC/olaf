@@ -193,21 +193,43 @@ async def create_elder_account(
             detail="Only family members can create elder accounts",
         )
 
+    # Validate username format
+    username = req.username.strip().lower()
+    if len(username) < 3:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username must be at least 3 characters",
+        )
+    if not username.replace("_", "").replace(".", "").isalnum():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username can only contain letters, numbers, dots, and underscores",
+        )
+
+    # Check username uniqueness via Firestore
+    existing = await fs.get_user_by_username(username)
+    if existing:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This username is already taken. Please choose another.",
+        )
+
     # Generate a secure temporary password
     alphabet = string.ascii_letters + string.digits
     temp_password = "".join(secrets.choice(alphabet) for _ in range(10))
 
-    # Create Firebase Auth user for the elder
+    # Create Firebase Auth user — use username@olaf.app as internal email
+    internal_email = f"{username}@olaf.app"
     try:
         firebase_user = firebase_auth.create_user(
-            email=req.email,
+            email=internal_email,
             password=temp_password,
             display_name=req.name,
         )
     except firebase_auth.EmailAlreadyExistsError:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
-            detail="An account with this email already exists",
+            detail="This username is already taken. Please choose another.",
         )
 
     elder_uid = firebase_user.uid
@@ -217,6 +239,7 @@ async def create_elder_account(
         uid=elder_uid,
         role="elderly",
         name=req.name,
+        username=username,
         age=req.age,
         timezone=req.timezone,
         language=req.language,
@@ -237,15 +260,15 @@ async def create_elder_account(
     await fs.create_family_link(link)
 
     logger.info(
-        "Family member %s created elder account %s (%s)",
-        family_uid, elder_uid, req.email,
+        "Family member %s created elder account %s (username=%s)",
+        family_uid, elder_uid, username,
     )
 
     return ApiResponse(
         status="success",
         data=CreateElderAccountResponse(
             elder_user_id=elder_uid,
-            email=req.email,
+            username=username,
             temp_password=temp_password,
             link_id=link_id,
         ).model_dump(by_alias=True),

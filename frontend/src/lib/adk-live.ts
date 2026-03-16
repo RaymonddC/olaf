@@ -32,6 +32,7 @@ export interface TranscriptEntry {
   role: 'user' | 'model';
   text: string;
   timestamp: string;
+  partial?: boolean;
 }
 
 export interface AdkLiveCallbacks {
@@ -40,6 +41,8 @@ export interface AdkLiveCallbacks {
   onTranscript: (entry: TranscriptEntry) => void;
   onToolCall: (name: string, args: Record<string, unknown>) => void;
   onInterrupted: () => void;
+  onTurnComplete?: () => void;
+  onReady?: () => void;
   onError: (error: Error) => void;
 }
 
@@ -95,7 +98,7 @@ export class AdkLiveClient {
       ws.onopen = () => {
         this._connected = true;
         this.reconnectAttempts = 0;
-        this.config.callbacks.onStatusChange('listening');
+        // Stay at 'connecting' — backend sends 'ready' when OLAF is about to speak
         resolve();
       };
 
@@ -110,12 +113,12 @@ export class AdkLiveClient {
 
       ws.onerror = () => {
         const err = new Error('WebSocket connection error');
-        this._connected = false;
         if (!this._connected) {
           // Failed during initial connect
           this.config.callbacks.onStatusChange('error');
           reject(err);
         } else {
+          this._connected = false;
           this.config.callbacks.onError(err);
         }
       };
@@ -125,11 +128,14 @@ export class AdkLiveClient {
         if (this.intentionalClose) {
           this.config.callbacks.onStatusChange('idle');
         } else {
-          // Unexpected close — attempt reconnect
-          this.config.callbacks.onStatusChange('connecting');
-          this.scheduleReconnect();
+          // Unexpected close — report error instead of reconnecting.
+          // Auto-reconnect creates a second backend session while the old
+          // AudioManager is still alive, causing double audio playback.
+          this.config.callbacks.onStatusChange('error');
+          this.config.callbacks.onError(
+            new Error('Connection lost. Please tap the button to reconnect.'),
+          );
         }
-        // Reject the promise if we closed before opening
         if (event.code === 4001) {
           reject(new Error(`Auth failed: ${event.reason}`));
         }
@@ -151,16 +157,14 @@ export class AdkLiveClient {
       case 'transcript': {
         const role = msg.role as 'user' | 'model';
         const text = msg.text as string;
+        const partial = (msg.partial as boolean) ?? false;
         if (text?.trim()) {
           this.config.callbacks.onTranscript({
             role,
             text,
+            partial,
             timestamp: new Date().toISOString(),
           });
-          if (role === 'model') {
-            // Model is generating output — mark as thinking until audio arrives
-            this.config.callbacks.onStatusChange('thinking');
-          }
         }
         break;
       }
@@ -175,11 +179,17 @@ export class AdkLiveClient {
 
       case 'turn_complete':
         this.config.callbacks.onStatusChange('listening');
+        this.config.callbacks.onTurnComplete?.();
         break;
 
       case 'interrupted':
         this.config.callbacks.onInterrupted();
         this.config.callbacks.onStatusChange('listening');
+        break;
+
+      case 'ready':
+        this.config.callbacks.onStatusChange('listening');
+        this.config.callbacks.onReady?.();
         break;
 
       case 'error':

@@ -9,7 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import api from '@/lib/api';
 
 const TASKS = [
-    { icon: Stethoscope, title: 'Book a doctor appointment', desc: 'Find and book your next visit with your GP', templateId: 'book_appointment', task: 'Book a doctor appointment', steps: 7, bg: 'linear-gradient(135deg, #eff6ff, #dbeafe)', color: '#1a6de0' },
+    { icon: Stethoscope, title: 'Book a doctor appointment', desc: 'Find and book your next visit with your GP', templateId: 'book_appointment', task: 'Book a doctor appointment', steps: 7, bg: 'linear-gradient(135deg, #e0f2f1, #b2dfdb)', color: '#00897b' },
     { icon: FileText, title: 'Check pension status', desc: 'View your latest benefits and pension info', templateId: 'pension_check', task: 'Check pension status', steps: 5, bg: 'linear-gradient(135deg, #f0fdfa, #ccfbf1)', color: '#0d9488' },
     { icon: ClipboardList, title: 'Read medical report', desc: 'Get a plain-language summary of documents', templateId: 'read_report', task: 'Read medical report', steps: 5, bg: 'linear-gradient(135deg, #fffbeb, #fef3c7)', color: '#d97706' },
 ] as const;
@@ -58,7 +58,7 @@ export default function HelpPage() {
                     <div className="text-center mb-6 animate-fade-up">
                         <div className="w-[60px] h-[60px] lg:w-[72px] lg:h-[72px] rounded-[20px] mx-auto mb-3 flex items-center justify-center"
                              style={{ background: 'linear-gradient(135deg, #eff6ff, #f0fdfa)', border: '1.5px solid #e2e8f0' }}>
-                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#1a6de0" strokeWidth="1.6" strokeLinecap="round">
+                            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#00897b" strokeWidth="1.6" strokeLinecap="round">
                                 <circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
                             </svg>
                         </div>

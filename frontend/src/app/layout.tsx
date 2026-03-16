@@ -22,10 +22,14 @@ export const metadata: Metadata = {
     description: 'An AI care companion for elderly users and their families.',
     manifest: '/manifest.json',
     appleWebApp: { capable: true, statusBarStyle: 'default', title: 'OLAF' },
+    icons: {
+        icon: '/favicon.svg',
+        shortcut: '/favicon.svg',
+    },
 };
 
 export const viewport: Viewport = {
-    themeColor: '#1a6de0',
+    themeColor: '#00897b',
     width: 'device-width',
     initialScale: 1,
 };

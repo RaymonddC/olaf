@@ -50,6 +50,12 @@ function base64ToInt16Array(base64: string): Int16Array {
 
 // ── AudioManager class ────────────────────────────────────────────────────
 
+// Speech is detected when the peak amplitude in a frame exceeds this value.
+// Int16 range is 0–32767. 2000 ≈ ~6% of max — ignores background noise.
+const VAD_THRESHOLD = 2000;
+// Number of consecutive loud frames before triggering interruption.
+const VAD_FRAMES_NEEDED = 4;
+
 export class AudioManager {
   // Capture
   private inputContext: AudioContext | null = null;
@@ -61,43 +67,44 @@ export class AudioManager {
   // Playback
   private outputContext: AudioContext | null = null;
   private nextPlayTime = 0;
-  private activeSourceCount = 0;
+  private activeSources: AudioBufferSourceNode[] = [];
   private _isSpeaking = false;
+  // When true, incoming audio chunks are dropped (user has interrupted)
+  private _playbackBlocked = false;
 
   // Callbacks
   private onAudioChunk: ((base64: string) => void) | null = null;
   private onPlaybackStateChange: ((speaking: boolean) => void) | null = null;
+  private onUserInterrupted: (() => void) | null = null;
+
+  // Client-side VAD state
+  private _vadFrameCount = 0;
 
   // State
   private _muted = false;
   private _started = false;
 
-  get muted(): boolean {
-    return this._muted;
-  }
-
-  get started(): boolean {
-    return this._started;
-  }
-
-  get isSpeaking(): boolean {
-    return this._isSpeaking;
-  }
+  get muted(): boolean { return this._muted; }
+  get started(): boolean { return this._started; }
+  get isSpeaking(): boolean { return this._isSpeaking; }
 
   /**
    * Start microphone capture and prepare playback context.
    *
    * @param onAudioChunk - Called with base64-encoded 16 kHz PCM chunks
    * @param onPlaybackStateChange - Called when OLAF starts/stops speaking
+   * @param onUserInterrupted - Called when client-side VAD detects the user speaking
    */
   async start(
     onAudioChunk: (base64: string) => void,
     onPlaybackStateChange?: (speaking: boolean) => void,
+    onUserInterrupted?: () => void,
   ): Promise<void> {
     if (this._started) return;
 
     this.onAudioChunk = onAudioChunk;
     this.onPlaybackStateChange = onPlaybackStateChange ?? null;
+    this.onUserInterrupted = onUserInterrupted ?? null;
 
     // Request microphone access
     this.mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -119,13 +126,35 @@ export class AudioManager {
     await this.inputContext.audioWorklet.addModule(this.workletUrl);
 
     // Wire: mic → AudioWorklet → onAudioChunk callback
-    this.sourceNode = this.inputContext.createMediaStreamSource(
-      this.mediaStream,
-    );
+    this.sourceNode = this.inputContext.createMediaStreamSource(this.mediaStream);
     this.workletNode = new AudioWorkletNode(this.inputContext, 'pcm-capture');
     this.workletNode.port.onmessage = (event: MessageEvent) => {
       if (this._muted) return;
       const pcmBuffer = event.data as ArrayBuffer;
+
+      // ── Client-side VAD: interrupt OLAF the moment the user speaks ───────
+      if (this._isSpeaking && !this._playbackBlocked) {
+        const samples = new Int16Array(pcmBuffer);
+        let peak = 0;
+        for (let i = 0; i < samples.length; i++) {
+          const abs = samples[i] < 0 ? -samples[i] : samples[i];
+          if (abs > peak) peak = abs;
+        }
+        if (peak > VAD_THRESHOLD) {
+          this._vadFrameCount++;
+          if (this._vadFrameCount >= VAD_FRAMES_NEEDED) {
+            this._vadFrameCount = 0;
+            this._playbackBlocked = true;   // drop all incoming audio chunks
+            this.clearPlaybackQueue();      // stop whatever is playing now
+            this.onUserInterrupted?.();
+          }
+        } else {
+          this._vadFrameCount = 0;
+        }
+      } else if (!this._isSpeaking) {
+        this._vadFrameCount = 0;
+      }
+
       const base64 = arrayBufferToBase64(pcmBuffer);
       this.onAudioChunk?.(base64);
     };
@@ -145,11 +174,29 @@ export class AudioManager {
   }
 
   /**
+   * Block playback — call when a tool call is detected to suppress
+   * duplicate audio that Gemini sends after tool execution.
+   */
+  blockPlayback(): void {
+    this._playbackBlocked = true;
+    this.clearPlaybackQueue();
+  }
+
+  /**
+   * Unblock playback — call when the server confirms interruption or turn is
+   * complete so OLAF's next response can be heard.
+   */
+  unblockPlayback(): void {
+    this._playbackBlocked = false;
+    this._vadFrameCount = 0;
+  }
+
+  /**
    * Queue a base64-encoded 24 kHz PCM chunk from Gemini for playback.
-   * Chunks are scheduled precisely on the AudioContext clock for gapless audio.
+   * Silently dropped while playback is blocked (user interrupted).
    */
   queuePlayback(pcmBase64: string): void {
-    if (!this.outputContext) return;
+    if (!this.outputContext || this._playbackBlocked) return;
 
     const int16 = base64ToInt16Array(pcmBase64);
     const float32 = new Float32Array(int16.length);
@@ -168,40 +215,36 @@ export class AudioManager {
     // Schedule chunk to play exactly at the end of the previous one
     const now = ctx.currentTime;
     if (this.nextPlayTime < now + 0.02) {
-      this.nextPlayTime = now + 0.02; // small lead-in to avoid underrun
+      this.nextPlayTime = now + 0.02;
     }
     source.start(this.nextPlayTime);
     this.nextPlayTime += buffer.duration;
 
-    this.activeSourceCount++;
+    this.activeSources.push(source);
     if (!this._isSpeaking) this.setSpeaking(true);
 
     source.onended = () => {
-      this.activeSourceCount--;
-      if (this.activeSourceCount <= 0) {
-        this.activeSourceCount = 0;
-        this.setSpeaking(false);
-      }
+      this.activeSources = this.activeSources.filter(s => s !== source);
+      if (this.activeSources.length === 0) this.setSpeaking(false);
     };
   }
 
-  /** Clear the playback queue (called on interruption). */
+  /** Stop all queued and playing audio immediately. */
   clearPlaybackQueue(): void {
-    // Reset the schedule — any already-started sources will finish naturally
-    // but we stop tracking them and reset speaking state immediately
     this.nextPlayTime = 0;
-    this.activeSourceCount = 0;
+    for (const src of this.activeSources) {
+      try { src.stop(); } catch { /* already ended */ }
+    }
+    this.activeSources = [];
     this.setSpeaking(false);
   }
 
   /** Stop capture, release microphone, and clean up audio contexts. */
   async stop(): Promise<void> {
     this._started = false;
-    this.nextPlayTime = 0;
-    this.activeSourceCount = 0;
-    this.setSpeaking(false);
+    this._playbackBlocked = false;
+    this.clearPlaybackQueue();
 
-    // Disconnect capture graph
     if (this.workletNode) {
       this.workletNode.port.onmessage = null;
       this.workletNode.disconnect();
@@ -211,25 +254,18 @@ export class AudioManager {
       this.sourceNode.disconnect();
       this.sourceNode = null;
     }
-
-    // Release microphone
     if (this.mediaStream) {
       this.mediaStream.getTracks().forEach((t) => t.stop());
       this.mediaStream = null;
     }
-
-    // Close audio contexts
     if (this.inputContext?.state !== 'closed') {
       await this.inputContext?.close().catch(() => {});
     }
     this.inputContext = null;
-
     if (this.outputContext?.state !== 'closed') {
       await this.outputContext?.close().catch(() => {});
     }
     this.outputContext = null;
-
-    // Revoke Blob URL
     if (this.workletUrl) {
       URL.revokeObjectURL(this.workletUrl);
       this.workletUrl = null;

@@ -28,7 +28,7 @@ export function HealthLogsView({ logs, loading }: Props) {
                     const emoji = MOOD[log.mood?.toLowerCase() ?? ''] || '❓';
                     const grad = p <= 2 ? 'linear-gradient(90deg, #34d399, #10b981)' : p <= 4 ? 'linear-gradient(90deg, #fbbf24, #f59e0b)' : 'linear-gradient(90deg, #f87171, #ef4444)';
                     return (
-                        <div key={log.id} className="flex items-center gap-3" style={{ padding: '10px 0', borderBottom: i < logs.length - 1 ? '1px solid rgba(241,245,249,0.9)' : 'none' }}>
+                        <div key={log.id ?? `log-${i}`} className="flex items-center gap-3" style={{ padding: '10px 0', borderBottom: i < logs.length - 1 ? '1px solid rgba(241,245,249,0.9)' : 'none' }}>
                             <span className="w-9 text-[14px] text-text-muted font-medium">{fmtDay(log.date)}</span>
                             <span className="text-[22px] w-8 text-center">{emoji}</span>
                             <div className="flex-1 h-2 rounded-full overflow-hidden" style={{ background: 'rgba(241,245,249,0.9)' }}>

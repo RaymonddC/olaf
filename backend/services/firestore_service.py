@@ -65,6 +65,13 @@ class FirestoreService:
             return None
         return UserProfile(**doc.to_dict())
 
+    async def get_user_by_username(self, username: str) -> UserProfile | None:
+        """Find a user by their unique username."""
+        docs = self.db.collection("users").where("username", "==", username).limit(1).get()
+        for doc in docs:
+            return UserProfile(**doc.to_dict())
+        return None
+
     async def update_user(self, uid: str, data: dict[str, Any]) -> None:
         """Partially update a user profile."""
         data["updated_at"] = _utcnow()
@@ -224,8 +231,10 @@ class FirestoreService:
         query = self._subcollection(uid, "reminders")
         if status:
             query = query.where("status", "==", status)
-        docs = query.order_by("scheduled_time").stream()
-        return [ReminderDoc(**doc.to_dict()) for doc in docs]
+        docs = query.stream()
+        reminders = [ReminderDoc(**doc.to_dict()) for doc in docs]
+        reminders.sort(key=lambda r: r.created_at, reverse=True)
+        return reminders
 
     async def update_reminder(
         self, uid: str, reminder_id: str, data: dict[str, Any]

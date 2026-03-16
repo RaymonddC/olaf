@@ -62,11 +62,21 @@ async def _create_memory_direct(
 
     if settings.google_api_key and transcript.strip():
         prompt = (
-            "You are a compassionate storyteller for an elderly care companion called OLAF.\n"
-            "Transform this conversation transcript into a warm memory chapter.\n\n"
+            "You are writing a personal journal entry for an elderly person based on their "
+            "conversation with their AI companion OLAF.\n\n"
             "TRANSCRIPT:\n"
             f"{transcript[:4000]}\n\n"
-            "Write a 3-5 paragraph narrative that honours the user's voice. "
+            "Write this as a simple, natural autobiography entry — like the person is writing "
+            "about their own day in their own words. Keep it in first person.\n"
+            "- Write 2-4 short paragraphs, simple and heartfelt\n"
+            "- Focus on what actually happened: who they talked to, what they did, "
+            "how they felt, what mattered to them\n"
+            "- Keep it grounded and real — no flowery storytelling or dramatic language\n"
+            "- It should read like a diary entry, not a story being told to someone\n"
+            "- Include the small meaningful details: a meal they enjoyed, a memory that "
+            "came up, a worry they shared, a moment that made them smile\n"
+            "- The title should be simple and personal, like 'A Quiet Tuesday Morning' "
+            "or 'Thinking About the Garden'\n\n"
             "Respond ONLY with JSON in this format:\n"
             '{{"title": "...", "narrative": "...", "tags": ["tag1", "tag2"]}}'
         )
@@ -107,20 +117,23 @@ async def _create_memory_direct(
         narrative_text = transcript
         logger.info("Memory task %s: using raw transcript as narrative fallback", task_id)
 
-    # ── Generate Imagen 3 illustration for this memory ─────────────────────
     illustration_urls: list[str] = []
+
+    # ── Generate scene illustration via gemini-2.5-flash-image ──────────────
     if narrative_text and narrative_text != transcript:
         try:
-            # Ask Gemini for an illustration scene prompt based on the narrative
+            # Ask Gemini for a focused scene prompt based on the narrative
             scene_prompt_text = ""
             if settings.google_api_key:
                 scene_req_prompt = (
-                    "Based on this narrative from an elderly person's memory, write a single "
-                    "vivid scene description (1-2 sentences) suitable as an image generation "
-                    "prompt. Focus on the most emotionally resonant visual moment. "
+                    "Based on this personal journal entry from an elderly person, describe "
+                    "a specific scene from their actual day (1-2 sentences) suitable as an "
+                    "image generation prompt. Pick a real moment they described — a place "
+                    "they visited, something they did, a person they saw, a meal they had. "
+                    "Make it specific to THEIR day, not generic. "
                     "Do NOT include any text, words, or letters in the scene. "
                     "Respond with ONLY the scene description, nothing else.\n\n"
-                    f"NARRATIVE:\n{narrative_text[:2000]}"
+                    f"JOURNAL ENTRY:\n{narrative_text[:2000]}"
                 )
                 try:
                     async with httpx.AsyncClient() as client:
@@ -149,27 +162,24 @@ async def _create_memory_direct(
             if not scene_prompt_text:
                 scene_prompt_text = f"An elderly person's memory: {title}. {narrative_text[:300]}"
 
-            # Generate illustration via Imagen 3
+            # Generate scene illustration via gemini-2.5-flash-image
             from services.imagen_service import ImageGenerationError, get_imagen_service
             imagen = get_imagen_service()
             try:
-                url = await imagen.generate_and_store(
-                    prompt=scene_prompt_text,
+                url = await imagen.generate_nano_banana_recap(
+                    narrative=scene_prompt_text,
                     user_id=user_id,
-                    style="warm watercolor",
-                    aspect_ratio="4:3",
                 )
                 illustration_urls.append(url)
-                logger.info("Memory task %s: illustration generated: %s", task_id, url)
+                logger.info("Memory task %s: scene illustration generated: %s", task_id, url)
             except ImageGenerationError as e:
-                logger.warning("Memory task %s: illustration generation failed: %s", task_id, e)
+                logger.warning("Memory task %s: scene illustration failed: %s", task_id, e)
             except Exception as e:
-                logger.warning("Memory task %s: illustration unexpected error: %s", task_id, e)
+                logger.warning("Memory task %s: scene illustration unexpected error: %s", task_id, e)
 
         except Exception as e:
             logger.warning("Memory task %s: illustration pipeline failed: %s", task_id, e)
 
-    import uuid
     memory_id = uuid.uuid4().hex[:20]
     snippet = narrative_text[:200].rstrip()
 

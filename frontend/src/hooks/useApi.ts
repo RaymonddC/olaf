@@ -98,7 +98,7 @@ export interface Reminder {
   id: string;
   type: 'medication' | 'appointment' | 'hydration' | 'custom';
   message: string;
-  scheduledTime: string;
+  scheduledTime?: string;
   status: 'pending' | 'sent' | 'acknowledged';
   recurring: boolean;
 }
@@ -295,10 +295,11 @@ export function useReminders(userId: string, status?: string) {
   const params = new URLSearchParams({ userId });
   if (status) params.set('status', status);
   return useQuery({
-    queryKey: queryKeys.reminders(userId),
+    queryKey: [...queryKeys.reminders(userId), status],
     queryFn: () =>
       api.get<ApiResponse<{ reminders: Reminder[] }>>(`/api/health/reminders?${params}`),
     enabled: !!userId,
+    refetchInterval: 30_000,
   });
 }
 

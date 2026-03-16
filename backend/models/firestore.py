@@ -16,6 +16,7 @@ class UserProfile(BaseModel):
     uid: str
     role: Literal["elderly", "family"]
     name: str
+    username: str | None = None  # Elderly login username (unique)
     age: int | None = None
     timezone: str = "UTC"
     language: str = "en"
@@ -98,9 +99,9 @@ class ReminderDoc(BaseModel):
     """Firestore: users/{uid}/reminders/{reminderId}"""
 
     reminder_id: str
-    type: Literal["medication", "appointment", "hydration", "custom"]
+    type: Literal["medication", "appointment", "hydration", "custom"] = "custom"
     message: str
-    scheduled_time: datetime
+    scheduled_time: datetime | None = None
     status: Literal["pending", "sent", "acknowledged"] = "pending"
     recurring: bool = False
     recurrence_pattern: str | None = None
