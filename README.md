@@ -4,7 +4,7 @@
 
 > "For the people who deserve more than a weekly phone call."
 
-OLAF is a voice-first AI companion for elderly users and the families who care for them. It combines real-time voice conversation, illustrated memory preservation, web navigation assistance, and intelligent family alerts — built on Gemini's Live API, Google ADK, Imagen 3, and a full Firebase stack.
+OLAF is a voice-first AI companion for elderly users and the families who care for them. It combines real-time voice conversation, illustrated memory preservation, and family monitoring — built on Gemini Live API, Google ADK, Vertex AI Imagen 3, and Firebase.
 
 ---
 
@@ -12,8 +12,10 @@ OLAF is a voice-first AI companion for elderly users and the families who care f
 
 | Feature | For whom | Description |
 |---|---|---|
-| **Voice Companion** | Elderly user | Real-time voice + vision companion via Gemini Live API (ADK bidi-streaming). Health check-ins, medication scanning via webcam, reminders, emotional support. |
-| **Memory Journal** | Elderly user | Speak a memory to OLAF. An ADK pipeline transforms it into an illustrated, watercolor-style life story chapter via Imagen 3. |
+| **Voice Companion** | Elderly user | Real-time voice companion via Gemini Live API (ADK bidi-streaming). OLAF greets the user first, listens, and responds like a warm friend. Users can interrupt naturally at any time. |
+| **Reminders** | Elderly user | Ask OLAF to set any reminder by voice. When the user says they have done it, OLAF marks it complete. Pending reminders appear on the family dashboard. |
+| **Medication Check** | Elderly user | Point the camera at a medication bottle. OLAF analyses the label via vision and cross-references it with the user's known prescription list. |
+| **Memory Journal** | Elderly user | Speak a memory to OLAF. An ADK pipeline transforms it into an illustrated, watercolor-style life story chapter via Vertex AI Imagen 3. |
 | **Family Dashboard** | Family members | Health trends, mood calendar, pending reminders, and push notifications via Firebase Cloud Messaging. |
 
 ---
@@ -82,15 +84,14 @@ OLAF is a voice-first AI companion for elderly users and the families who care f
 | Frontend language | TypeScript | 5.7 |
 | Styling | Tailwind CSS | 4 |
 | UI state | React Query (@tanstack) | 5 |
-| Voice/Vision | Gemini Live API (WebSocket direct) | `gemini-2.5-flash-native-audio-preview-12-2025` |
+| Voice/Vision | Gemini Live API via ADK bidi-streaming | `gemini-2.5-flash-native-audio-preview-09-2025` |
 | ADK agents | Google ADK + Gemini 2.5 Flash | >= 1.26 |
 | Image generation | Imagen 3 via Vertex AI | `imagen-3.0-generate-002` |
-| Backend framework | FastAPI (via ADK `get_fast_api_app`) | 0.115 |
-| Backend language | Python | 3.13 |
-| Headless browser | Playwright + Chromium | 1.49 |
+| Backend framework | FastAPI | 0.115 |
+| Backend language | Python | 3.12 |
 | Auth | Firebase Authentication | 11 |
 | Database | Cloud Firestore | — |
-| File storage | Cloud Storage | — |
+| File storage | Cloud Storage (GCS) | — |
 | Push notifications | Firebase Cloud Messaging | — |
 | Hosting (backend) | Google Cloud Run | — |
 | Hosting (frontend) | Firebase Hosting | — |
@@ -109,75 +110,53 @@ olaf/
 │   └── src/
 │       ├── app/
 │       │   ├── (auth)/            # Login, register
-│       │   ├── (app)/             # Talk, Memories, Help (elderly UI)
+│       │   ├── (app)/             # Talk, Memories (elderly UI)
 │       │   └── (family)/          # Family dashboard
 │       ├── components/
-│       │   ├── companion/         # AudioVisualizer, CameraToggle, StatusIndicator
-│       │   ├── navigator/         # ScreenshotViewer, ConfirmationPrompt
+│       │   ├── companion/         # CameraToggle, StatusIndicator
 │       │   ├── memories/          # MemoryChapterCard, ReportCard
-│       │   ├── family/            # AlertCard, OverviewCard, ReportsSection
-│       │   ├── layout/            # BottomNav, Header, PageShell
-│       │   └── ui/                # Button, Card, Modal, Toast, Input
+│       │   ├── family/            # AlertCard, OverviewCard
+│       │   ├── layout/            # BottomNav, Header
+│       │   └── ui/                # Button, Card, Input
 │       ├── lib/
-│       │   ├── gemini-live.ts     # GeminiLiveClient (WebSocket, session resumption)
-│       │   ├── tool-handler.ts    # Tool call → REST bridge
+│       │   ├── adk-live.ts        # ADK WebSocket client
 │       │   ├── audio-manager.ts   # 16kHz PCM mic capture + playback
 │       │   ├── firebase.ts        # Firebase client init
 │       │   └── fcm.ts             # Push notification setup
 │       ├── hooks/
-│       │   └── useApi.ts          # React Query hooks for all backend endpoints
+│       │   └── useApi.ts          # React Query hooks
 │       └── contexts/
 │           └── AuthContext.tsx    # Firebase auth state
 │
 ├── backend/                       # Python FastAPI + Google ADK
-│   ├── main.py                    # App entry point (get_fast_api_app + custom routes)
+│   ├── main.py                    # App entry point
 │   ├── config.py                  # Pydantic settings (env vars)
-│   ├── olaf_agents/              # ADK agent module (convention: exports root_agent)
-│   │   ├── agent.py               # root_agent = olaf_coordinator
+│   ├── olaf_agents/
 │   │   ├── agents/
-│   │   │   ├── storyteller.py     # storyteller_agent + story_pipeline (SequentialAgent)
-│   │   │   ├── navigator.py       # navigator_agent (Playwright tools)
-│   │   │   └── alert.py           # alert_agent (wrapped as AgentTool)
+│   │   │   ├── companion.py       # companion_agent (ADK bidi-streaming)
+│   │   │   └── storyteller.py     # storyteller_agent (SequentialAgent)
 │   │   ├── tools/
-│   │   │   ├── storyteller_tools.py  # generate_illustration, save_memory_chapter, etc.
-│   │   │   ├── navigator_tools.py    # navigate_to_url, click_element, take_screenshot, etc.
-│   │   │   ├── alert_tools.py        # send_push_notification, evaluate_signal, etc.
-│   │   │   └── companion_tools.py    # analyze_medication, log_health_checkin, etc.
-│   │   ├── instructions/          # Agent system prompts
-│   │   └── callbacks/
-│   │       ├── safety.py          # before_model_callback (input safety guard)
-│   │       └── navigator_guard.py # before_tool_callback (URL validation + audit log)
+│   │   │   ├── companion_tools.py # set_reminder, complete_reminder, log_health_checkin, analyze_medication
+│   │   │   └── storyteller_tools.py # generate_illustration, save_memory_chapter
+│   │   └── instructions/          # Agent system prompts
 │   ├── api/
-│   │   ├── routes/                # Custom FastAPI routers
-│   │   │   ├── gemini_token.py    # POST /api/gemini/token (ephemeral tokens)
-│   │   │   ├── companion.py       # POST /api/companion/* (tool execution)
-│   │   │   ├── storyteller.py     # POST /api/storyteller/* (story creation)
-│   │   │   ├── navigator.py       # WS /api/navigator/* (screenshot stream)
-│   │   │   ├── health.py          # GET/POST /api/health/* (logs, reports)
-│   │   │   └── alerts.py          # GET/POST /api/alerts/*
-│   │   └── middleware/
-│   │       └── firebase_auth.py   # Firebase ID token verification
+│   │   └── routes/
+│   │       ├── companion.py       # POST /api/companion/*
+│   │       ├── companion_stream.py # WS /api/companion/stream
+│   │       ├── storyteller.py     # POST /api/storyteller/*
+│   │       ├── health.py          # GET/POST /api/health/*
+│   │       └── alerts.py          # GET/POST /api/alerts/*
 │   ├── services/
 │   │   ├── firestore_service.py   # Firestore CRUD
-│   │   ├── imagen_service.py      # Vertex AI Imagen 3 + Cloud Storage upload
-│   │   ├── browser_service.py     # Playwright browser pool (up to 5 sessions)
-│   │   ├── navigator_session.py   # Per-session navigator state
+│   │   ├── imagen_service.py      # Vertex AI Imagen 3 + Cloud Storage
 │   │   └── fcm_service.py         # Firebase Cloud Messaging
 │   ├── models/
 │   │   ├── api.py                 # Pydantic request/response schemas
 │   │   └── firestore.py           # Firestore document models
 │   ├── tests/
-│   │   ├── conftest.py
 │   │   └── test_api/              # API endpoint tests (pytest-asyncio)
 │   ├── Dockerfile
 │   └── pyproject.toml
-│
-├── docs/
-│   ├── architecture/              # Agent orchestration, API contracts, data flow
-│   ├── design-system/             # Color tokens, component specs, Tailwind config
-│   ├── plans/                     # Product design document
-│   ├── research/                  # Gemini Live API, ADK, Firebase/GCP research
-│   └── submission/                # Hackathon: demo script, Devpost text, prize strategy
 │
 ├── docker-compose.yml             # Backend + Firestore emulator (local dev)
 └── README.md
@@ -188,13 +167,13 @@ olaf/
 ## Prerequisites
 
 - **Node.js** 20+ and npm
-- **Python** 3.11+
-- **Docker** (optional — for Firestore emulator local dev)
+- **Python** 3.12+
+- **Docker** (optional, for local Firestore emulator)
 - **Google Cloud project** with:
   - Firebase enabled (Auth + Firestore + Cloud Storage + Cloud Messaging)
-  - Gemini API key (from [Google AI Studio](https://aistudio.google.com/apikey))
-  - Vertex AI enabled (for Imagen 3 illustration generation)
-  - Cloud Storage bucket created
+  - Gemini API key from [Google AI Studio](https://aistudio.google.com/apikey)
+  - Vertex AI enabled (for Imagen 3)
+  - Cloud Storage bucket created and set to public read
 
 ---
 
@@ -203,7 +182,7 @@ olaf/
 ### 1. Clone
 
 ```bash
-git clone <repo-url>
+git clone https://github.com/RaymonddC/olaf.git
 cd olaf
 ```
 
@@ -219,95 +198,54 @@ npm install
 ```bash
 cd backend
 pip install -e ".[dev]"
-playwright install chromium
 ```
 
 ### 4. Configure environment variables
 
 **Frontend** (`frontend/.env.local`):
 
-```bash
-cp frontend/.env.example frontend/.env.local
-```
-
-Edit `frontend/.env.local`:
-
 ```env
-# Firebase Web App Config
-# Source: Firebase Console → Project Settings → General → Your apps → Web app
 NEXT_PUBLIC_FIREBASE_API_KEY=AIza...
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
 NEXT_PUBLIC_FIREBASE_PROJECT_ID=your-project-id
 NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
 NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789
 NEXT_PUBLIC_FIREBASE_APP_ID=1:123456789:web:abcdef
-
-# Backend API (local)
 NEXT_PUBLIC_API_URL=http://localhost:8080
 ```
 
 **Backend** (`backend/.env`):
 
-```bash
-cp backend/.env.example backend/.env
-```
-
-Edit `backend/.env`:
-
 ```env
-# Google AI / Gemini
-# Source: https://aistudio.google.com/apikey
+# Gemini API key from https://aistudio.google.com/apikey
 GOOGLE_API_KEY=AIza...
 
-# Google Cloud (for Vertex AI Imagen 3)
+# Google Cloud project for Vertex AI Imagen 3
 GOOGLE_CLOUD_PROJECT=your-project-id
 GOOGLE_CLOUD_LOCATION=us-central1
 
-# Firebase Admin
-# Option A: Path to downloaded service account JSON
-# Source: Firebase Console → Project Settings → Service Accounts → Generate New Private Key
+# Firebase Admin — option A: service account file
 GOOGLE_APPLICATION_CREDENTIALS=/path/to/service-account.json
 
-# Option B: Inline credentials (required for Docker / Cloud Run)
+# Firebase Admin — option B: inline credentials
 # FIREBASE_ADMIN_PROJECT_ID=your-project-id
 # FIREBASE_ADMIN_CLIENT_EMAIL=firebase-adminsdk-xxx@your-project.iam.gserviceaccount.com
-# FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nMII...\n-----END PRIVATE KEY-----\n"
+# FIREBASE_ADMIN_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
 
-# Cloud Storage bucket (for Imagen illustrations + storybook files)
-GCS_ARTIFACTS_BUCKET=your-project-artifacts
+# Cloud Storage bucket for illustrations
+GCS_ARTIFACTS_BUCKET=your-bucket-name
 
-# Server config
 PORT=8080
 ALLOWED_ORIGINS=http://localhost:3000
-LOG_LEVEL=info
-
-# ADK session persistence (SQLite for local, change for production)
-SESSION_DB_URI=sqlite+aiosqlite:///./sessions.db
-
-# Enable ADK Dev UI at /dev-ui (useful for agent debugging)
-ENABLE_DEV_UI=true
 ```
 
 ### 5. Firebase project setup
 
-1. [Firebase Console](https://console.firebase.google.com) → Create project (or use existing)
-2. Authentication → Sign-in methods → Enable **Email/Password** and **Google**
-3. Firestore Database → Create database → Start in **test mode** for local dev
-4. Storage → Create bucket (note the bucket name for `GCS_ARTIFACTS_BUCKET`)
-5. Project Settings → Cloud Messaging → Copy the VAPID key (for push notifications)
-
-**Firestore security rules (development):**
-
-```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if request.auth != null;
-    }
-  }
-}
-```
+1. [Firebase Console](https://console.firebase.google.com) → create or select project
+2. Authentication → Sign-in methods → enable **Email/Password** and **Google**
+3. Firestore → create database in **test mode**
+4. Storage → create bucket → set to public read (for illustration images)
+5. Project Settings → Cloud Messaging → copy VAPID key
 
 ### 6. Start the backend
 
@@ -316,10 +254,8 @@ cd backend
 uvicorn main:app --host 0.0.0.0 --port 8080 --reload
 ```
 
-Available at `http://localhost:8080`:
-- `GET /health` — Health check
-- `GET /docs` — Swagger API docs (interactive)
-- `GET /dev-ui` — ADK agent dev UI (if `ENABLE_DEV_UI=true`)
+- `GET /health` — health check
+- `GET /docs` — Swagger API docs
 
 ### 7. Start the frontend
 
@@ -329,14 +265,12 @@ npm run dev
 ```
 
 Available at `http://localhost:3000`:
-- `/login` — Sign in (elderly user or family member)
-- `/register` — Create account
-- `/talk` — Voice companion (elderly UI)
-- `/memories` — Memory storybook
-- `/help` — Web navigator
-- `/dashboard` — Family monitoring dashboard
+- `/login` — sign in
+- `/talk` — voice companion (elderly UI)
+- `/memories` — memory storybook
+- `/dashboard` — family monitoring dashboard
 
-### 8. (Alternative) Start with Docker Compose
+### 8. (Alternative) Docker Compose
 
 ```bash
 # Starts backend + Firestore emulator
@@ -350,28 +284,25 @@ cd frontend && npm run dev
 
 ## Environment Variables Reference
 
-### Backend (`backend/.env`)
+### Backend
 
 | Variable | Required | Description |
 |---|---|---|
 | `GOOGLE_API_KEY` | Yes | Gemini API key from AI Studio |
-| `GOOGLE_CLOUD_PROJECT` | Yes (Imagen) | GCP project ID for Vertex AI |
+| `GOOGLE_CLOUD_PROJECT` | Yes | GCP project ID for Vertex AI |
 | `GOOGLE_CLOUD_LOCATION` | No | Vertex AI region (default: `us-central1`) |
-| `GOOGLE_GENAI_USE_VERTEXAI` | No | Set `True` to use Vertex AI instead of AI Studio |
+| `GOOGLE_GENAI_USE_VERTEXAI` | No | Set `True` to route through Vertex AI |
 | `GOOGLE_APPLICATION_CREDENTIALS` | Yes* | Path to service account JSON |
 | `FIREBASE_ADMIN_PROJECT_ID` | Yes* | Firebase project ID (inline credentials) |
 | `FIREBASE_ADMIN_CLIENT_EMAIL` | Yes* | Service account email (inline credentials) |
 | `FIREBASE_ADMIN_PRIVATE_KEY` | Yes* | Service account private key (inline credentials) |
-| `GCS_ARTIFACTS_BUCKET` | Yes (Imagen) | Cloud Storage bucket name for illustrations |
+| `GCS_ARTIFACTS_BUCKET` | Yes | Cloud Storage bucket for illustrations |
 | `PORT` | No | Server port (default: `8080`) |
-| `ALLOWED_ORIGINS` | No | CORS origins, comma-separated (default: `http://localhost:3000`) |
-| `LOG_LEVEL` | No | Python log level (default: `info`) |
-| `SESSION_DB_URI` | No | ADK session store URI (default: SQLite) |
-| `ENABLE_DEV_UI` | No | Enable ADK dev UI at `/dev-ui` (default: `false`) |
+| `ALLOWED_ORIGINS` | No | CORS origins, comma-separated |
 
 *Either `GOOGLE_APPLICATION_CREDENTIALS` OR the three `FIREBASE_ADMIN_*` vars are required.
 
-### Frontend (`frontend/.env.local`)
+### Frontend
 
 | Variable | Required | Description |
 |---|---|---|
@@ -379,29 +310,25 @@ cd frontend && npm run dev
 | `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN` | Yes | Firebase auth domain |
 | `NEXT_PUBLIC_FIREBASE_PROJECT_ID` | Yes | Firebase project ID |
 | `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET` | Yes | Firebase Storage bucket |
-| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Yes | FCM sender ID (for push) |
+| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | Yes | FCM sender ID |
 | `NEXT_PUBLIC_FIREBASE_APP_ID` | Yes | Firebase app ID |
-| `NEXT_PUBLIC_API_URL` | Yes | Backend base URL (default: `http://localhost:8080`) |
+| `NEXT_PUBLIC_API_URL` | Yes | Backend base URL |
 
 ---
 
-## Deployment — Google Cloud Run
+## Deployment
 
-### Build and push backend image
+### Backend — Google Cloud Run
+
+Automated via Cloud Build. See [`backend/cloudbuild.yaml`](backend/cloudbuild.yaml).
+
+Manual deploy:
 
 ```bash
 cd backend
-
-# Build
 docker build -t gcr.io/YOUR_PROJECT/olaf-backend:latest .
-
-# Push
 docker push gcr.io/YOUR_PROJECT/olaf-backend:latest
-```
 
-### Deploy backend to Cloud Run
-
-```bash
 gcloud run deploy olaf-backend \
   --image gcr.io/YOUR_PROJECT/olaf-backend:latest \
   --platform managed \
@@ -409,27 +336,20 @@ gcloud run deploy olaf-backend \
   --memory 2Gi \
   --cpu 2 \
   --timeout 3600 \
-  --concurrency 100 \
   --no-use-http2 \
   --min-instances 1 \
-  --max-instances 5 \
-  --set-env-vars "GOOGLE_CLOUD_PROJECT=YOUR_PROJECT,GCS_ARTIFACTS_BUCKET=YOUR_BUCKET,ALLOWED_ORIGINS=https://your-frontend.vercel.app" \
-  --set-secrets "GOOGLE_API_KEY=gemini-api-key:latest,FIREBASE_ADMIN_PRIVATE_KEY=firebase-private-key:latest"
+  --set-env-vars "GOOGLE_CLOUD_PROJECT=YOUR_PROJECT,GCS_ARTIFACTS_BUCKET=YOUR_BUCKET,ALLOWED_ORIGINS=https://your-app.web.app"
 ```
 
 Notes:
-- `--no-use-http2` is required for WebSocket support (HTTP/2 end-to-end is incompatible with WebSocket in Cloud Run)
-- `--min-instances 1` keeps a warm Playwright container — without this, cold starts take 10–30 seconds
-- `--memory 2Gi` is required for the Playwright Chromium process
-- Use Secret Manager for sensitive values (`GOOGLE_API_KEY`, `FIREBASE_ADMIN_PRIVATE_KEY`)
+- `--no-use-http2` is required for WebSocket support
+- `--min-instances 1` avoids cold starts on the ADK runner
 
-On Cloud Run, Firebase Admin SDK uses **Application Default Credentials** automatically. You do not need to set `GOOGLE_APPLICATION_CREDENTIALS` — grant the Cloud Run service account the `Firebase Admin SDK Service Agent` role.
+### Frontend — Firebase Hosting
 
-### Deploy frontend to Firebase Hosting
+Deploys automatically via GitHub Actions after CI passes. See [`.github/workflows/deploy-frontend.yml`](.github/workflows/deploy-frontend.yml).
 
-The frontend deploys automatically via GitHub Actions when you push to `main` (CI must pass first).
-
-To deploy manually:
+Manual deploy:
 
 ```bash
 cd frontend
@@ -437,8 +357,6 @@ npm ci
 npx firebase-tools experiments:enable webframeworks
 npx firebase-tools deploy --only hosting
 ```
-
-Make sure your Firebase project is set in `.firebaserc` and environment variables are available during build.
 
 ---
 
@@ -453,35 +371,34 @@ The live app is available at **https://olaf-dev-7a5d4.web.app**
 | Elderly user | `olaf.demo` | `Demo1234!` |
 | Family member | `demo.family@gmail.com` | `Demo1234!` |
 
-> Sign in as the elderly user on one tab and the family member on another to see the full care loop.
+Open both accounts in separate tabs to see the full care loop.
 
 ### Feature walkthrough
 
 **1. Voice Companion (Talk page)**
 1. Log in as the elderly user → tap **Talk to OLAF**
-2. Wait for OLAF to greet you first (within 2–3 seconds)
-3. Say _"I'm feeling a bit tired today"_ — OLAF will ask a follow-up question
-4. Say _"Remind me to take my medicine tonight"_ — OLAF sets a reminder
-5. Say _"I already took my medicine"_ — OLAF marks the reminder as done
-6. Say _"Bye"_ — OLAF gives a farewell without asking another question
-7. **Try interrupting**: start speaking while OLAF is mid-sentence — it stops immediately
+2. Wait for OLAF to greet you first (within 2 seconds)
+3. Say "I'm feeling a bit tired today" — OLAF asks a follow-up question
+4. Say "Remind me to take my medicine tonight" — OLAF sets a reminder
+5. Say "I already took my medicine" — OLAF marks the reminder as done
+6. Say "Bye" — OLAF gives a warm farewell without asking another question
+7. Interrupt OLAF mid-sentence — it stops immediately and listens
 
 **2. Health Check-in**
-1. During a Talk session, tell OLAF how you feel and mention any pain
-2. OLAF will call `log_health_checkin` automatically after gathering mood/pain info
-3. Switch to the family dashboard — the mood and pain level appears under today's entry
+1. Tell OLAF how you feel and mention any pain level
+2. OLAF calls `log_health_checkin` automatically
+3. Switch to the family dashboard — mood and pain appear under today's entry
 
 **3. Memory Journal (Memories page)**
-1. Log in as elderly user → tap **Memories**
-2. Tap **New Memory** → speak or type a short memory
-3. The pipeline generates a narrative + Imagen 3 watercolor illustration
+1. Tap **Memories** → tap **New Memory**
+2. Speak or type a short memory
+3. The pipeline generates a narrative and a watercolor illustration via Imagen 3
 4. The memory appears as an illustrated chapter card
 
 **4. Family Dashboard**
-1. Log in as the family member → you see the elder's health summary
-2. Check the mood calendar — dots appear on days with health logs
-3. Pending reminders from the Talk session appear under **Reminders**
-4. Any alerts created during the session appear under **Alerts**
+1. Log in as the family member
+2. See the elder's mood calendar, health trends, and pending reminders
+3. Any alerts from the session appear under **Alerts**
 
 ---
 
@@ -490,59 +407,31 @@ The live app is available at **https://olaf-dev-7a5d4.web.app**
 ### Frontend
 
 ```bash
-npm run dev          # Development server (localhost:3000, HMR)
+npm run dev          # Development server (localhost:3000)
 npm run build        # Production build
-npm run start        # Start production build locally
 npm run lint         # ESLint
-npm run type-check   # TypeScript (tsc --noEmit)
+npm run type-check   # TypeScript
 ```
 
 ### Backend
 
 ```bash
-uvicorn main:app --reload          # Development server (localhost:8080, hot-reload)
-pytest                              # Run test suite
-pytest -v tests/test_api/          # API tests only
-ruff check .                        # Lint
-ruff format .                       # Format
-mypy .                              # Type check (strict)
+uvicorn main:app --reload    # Development server (localhost:8080)
+pytest -v                    # Run all tests
+ruff check .                 # Lint
+ruff format .                # Format
 ```
 
 ---
 
-## Gemini API Usage Summary
+## Gemini API Usage
 
 | Component | Model | Usage |
 |---|---|---|
-| Voice Companion (ADK bidi) | `gemini-2.5-flash-native-audio-preview-09-2025` | Bidi-streaming audio + camera frames, 4 tools: set_reminder, complete_reminder, log_health_checkin, analyze_medication |
-| Storyteller (ADK) | `gemini-2.5-flash` | Memory narrative writing, daily health summaries, weekly reports |
-| Illustration generation | `imagen-3.0-generate-002` | Warm watercolor memory illustrations via Vertex AI |
+| Voice Companion | `gemini-2.5-flash-native-audio-preview-09-2025` | Bidi-streaming audio + camera frames, 4 tools |
+| Storyteller | `gemini-2.5-flash` | Memory narrative writing, health summaries |
+| Illustration | `imagen-3.0-generate-002` | Watercolor memory illustrations via Vertex AI |
 | Conversation summary | `gemini-2.5-flash` | Post-session transcript analysis and mood scoring |
-
----
-
-## Design Principles (Elderly-First UX)
-
-- **18px minimum** body text across all screens
-- **WCAG AAA** contrast ratio target (7:1) — not AAA aspirational, AAA enforced
-- **48px minimum** touch targets — designed for tablet use with imprecise finger taps
-- **Three screens only** — Talk, Memories, Help — with consistent layout on every visit
-- **Voice-first** — every action triggerable by voice command to OLAF
-- **Always show loading states** — blank screens cause anxiety; all async operations show progress
-- **No jargon** — "Talk to OLAF", not "Initialize Voice Session"
-- **Forgiveness** — undo everything, confirm destructive actions, repeat anything without frustration
-- **Consistent audio feedback** — gentle sounds for confirmations and alerts
-
----
-
-## Hackathon Submission Files
-
-```
-docs/submission/
-├── demo-script.md         # 4-minute emotional demo script
-├── devpost-submission.md  # Full Devpost submission text
-└── prize-strategy.md      # Targeting paragraphs for each prize category
-```
 
 ---
 
@@ -551,7 +440,5 @@ docs/submission/
 MIT
 
 ---
-
-## Team
 
 Built for the **Gemini Live Agent Challenge** (Devpost, deadline March 16, 2026).
