@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { useState, useCallback } from 'react';
-import { ArrowLeft, Share2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 
 import { Badge } from '@/components/ui/Badge';
 import { useMemory } from '@/hooks/useApi';
@@ -96,15 +96,6 @@ export default function MemoryDetailPage() {
   const { user } = useAuth();
   const { data: memory, isLoading, isError } = useMemory(memoryId, user?.uid ?? '');
 
-  const handleShare = useCallback(async () => {
-    const url = window.location.href;
-    if (navigator.share) {
-      try { await navigator.share({ title: memory?.title ?? 'A Memory', url }); } catch {}
-    } else {
-      await navigator.clipboard.writeText(url);
-    }
-  }, [memory?.title]);
-
   return (
     <div className="flex flex-col h-dvh">
       <header
@@ -125,17 +116,6 @@ export default function MemoryDetailPage() {
         </Link>
 
         <div className="flex-1" />
-
-        <button
-          type="button"
-          onClick={handleShare}
-          aria-label="Share this memory"
-          className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[15px] font-heading font-semibold transition-all focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-primary-300 active:scale-95 min-h-[48px]"
-          style={{ background: 'rgba(26,109,224,0.08)', color: '#1a6de0' }}
-        >
-          <Share2 className="w-5 h-5" aria-hidden="true" />
-          <span>Share</span>
-        </button>
       </header>
 
       <div className="flex-1 overflow-y-auto px-5 py-5 pb-32 lg:px-10 lg:py-8 lg:pb-36">
