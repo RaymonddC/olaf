@@ -1,7 +1,7 @@
 import { Header } from '@/components/layout/Header';
 import { TalkContent } from './TalkContent';
 
-export const metadata = { title: 'Talk — OLAF' };
+export const metadata = { title: 'Talk | OLAF' };
 
 export default function TalkPage() {
     return (

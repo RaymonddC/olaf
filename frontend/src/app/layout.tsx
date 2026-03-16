@@ -18,7 +18,7 @@ const notoSans = Noto_Sans({
 });
 
 export const metadata: Metadata = {
-    title: 'OLAF — Your Care Companion',
+    title: 'OLAF | Your Care Companion',
     description: 'An AI care companion for elderly users and their families.',
     manifest: '/manifest.json',
     appleWebApp: { capable: true, statusBarStyle: 'default', title: 'OLAF' },
