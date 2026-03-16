@@ -19,9 +19,6 @@ from olaf_agents.tools.companion_tools import (
     analyze_medication as _analyze_medication,
 )
 from olaf_agents.tools.companion_tools import (
-    call_for_help as _call_for_help,
-)
-from olaf_agents.tools.companion_tools import (
     complete_reminder as _complete_reminder,
 )
 from olaf_agents.tools.companion_tools import (
@@ -29,9 +26,6 @@ from olaf_agents.tools.companion_tools import (
 )
 from olaf_agents.tools.companion_tools import (
     set_reminder as _set_reminder,
-)
-from olaf_agents.tools.companion_tools import (
-    share_update_with_family as _share_update_with_family,
 )
 
 _COMPANION_MODEL = "gemini-2.5-flash-native-audio-preview-09-2025"
@@ -43,7 +37,6 @@ SILENT_TOOLS = {
     "complete_reminder",
     "log_health_checkin",
     "flag_emotional_distress",
-    "share_update_with_family",
 }
 
 
@@ -116,28 +109,6 @@ async def complete_reminder(
         return {"status": "ok"}
 
 
-async def call_for_help(tool_context: ToolContext) -> dict:
-    """Trigger an emergency alert and notify the user's family immediately.
-
-    Call this without hesitation whenever the user indicates they need help,
-    have fallen, are in pain, or use any emergency phrase.
-    """
-    user_id: str = tool_context.state.get("user_id", "")
-    logger.info("TOOL CALLED: call_for_help user=%s", user_id)
-    result = await _call_for_help(user_id)
-    logger.info("TOOL RESULT: call_for_help → %s", result.get("status"))
-    return result
-
-
-async def share_update_with_family(message: str, tool_context: ToolContext) -> dict:
-    """Send a positive update or message to the user's family via notification."""
-    user_id: str = tool_context.state.get("user_id", "")
-    logger.info("TOOL CALLED: share_update_with_family user=%s msg=%s", user_id, message[:80])
-    result = await _share_update_with_family(user_id, message)
-    logger.info("TOOL RESULT: share_update_with_family → %s", result.get("status"))
-    return result
-
-
 # ── Agent definition ─────────────────────────────────────────────────────────
 # NOTE: after_tool_callback does NOT fire in live/bidi mode (ADK issue #1897).
 # Post-tool duplicate suppression is handled in companion_stream.py instead.
@@ -149,10 +120,8 @@ companion_agent = Agent(
     instruction=COMPANION_INSTRUCTION,
     tools=[
         analyze_medication,
-        call_for_help,
         complete_reminder,
         log_health_checkin,
         set_reminder,
-        share_update_with_family,
     ],
 )
