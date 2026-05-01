@@ -17,6 +17,8 @@ OLAF is a voice-first AI companion for elderly users and the families who care f
 | **Medication Check** | Elderly user | Point the camera at a medication bottle. OLAF analyses the label via vision and cross-references it with the user's known prescription list. |
 | **Memory Journal** | Elderly user | Speak a memory to OLAF. An ADK pipeline transforms it into an illustrated, watercolor-style life story chapter via Vertex AI Imagen 3. |
 | **Family Dashboard** | Family members | Health trends, mood calendar, pending reminders, and push notifications via Firebase Cloud Messaging. |
+| **Form Navigator** | Elderly user | A separate browser-using agent (`navigator_agent`) drives a headless browser to help with government portals, medical appointments, online forms, and document retrieval. Every action passes through a safety callback (`validate_navigation_safety`) and the agent narrates each step with screenshots so the user can confirm before sensitive submissions. |
+| **Alert Manager** | Internal | A dedicated `alert_manager` agent receives signals from the other agents (e.g. emotional distress flags, missed reminders) and decides notification routing — push, email, or daily report — based on user baselines and the family contact graph. |
 
 ---
 
@@ -73,6 +75,30 @@ OLAF is a voice-first AI companion for elderly users and the families who care f
 ```
 
 **Key architectural decision:** The voice companion uses ADK `runner.run_live()` with `StreamingMode.BIDI` — the backend proxies all audio between the browser and Gemini Live API. This allows server-side tool execution with user context from Firestore, while keeping audio latency low. The frontend sends 16kHz PCM audio and JPEG camera frames over WebSocket; the backend returns audio chunks and transcripts.
+
+---
+
+## Engineering Highlights
+
+A few production-aware design decisions that aren't obvious from the feature list:
+
+### Memory bank — cross-session continuity
+On every WebSocket connection, the backend pulls up to 5 of the user's most recent memory chapters from Firestore and injects them into the ADK session state as a "memory bank." The companion agent's instruction references this bank, so OLAF can say things like *"Remember last week when you talked about your wedding day?"* — the model isn't stateless across sessions.
+
+### Daily briefing — timezone-aware greeting
+At session start, the backend assembles a daily briefing: the user's local time-of-day (resolved from their stored `timezone`), and any pending reminders. This is injected into session state before the first audio frame, so OLAF's opening greeting is contextually correct (*"Good Tuesday morning. You have one pending reminder: take your medicine."*) without the model needing tool calls for basic context.
+
+### Pre-greeting trigger — workaround for Gemini Live's modality lock
+Gemini Live's first response locks the response modality. If OLAF speaks before mic audio is flowing, it answers in text. The backend solves this by waiting 2 seconds (long enough for mic blobs to start streaming) and then sending a hidden `__START_SESSION__` text trigger — the model responds in audio, and the user hears OLAF greet them first.
+
+### Duplicate suppression — handling ADK echo around tool calls
+ADK's bidi/live mode hides function-call events from user code, and the model sometimes repeats itself before and after invoking a tool. The downstream task runs every model transcript (partial and finished) through prefix-based fuzzy matching against a sliding window of recent transcripts; on a hit, the backend sends a `clear_audio` signal to the frontend to halt playback and suppresses the duplicate audio chunks. Without this, users would hear the same sentence twice every time OLAF set a reminder.
+
+### Defensive close handling
+ADK raises `APIError(1000)` on normal WebSocket close. The downstream loop checks for `"1000"` in the exception message and logs it as a clean disconnect instead of an error — keeps logs readable.
+
+### Per-agent safety callbacks
+Both the companion and the navigator agent register `before_tool_callback` hooks (`safety.py`, `navigator_guard.py`) that gate destructive or sensitive actions. The navigator guard, in particular, runs before any browser action that could submit a form on a user's behalf.
 
 ---
 
@@ -133,12 +159,25 @@ olaf/
 │   ├── config.py                  # Pydantic settings (env vars)
 │   ├── olaf_agents/
 │   │   ├── agents/
-│   │   │   ├── companion.py       # companion_agent (ADK bidi-streaming)
-│   │   │   └── storyteller.py     # storyteller_agent (SequentialAgent)
+│   │   │   ├── companion.py       # companion_agent (ADK bidi-streaming voice + vision)
+│   │   │   ├── storyteller.py     # storyteller_agent + story_pipeline (SequentialAgent)
+│   │   │   ├── alert.py           # alert_manager — routes signals to family notifications
+│   │   │   └── navigator.py       # navigator_agent — headless-browser form helper
 │   │   ├── tools/
-│   │   │   ├── companion_tools.py # set_reminder, complete_reminder, log_health_checkin, analyze_medication
-│   │   │   └── storyteller_tools.py # generate_illustration, save_memory_chapter
-│   │   └── instructions/          # Agent system prompts
+│   │   │   ├── companion_tools.py # 8 tools: set_reminder, complete_reminder, log_health_checkin,
+│   │   │   │                      #   analyze_medication, flag_emotional_distress, call_for_help,
+│   │   │   │                      #   share_update_with_family, log_conversation
+│   │   │   ├── storyteller_tools.py # generate_illustration, save_memory_chapter, save_health_narrative,
+│   │   │   │                      #   save_weekly_report, get_health_logs, get_conversation_summaries,
+│   │   │   │                      #   get_user_memories
+│   │   │   ├── alert_tools.py     # evaluate_signal, create_alert, escalate_alert, send_push_notification,
+│   │   │   │                      #   send_email_alert, log_to_daily_report, get_user_baseline,
+│   │   │   │                      #   get_family_contacts
+│   │   │   └── navigator_tools.py # navigate_to_url, click_element, type_text, scroll_page,
+│   │   │                          #   read_page_text, take_screenshot, summarize_content,
+│   │   │                          #   ask_user_confirmation
+│   │   ├── callbacks/             # safety.py, navigator_guard.py — pre-tool safety checks
+│   │   └── instructions/          # Per-agent system prompts
 │   ├── api/
 │   │   └── routes/
 │   │       ├── companion.py       # POST /api/companion/*
